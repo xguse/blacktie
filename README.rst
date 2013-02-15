@@ -1,15 +1,38 @@
-This file requires editing
+This file STILL requires editing
 ==========================
 
-Note to the author: Please add something informative to this README *before*
-releasing your software, as `a little documentation goes a long way`_.  Both
-README.rst (this file) and NEWS.txt (release notes) will be included in your
-package metadata which gets displayed in the PyPI page for your project.
+This package is still VERY raw and not complete.  However the tophat and cufflinks steps
+have been written and passed preliminary functionality tests.  I seek collaboration and 
+contributions to improve this tool.  Its goal is to simplify the integration of all the
+input/output streams of the tophat/cufflinks workflow into a single yaml based config
+file and automate as much of everything else as possible so that once the config file
+is filled out, the entire process of analysing a multi-condition RNA-seq experiment can
+be run with a single command.  I have not had time to fill in all the doc strings but will
+soon.  If you want to use/contribute before the docs are complete, please contact me at 
+wadunn83@gmail.com for guidance.
 
-You can take a look at the README.txt of other projects, such as repoze.bfg
-(http://bfg.repoze.org/trac/browser/trunk/README.txt) for some ideas.
+Usage
+-----
+::
 
-.. _`a little documentation goes a long way`: http://www.martinaspeli.net/articles/a-little-documentation-goes-a-long-way
+  usage: blacktie_pipeline.py [-h]
+                              [--prog {tophat,cufflinks,cuffmerge,cuffdiff,all}]
+                              config_file
+  
+  This script reads options from a yaml formatted file and organizes the
+  execution of tophat/cufflinks runs for multiple condition sets.
+  
+  positional arguments:
+    config_file           Path to a yaml formatted config file containing setup
+                          options for the runs.
+
+  optional arguments:
+    -h, --help            show this help message and exit
+    --prog {tophat,cufflinks,cuffmerge,cuffdiff,all}
+                          Which program do you want to run? (default: tophat)
+
+::
+
 
 Credits
 -------
