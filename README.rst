@@ -11,6 +11,28 @@ be run with a single command.  I have not had time to fill in all the doc string
 soon.  If you want to use/contribute before the docs are complete, please contact me at 
 wadunn83@gmail.com for guidance.
 
+Usage
+-----
+::
+
+  usage: blacktie_pipeline.py [-h]
+                              [--prog {tophat,cufflinks,cuffmerge,cuffdiff,all}]
+                              config_file
+  
+  This script reads options from a yaml formatted file and organizes the
+  execution of tophat/cufflinks runs for multiple condition sets.
+  
+  positional arguments:
+    config_file           Path to a yaml formatted config file containing setup
+                          options for the runs.
+
+  optional arguments:
+    -h, --help            show this help message and exit
+    --prog {tophat,cufflinks,cuffmerge,cuffdiff,all}
+                          Which program do you want to run? (default: tophat)
+
+::
+
 
 Credits
 -------
