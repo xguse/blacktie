@@ -1,3 +1,15 @@
+#*****************************************************************************
+#  blacktie_pipeline.py (part of the blacktie package)
+#
+#  (c) 2013 - Augustine Dunn
+#  James Laboratory
+#  Department of Biochemistry and Molecular Biology
+#  University of California Irvine
+#  wadunn83@gmail.com
+#
+#  Licenced under the GNU General Public License 2.0 license.
+#******************************************************************************
+
 """
 ####################
 blacktie_pipeline.py

@@ -1,3 +1,22 @@
+#*****************************************************************************
+#  misc.py (part of the blacktie package)
+#
+#  (c) 2013 - Augustine Dunn
+#  James Laboratory
+#  Department of Biochemistry and Molecular Biology
+#  University of California Irvine
+#  wadunn83@gmail.com
+#
+#  Licenced under the GNU General Public License 2.0 license.
+#******************************************************************************
+
+"""
+####################
+misc.py
+####################
+Code facilitating random aspects of this package.
+"""
+
 import sys
 import inspect
 import smtplib

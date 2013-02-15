@@ -1,3 +1,15 @@
+#*****************************************************************************
+#  errors.py (part of the blacktie package)
+#
+#  (c) 2013 - Augustine Dunn
+#  James Laboratory
+#  Department of Biochemistry and Molecular Biology
+#  University of California Irvine
+#  wadunn83@gmail.com
+#
+#  Licenced under the GNU General Public License 2.0 license.
+#******************************************************************************
+
 """
 ####################
 errors.py
@@ -7,7 +19,7 @@ Code defining custom base error classes to provide a foundation for graceful err
 import warnings
 
 class BlacktieError(StandardError):
-    """Base class for exceptions in the rSeq package."""
+    """Base class for exceptions in the blacktie package."""
     pass
 
 
