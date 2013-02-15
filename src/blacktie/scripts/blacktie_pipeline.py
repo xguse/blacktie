@@ -12,7 +12,7 @@
 
 """
 ####################
-blacktie_pipeline.py
+tophat_2_cuffdiff_pipeline.py
 ####################
 Code defining an object oriented python pipeline script to allow simplified
 coordination of data through parts or all of the popular Tophat/Cufflinks
@@ -31,10 +31,10 @@ from collections import defaultdict
 
 import yaml
 
-from blacktie.utils.misc import Bunch,bunchify
-from blacktie.utils.misc import email_notification
-from blacktie.utils.externals import runExternalApp
-from blacktie.utils import errors
+from rSeq.utils.misc import Bunch,bunchify
+from rSeq.utils.misc import email_notification
+from rSeq.utils.externals import runExternalApp
+from rSeq.utils import errors
 
 
 class BaseCall(object):
@@ -392,9 +392,10 @@ class CufflinksCall(BaseCall):
             self.log_msg(\
 """
 WARNING: unable to find matching tophat call record in memory:
-\tattempting to locate an existing tophat out directory your base directory
-\tthat matches the condition name in your config file.
-\tYou may want to double check my work.
+attempting to locate an existing tophat out directory your base directory
+that matches the condition name in your config file.
+
+You may want to double check my work.
 
 The specific traceback is recorded below:\n
 %s
@@ -408,10 +409,98 @@ The specific traceback is recorded below:\n
                 raise errors.MissingArgumentError("I could not find an appropriate accepted_hits.bam file. Failed to find: %s" \
                                                   % (bam_path))
             else:
-                return bam_path
-            
+                return bam_path 
         
         return bam_path
+
+class CuffmergeCall(BaseCall):
+    """
+    Manage a single call to cuffmerge and store associated run data.
+    """
+
+    def __init__(self,yargs,email_info,run_id,run_log,run_err,conditions):
+
+        self.prog_name = 'cuffmerge'
+
+        BaseCall.__init__(self,yargs,email_info,run_id,run_log,run_err,conditions)
+
+        self.prog_yargs = self.yargs.cuffmerge_options
+        self.set_call_id()
+        self.out_dir = self.get_out_dir()
+
+
+        # set up options for program call
+        self.opt_dict = self.init_opt_dict()
+        self.opt_dict['o'] = self.out_dir
+        self.opt_dict['ref-gtf'] = self.get_gtf_anno()
+        self.opt_dict['ref-sequence'] = self.get_genome()
+        self.construct_options_list()
+
+        # now the positional args
+        accepted_hits = self.get_accepted_hits()
+
+        # combine and save arg_str
+        self.options_list.extend([accepted_hits])
+        self.arg_str = ' '.join(self.options_list)
+
+    def get_out_dir(self):
+        option = self.prog_yargs.o
+        if option == 'from_conditions':
+            return self.build_out_dir_path()
+        else:
+            return option
+
+    def get_gtf_anno(self):
+        option = self.prog_yargs['ref-gtf']
+        if option == 'from_conditions':
+            gtf_path = self._conditions['gtf_annotation']
+            return gtf_path
+        else:
+            return option
+
+    def get_genome(self):
+        option = self.prog_yargs['ref-sequence']
+        if option == 'from_conditions':
+            genome_path = self._conditions['genome_seq']
+            return genome_path
+        else:
+            return option
+        
+    def get_cufflinks_gtfs(self):
+        option = self.prog_yargs.positional_args.assembly_list
+        if option == 'from_conditions':
+            paths = []
+            for condition in self._conditions:
+                gtf_path = self.get_cuffGTF_path(condition)
+                paths.append(gtf_path)
+            assembly_list_file = open("%s/assembly_list.txt" % (self.out_dir.rstrip('/')),'w')
+            assembly_list_file.write("\n".join(paths))
+            assembly_list_file.close()
+            return os.path.abspath(assembly_list_file.name)
+        else:
+            return option
+    
+    def get_cuffGTF_path(self,condition):
+        cl_call_id = "cufflinks_%s" % (condition['name'])
+        try:
+            cl_call = self.yargs.call_records[cl_call_id]
+            cl_out_dir = cl_call.out_dir
+            gtf_path = "%s/transcripts.gtf" % (cl_out_dir.rstrip('/'))
+        except (KeyError,AttributeError) as exp:
+            self.log_msg("WARNING: unable to find matching cufflinks call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir."
+                         % (condition['name']))
+            
+            # try to guess correct cufflinks out directory
+            base_dir = self.yargs.run_options.base_dir
+            gtf_path = "%s/%s/" % (base_dir.rstrip('/'),cl_call_id)
+            if not os.path.exists(gtf_path):
+                # TODO: build framework to handle this non-fatally
+                raise errors.MissingArgumentError("I could not find an appropriate transcripts.gtf file. Failed to find: %s" \
+                                                  % (gtf_path))
+            else:
+                return gtf_path
+
+        return gtf_path
 
 
 def map_condition_groups(yargs):
@@ -446,223 +535,83 @@ def map_condition_groups(yargs):
     ###"""
     #### build report string
     ###report = ""
-    
 
 
-#def tophat_call(condition_num,yargs):
-    #"""
-    #*GIVEN:*
-        #* ``condition_num`` = index of job in job queue
-        #* ``yargs`` = parsed options from the yaml config file
-    #*DOES:*
-        #* Constructs tophat command string from config file data for this job.
-        #* Runs tophat system call and records results from stdout and stderr.
-        #* Tests for error-free completion of tophat.
-    #*RETURNS:*
-        #* Tuple = (stdout,stderr,cmd_string,out_dir)
-    #"""
-    #def get_out_dir(self):
-        #option = yargs.tophat_options.o
-        #if option == 'from_conditions':
-            #return build_out_dir_path(yargs,condition_num,prog_name='tophat')
-        #else:
-            #return option
 
-    #def get_gtf_anno(self):
-        #option = yargs.tophat_options.G
-        #if option == 'from_conditions':
-            #gtf_path = yargs.condition_queue[condition_num]['gtf_annotation']
-            #return gtf_path
-        #else:
-            #return option
+def cuffmerge_call(condition_group,yargs):
+    """
+    *GIVEN:*
+        * ``condition_group`` = list of condition_nums that are grouped by the smae group_id.
+        * ``yargs`` = parsed options from the yaml config file
+    *DOES:*
+        * Constructs cufflinks command string from config file data for this job.
+        * Runs cufflinks system call and records results from stdout and stderr.
+        * Tests for error-free completion of cufflinks.
+    *RETURNS:*
+        * Tuple = (stdout,stderr,cmd_string)
+    """
+    def get_out_dir():
+        option = yargs.cuffmerge_options.o
+        if option == 'from_conditions':
+            base_dir = yargs.run_options.base_dir
+            out_name = "cuffmerge_%s" % ("_".join([ job.name for job in [yargs.condition_queue[i] for i in condition_group] ]))
+            out_dir = "%s/%s" % (base_dir,out_name)
+            return out_dir
+        else:
+            return option
 
-    #def get_bt_idx(self):
-        #option = yargs.tophat_options.positional_args.bowtie2_index
-        #if option == 'from_conditions':
-            #bt_idx_dir = yargs.run_options.bowtie_indexes_dir.rstrip('/')
-            #bt_idx_name = yargs.condition_queue[condition_num]['bowtie2_index']
-            #return "%s/%s" % (bt_idx_dir,bt_idx_name)
-        #else:
-            #return option
+    def get_gtf_anno():
+        option = yargs.cuffmerge_options['ref-gtf']
+        if option == 'from_conditions':
+            gtf_path = yargs.condition_queue[condition_num]['gtf_annotation']
+            return gtf_path
+        else:
+            return option
 
-    #def get_lt_reads(self):
-        #option = yargs.tophat_options.positional_args.left_reads
-        #if option == 'from_conditions':
-            #lt_reads = yargs.condition_queue[condition_num]['left_reads']
-            #return "%s" % (','.join(lt_reads))
-        #else:
-            #return option
+    def get_genome():
+        option = yargs.cuffmerge_options['ref-sequence']
+        if option == 'from_conditions':
+            genome_path = yargs.condition_queue[condition_num]['genome_seq']
+            return genome_path
+        else:
+            return option
 
-    #def get_rt_reads(self):
-        #option = yargs.tophat_options.positional_args.right_reads
-        #if option == 'from_conditions':
-            #rt_reads = yargs.condition_queue[condition_num]['right_reads']
-            #return "%s" % (','.join(rt_reads))
-        #else:
-            #return option
-
-    ## set up empty arg/opt dict to populate based on yaml confFile state
-    #opt_dict = init_opt_dict(yargs.tophat_options)
-    #opt_dict['o'] = get_out_dir()
-    #opt_dict['G'] = get_gtf_anno()
-
-    ##   - Now for the positional args
-    #bowtie_index = get_bt_idx()
-    #left_reads = get_lt_reads()
-    #right_reads = get_rt_reads()
-
-    #tophat_cmd_args = construct_options_string(opt_dict)
-
-    ## add positional arguments to the end
-    #tophat_cmd_args.extend([bowtie_index,left_reads,right_reads])
-    #argStr = ' '.join(tophat_cmd_args)
-
-    ## Run tophat
-    ##   - tophat system call, collecting stdout/stderr, and checking for non-zero tophat return status handled by runExternalApp()
-    #stdout,stderr = runExternalApp(progName='tophat',argStr=argStr)
-
-    #return (stdout,stderr,argStr,opt_dict['o'])
-
-#def cufflinks_call(condition_num,yargs,tophat_out_dir):
-    #"""
-    #*GIVEN:*
-        #* ``condition_num`` = index of job in job queue
-        #* ``yargs`` = parsed options from the yaml config file
-    #*DOES:*
-        #* Constructs cufflinks command string from config file data for this job.
-        #* Runs cufflinks system call and records results from stdout and stderr.
-        #* Tests for error-free completion of cufflinks.
-    #*RETURNS:*
-        #* Tuple = (stdout,stderr,cmd_string)
-    #"""
-    #def get_out_dir():
-        #option = yargs.cufflinks_options.o
-        #if option == 'from_conditions':
-            #return build_out_dir_path(yargs,condition_num,prog_name='cufflinks')
-        #else:
-            #return option
-
-    #def get_gtf_anno():
-        #option = yargs.cufflinks_options['GTF-guide']
-        #if option == 'from_conditions':
-            #gtf_path = yargs.condition_queue[condition_num]['gtf_annotation']
-            #return gtf_path
-        #else:
-            #return option
-
-    #def get_genome():
-        #option = yargs.cufflinks_options['frag-bias-correct']
-        #if option == 'from_conditions':
-            #genome_path = yargs.condition_queue[condition_num]['genome_seq']
-            #return genome_path
-        #else:
-            #return option
-
-    #def get_accepted_hits():
-        #option = yargs.cufflinks_options.positional_args.accepted_hits
-        #if option == 'from_conditions':
-            #bam_path = "%s/accepted_hits.bam" % (tophat_out_dir.rstrip('/'))
-            #return bam_path
-        #else:
-            #return option
+    def get_cufflinks_gtfs(out_dir):
+        option = yargs.cuffmerge_options.positional_args.assembly_list
+        if option == 'from_conditions':
+            paths = []
+            for condition_num in condition_group:
+                gtf_dir = build_out_dir_path(yargs,condition_num,prog_name='cufflinks')
+                gtf_path = "%s/transcripts.gtf" % (gtf_dir.rstrip('/'))
+                paths.append(gtf_path)
+            assembly_list_file = open("%s/assembly_list.txt" % (out_dir.rstrip('/')),'w')
+            assembly_list_file.write("\n".join(paths))
+            assembly_list_file.close()
+            return os.path.abspath(assembly_list_file.name)
+        else:
+            return option
 
 
-    ## set up empty arg/opt dict to populate based on yaml confFile state
-    #opt_dict = init_opt_dict(yargs.cufflinks_options)
-    #opt_dict['o'] = get_out_dir()
-    #opt_dict['GTF-guide'] = get_gtf_anno()
-    #opt_dict['frag-bias-correct'] = get_genome()
+    # set up empty arg/opt dict to populate based on yaml confFile state
+    opt_dict = init_opt_dict(yargs.cuffmerge_options)
+    opt_dict['o'] = get_out_dir()
+    opt_dict['ref-gtf'] = get_gtf_anno()
+    opt_dict['ref-sequence'] = get_genome()
 
-    ##   - Now for the positional args
-    #accepted_hits = get_accepted_hits()
+    #   - Now for the positional args
+    assembly_list = get_cufflinks_gtfs(opt_dict['o'])
 
-    #cufflinks_cmd_args = construct_options_list(opt_dict)
+    cuffmerge_cmd_args = construct_options_list(opt_dict)
 
-    ## add positional args to the end
-    #cufflinks_cmd_args.extend([accepted_hits])
-    #argStr = ' '.join(cufflinks_cmd_args)
+    # add positional args to the end
+    cuffmerge_cmd_args.extend([assembly_list])
+    argStr = ' '.join(cuffmerge_cmd_args)
 
-    ## Run program
-    ##   - system call, collecting stdout/stderr, and checking for non-zero tophat return status handled by runExternalApp()
-    #stdout,stderr = runExternalApp(progName='cufflinks',argStr=argStr)
+    # Run program
+    #   - system call, collecting stdout/stderr, and checking for non-zero tophat return status handled by runExternalApp()
+    stdout,stderr = runExternalApp(progName='cuffmerge',argStr=argStr)
 
-    #return (stdout,stderr,argStr)
-
-
-#def cuffmerge_call(condition_group,yargs):
-    #"""
-    #*GIVEN:*
-        #* ``condition_group`` = list of condition_nums that are grouped by the smae group_id.
-        #* ``yargs`` = parsed options from the yaml config file
-    #*DOES:*
-        #* Constructs cufflinks command string from config file data for this job.
-        #* Runs cufflinks system call and records results from stdout and stderr.
-        #* Tests for error-free completion of cufflinks.
-    #*RETURNS:*
-        #* Tuple = (stdout,stderr,cmd_string)
-    #"""
-    #def get_out_dir():
-        #option = yargs.cuffmerge_options.o
-        #if option == 'from_conditions':
-            #base_dir = yargs.run_options.base_dir
-            #out_name = "cuffmerge_%s" % ("_".join([ job.name for job in [yargs.condition_queue[i] for i in condition_group] ]))
-            #out_dir = "%s/%s" % (base_dir,out_name)
-            #return out_dir
-        #else:
-            #return option
-
-    #def get_gtf_anno():
-        #option = yargs.cuffmerge_options['ref-gtf']
-        #if option == 'from_conditions':
-            #gtf_path = yargs.condition_queue[condition_num]['gtf_annotation']
-            #return gtf_path
-        #else:
-            #return option
-
-    #def get_genome():
-        #option = yargs.cuffmerge_options['ref-sequence']
-        #if option == 'from_conditions':
-            #genome_path = yargs.condition_queue[condition_num]['genome_seq']
-            #return genome_path
-        #else:
-            #return option
-
-    #def get_cufflinks_gtfs(out_dir):
-        #option = yargs.cuffmerge_options.positional_args.assembly_list
-        #if option == 'from_conditions':
-            #paths = []
-            #for condition_num in condition_group:
-                #gtf_dir = build_out_dir_path(yargs,condition_num,prog_name='cufflinks')
-                #gtf_path = "%s/merged.gtf" % (gtf_dir.rstrip('/'))
-                #paths.append(gtf_path)
-            #assembly_list_file = open("%s/assembly_list.txt" % (out_dir.rstrip('/')),'w')
-            #assembly_list_file.write("\n".join(paths))
-            #assembly_list_file.close()
-            #return os.path.abspath(assembly_list_file.name)
-        #else:
-            #return option
-
-
-    ## set up empty arg/opt dict to populate based on yaml confFile state
-    #opt_dict = init_opt_dict(yargs.cuffmerge_options)
-    #opt_dict['o'] = get_out_dir()
-    #opt_dict['ref-gtf'] = get_gtf_anno()
-    #opt_dict['ref-sequence'] = get_genome()
-
-    ##   - Now for the positional args
-    #assembly_list = get_cufflinks_gtfs(opt_dict['o'])
-
-    #cuffmerge_cmd_args = construct_options_list(opt_dict)
-
-    ## add positional args to the end
-    #cuffmerge_cmd_args.extend([assembly_list])
-    #argStr = ' '.join(cuffmerge_cmd_args)
-
-    ## Run program
-    ##   - system call, collecting stdout/stderr, and checking for non-zero tophat return status handled by runExternalApp()
-    #stdout,stderr = runExternalApp(progName='cuffmerge',argStr=argStr)
-
-    #return (stdout,stderr,argStr)
+    return (stdout,stderr,argStr)
 
 def main():
     """
