@@ -1,0 +1,111 @@
+
+---
+run_options:
+  base_dir: /path/to/project/base_dir
+  run_id: False     # if false; uses current date/time for uniqe run_id everytime
+  bowtie_indexes_dir: /path/to/bowtie2_indexes
+  email_info:
+    sender: from_me@email.com
+    to: to_you@email.com
+    li: /path/to/file/containing/base64_encoded/login_info # base64_encoded pswrd for from_me@email.com
+
+tophat_options:
+  o: from_conditions
+  library-type: fr-unstranded
+  p: 6
+  r: 125
+  mate-std-dev: 25
+  G: from_conditions
+  no-coverage-search: True
+  positional_args:
+    bowtie2_index: from_conditions
+    left_reads: from_conditions
+    right_reads: from_conditions
+      
+cufflinks_options:
+  o: from_conditions
+  p: 7
+  GTF-guide: from_conditions
+  3-overhang-tolerance: 5000
+  frag-bias-correct: from_conditions # if not False; path to genome fasta
+  multi-read-correct: True
+  upper-quartile-norm: True
+  positional_args:
+    accepted_hits: from_conditions
+
+cuffmerge_options:
+  o: from_conditions # output directory
+  ref-gtf: from_conditions
+  p: 6
+  ref-sequence: from_conditions
+  positional_args:
+    assembly_list: from_conditions # file with path to cufflinks gtf files to be merged
+
+cuffdiff_options:
+  o: from_conditions
+  labels: from_conditions
+  p: 6
+  time-series: True
+  upper-quartile-norm: True
+  frag-bias-correct: from_conditions
+  multi-read-correct: True
+  positional_args:
+    transcripts_gtf: from_conditions
+    sample_bams: from_conditions
+
+
+condition_queue:
+  -
+    name: control_1
+    group_id: 0
+    left_reads:
+      - /path/to/control_1/techRep1.left_reads.fastq
+      - /path/to/control_1/techRep2.left_reads.fastq
+    right_reads:
+      - /path/to/control_1/techRep1.right_reads.fastq
+      - /path/to/control_1/techRep2.right_reads.fastq
+    genome_seq: /path/to/species/genome.fa
+    gtf_annotation: /path/to/species/annotation.gtf
+    bowtie2_index: species.bowtie2_index.basename
+
+  -
+    name: treatment_1
+    group_id: 0
+    left_reads:
+      - /path/to/treatment_1/techRep1.left_reads.fastq
+      - /path/to/treatment_1/techRep2.left_reads.fastq
+    right_reads:
+      - /path/to/treatment_1/techRep1.right_reads.fastq
+      - /path/to/treatment_1/techRep2.right_reads.fastq
+    genome_seq: /path/to/species/genome.fa
+    gtf_annotation: /path/to/species/annotation.gtf
+    bowtie2_index: species.bowtie2_index.basename
+
+  -
+    name: control_2
+    group_id: 1
+    left_reads:
+      - /path/to/control_2/techRep1.left_reads.fastq
+      - /path/to/control_2/techRep2.left_reads.fastq
+    right_reads:
+      - /path/to/control_2/techRep1.right_reads.fastq
+      - /path/to/control_2/techRep2.right_reads.fastq
+    genome_seq: /path/to/species/genome.fa
+    gtf_annotation: /path/to/species/annotation.gtf
+    bowtie2_index: species.bowtie2_index.basename
+
+  -
+    name: treatment_2
+    group_id: 1
+    left_reads:
+      - /path/to/treatment_2/techRep1.left_reads.fastq
+      - /path/to/treatment_2/techRep2.left_reads.fastq
+    right_reads:
+      - /path/to/treatment_2/techRep1.right_reads.fastq
+      - /path/to/treatment_2/techRep2.right_reads.fastq
+    genome_seq: /path/to/species/genome.fa
+    gtf_annotation: /path/to/species/annotation.gtf
+    bowtie2_index: species.bowtie2_index.basename
+  
+
+...
