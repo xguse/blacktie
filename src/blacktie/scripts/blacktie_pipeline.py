@@ -27,10 +27,9 @@ import traceback
 import re
 import time
 import socket
-import multiprocessing
-import subprocess
 from collections import defaultdict
 
+import pprocess
 import yaml
 
 #try:
@@ -81,7 +80,7 @@ class BaseCall(object):
 
 
 
-
+    def 
 
     def set_call_id(self):
         if isinstance(self._conditions,list):
@@ -101,7 +100,7 @@ class BaseCall(object):
         e = self.email_info
         report_time = runExternalApp('date',"+'%Y%m%d_%H:%M'")[0].strip('\n')
         email_sub="[SITREP from %s] Run %s - Starting %s at %s" % (self._hostname,self.run_id,self.call_id,report_time)
-        email_body=email_sub
+        email_body="%s\n\n%s" % (email_sub,self.cmd_string)
         email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li))
 
     def notify_end_of_call(self):
@@ -205,9 +204,9 @@ class BaseCall(object):
         
         self.stderr_msg = self.purge_progress_bars(self.stderr_msg)
 
-        cmd_string = "\n%s %s\n" % (self.prog_name,self.arg_str)
-        self.stdout.write("%s\n%s\n[end %s]\n\n" % (cmd_string,self.stdout_msg,self.call_id))
-        self.stderr.write("%s\n%s\n[end %s]\n\n" % (cmd_string,self.stderr_msg,self.call_id))
+
+        self.stdout.write("%s\n\n%s\n[end %s]\n\n" % (self.cmd_string,self.stdout_msg,self.call_id))
+        self.stderr.write("%s\n\n%s\n[end %s]\n\n" % (self.cmd_string,self.stderr_msg,self.call_id))
         self.stdout.flush()
         self.stderr.flush()
 
@@ -216,7 +215,7 @@ class BaseCall(object):
         *DOES:*
             * calls correct program, records results, and manages errors.
         """
-        
+        self.cmd_string = "%s %s" % (self.prog_name,self.arg_str)
         try:
             self.notify_start_of_call()
             self.log_start()
@@ -423,7 +422,7 @@ class CufflinksCall(BaseCall):
             try:
                 mask_path = self._conditions['mask_file']
                 return mask_path
-            except NameError:
+            except KeyError:
                 return False
         else:
             return option
@@ -674,7 +673,8 @@ def main():
         # doesn't seem to consume massive amounts of memory        
         try:
             #job_server = pp.Server(ncpus=yargs.cufflinks_options.p)
-            pool = multiprocessing.Pool(yargs.cufflinks_options.p)
+            #pool = multiprocessing.Pool(yargs.cufflinks_options.p)
+            queue = pprocess.Queue(limit=yargs.cufflinks_options.p)
             
             def run_cufflinks_call(cufflinks_call):
                 """
@@ -694,14 +694,15 @@ def main():
                 cufflinks_call.arg_str = ' '.join(cufflinks_call.options_list)
                 return cufflinks_call
             
+            execute = queue.manage(pprocess.MakeParallel(run_cufflinks_call))
             jobs = []
-            results = []
+            
             
             for condition in yargs.condition_queue:
                 cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_log,run_err,conditions=condition)
                 cufflinks_call = change_processor_count(cufflinks_call)
                 jobs.append(cufflinks_call)
-                
+                execute(cufflinks_call)
                 #jobs.append(job_server.submit(func=run_cufflinks_call,
                                               #args=(tuple([cufflinks_call])),
                                               #depfuncs=(runExternalApp,email_notification,os.path.abspath,os.rename),
@@ -711,11 +712,10 @@ def main():
                                               #group='default',
                                               #globals=None))
             
-            r = pool.map_async(run_cufflinks_call, jobs, callback=results.append)
-            r.wait()
+            
                 
             # record the cufflinks_call objects
-            for call in results:
+            for call in queue:
                 yargs.call_records[call.call_id] = call
             
         except NameError:
