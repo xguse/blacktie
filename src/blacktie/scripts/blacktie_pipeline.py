@@ -12,7 +12,7 @@
 
 """
 ####################
-tophat_2_cuffdiff_pipeline.py
+blacktie_pipeline.py
 ####################
 Code defining an object oriented python pipeline script to allow simplified
 coordination of data through parts or all of the popular Tophat/Cufflinks
@@ -27,14 +27,21 @@ import traceback
 import re
 import time
 import socket
+import multiprocessing
+import subprocess
 from collections import defaultdict
 
 import yaml
 
-from rSeq.utils.misc import Bunch,bunchify
-from rSeq.utils.misc import email_notification
-from rSeq.utils.externals import runExternalApp
-from rSeq.utils import errors
+#try:
+    #import pp
+#except ImportError:
+    #pass
+
+from blacktie.utils.misc import Bunch,bunchify
+from blacktie.utils.misc import email_notification
+from blacktie.utils.externals import runExternalApp
+from blacktie.utils import errors
 
 
 class BaseCall(object):
@@ -209,6 +216,7 @@ class BaseCall(object):
         *DOES:*
             * calls correct program, records results, and manages errors.
         """
+        
         try:
             self.notify_start_of_call()
             self.log_start()
@@ -217,7 +225,7 @@ class BaseCall(object):
 
             self.log_end()
             self.notify_end_of_call()
-        except Exception as exception:
+        except Exception as exc:
             email_body = traceback.format_exc()
             email_body = self.purge_progress_bars(email_body)
             e = self.email_info
@@ -229,13 +237,18 @@ class BaseCall(object):
 
             self._flag_out_dir()
 
-            if 'SystemCallError' not in email_body:
+            if isinstance(exc,errors.SystemCallError):
+                email_sub="[SITREP from %s] Run %s experienced SystemCallError in call %s. MOVING ON." % (self._hostname,self.run_id,self.call_id)
+                email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li))                
+            elif isinstance(exc,KeyboardInterrupt):
+                email_sub="[SITREP from %s] Run %s experienced KeyboardInterrupt in call %s. MOVING ON." % (self._hostname,self.run_id,self.call_id)
+                email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li)) 
+            else:
                 email_sub="[SITREP from %s] Run %s experienced unhandled exception in call %s. EXITING." % (self._hostname,self.run_id,self.call_id)
                 email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li))
                 raise
-            else:
-                email_sub="[SITREP from %s] Run %s experienced SystemCallError in call %s. MOVING ON." % (self._hostname,self.run_id,self.call_id)
-                email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li))
+        finally:
+            return True
 
 
 
@@ -338,13 +351,14 @@ class CufflinksCall(BaseCall):
         self.opt_dict['o'] = self.out_dir
         self.opt_dict['GTF-guide'] = self.get_gtf_anno()
         self.opt_dict['frag-bias-correct'] = self.get_genome()
+        self.opt_dict['mask-file'] = self.get_mask_file()
         self.construct_options_list()
 
         # now the positional args
-        accepted_hits = self.get_accepted_hits()
+        self.accepted_hits = self.get_accepted_hits() 
 
         # combine and save arg_str
-        self.options_list.extend([accepted_hits])
+        self.options_list.extend([self.accepted_hits])
         self.arg_str = ' '.join(self.options_list)
 
 
@@ -388,22 +402,12 @@ class CufflinksCall(BaseCall):
             th_out_dir = th_call.out_dir
             bam_path = "%s/accepted_hits.bam" % (th_out_dir.rstrip('/'))
         except (KeyError,AttributeError) as exp:
-            trcBk = traceback.format_exc()
-            self.log_msg(\
-"""
-WARNING: unable to find matching tophat call record in memory:
-attempting to locate an existing tophat out directory your base directory
-that matches the condition name in your config file.
-
-You may want to double check my work.
-
-The specific traceback is recorded below:\n
-%s
-"""         % (trcBk))
+            self.log_msg("WARNING: unable to find matching tophat call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir."
+                         % (self._conditions['name']))
             
             # try to guess correct tophat out directory
             base_dir = self.yargs.run_options.base_dir
-            bam_path = "%s/%s/" % (base_dir.rstrip('/'),th_call_id)
+            bam_path = "%s/%s/accepted_hits.bam" % (base_dir.rstrip('/'),th_call_id)
             if not os.path.exists(bam_path):
                 # TODO: build framework to handle this non-fatally
                 raise errors.MissingArgumentError("I could not find an appropriate accepted_hits.bam file. Failed to find: %s" \
@@ -412,6 +416,17 @@ The specific traceback is recorded below:\n
                 return bam_path 
         
         return bam_path
+    
+    def get_mask_file(self):
+        option = self.prog_yargs['mask-file']
+        if option == 'from_conditions':
+            try:
+                mask_path = self._conditions['mask_file']
+                return mask_path
+            except NameError:
+                return False
+        else:
+            return option
 
 class CuffmergeCall(BaseCall):
     """
@@ -518,23 +533,6 @@ def map_condition_groups(yargs):
     groups = Bunch(dict(groups))
     return groups
 
-
-###def write_to_logs(out_log,err_log,message):
-    ###"""
-    ###Provides ``main()`` ability to write the same message to both stdout and stderr log files.
-    ###"""
-    ###out_log.write('\n%s\n' % (message))
-    ###err_log.write('\n%s\n' % (message))
-    ###out_log.flush()
-    ###err_log.flush()    
-
-    
-
-###def handle_failed_job(trace_back):
-    ###"""
-    ###"""
-    #### build report string
-    ###report = ""
 
 
 
@@ -655,9 +653,9 @@ def main():
     yargs.groups = map_condition_groups(yargs)
     yargs.call_records = {}
 
-    # loop through the queued conditions and send reports for tophat and cufflinks calls
-    for condition in yargs.condition_queue:
-        if args.prog in ['tophat','all']:
+    # loop through the queued conditions and send reports for tophat 
+    if args.prog in ['tophat','all']:
+        for condition in yargs.condition_queue:
 
             # Prep Tophat Call
             tophat_call = TophatCall(yargs,email_info,run_id,run_log,run_err,conditions=condition)
@@ -668,15 +666,69 @@ def main():
         else:
             pass
         
-        if args.prog in ['cufflinks','all']:
-            # Prep cufflinks_call
-            cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_log,run_err,conditions=condition)
-            cufflinks_call.execute()
+ 
+    
+    if args.prog in ['cufflinks','all']:
+        # attempt to run more than one cufflinks call in parallel since cufflinks
+        # seems to use only one processor no matter the value of -p you give it and
+        # doesn't seem to consume massive amounts of memory        
+        try:
+            #job_server = pp.Server(ncpus=yargs.cufflinks_options.p)
+            pool = multiprocessing.Pool(yargs.cufflinks_options.p)
             
-            # record the cufflinks_call object
-            yargs.call_records[cufflinks_call.call_id] = cufflinks_call
-        else:
-            pass
+            def run_cufflinks_call(cufflinks_call):
+                """
+                function to start each parallel cufflinks_call inside the parallel job server.
+                """
+                cufflinks_call.execute()
+                return cufflinks_call
+            
+            def change_processor_count(cufflinks_call):
+                """
+                Since we will run multiple instances of CufflinksCall at once, reduce
+                the number of processors any one system call thinks it can use.
+                """
+                cufflinks_call.opt_dict['p'] = 2
+                cufflinks_call.construct_options_list()
+                cufflinks_call.options_list.extend([cufflinks_call.accepted_hits])
+                cufflinks_call.arg_str = ' '.join(cufflinks_call.options_list)
+                return cufflinks_call
+            
+            jobs = []
+            results = []
+            
+            for condition in yargs.condition_queue:
+                cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_log,run_err,conditions=condition)
+                cufflinks_call = change_processor_count(cufflinks_call)
+                jobs.append(cufflinks_call)
+                
+                #jobs.append(job_server.submit(func=run_cufflinks_call,
+                                              #args=(tuple([cufflinks_call])),
+                                              #depfuncs=(runExternalApp,email_notification,os.path.abspath,os.rename),
+                                              #modules=(),
+                                              #callback=None,
+                                              #callbackargs=(),
+                                              #group='default',
+                                              #globals=None))
+            
+            r = pool.map_async(run_cufflinks_call, jobs, callback=results.append)
+            r.wait()
+                
+            # record the cufflinks_call objects
+            for call in results:
+                yargs.call_records[call.call_id] = call
+            
+        except NameError:
+            # loop through the queued conditions and send reports for cufflinks    
+            for condition in yargs.condition_queue:   
+                # Prep cufflinks_call
+                cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_log,run_err,conditions=condition)
+                cufflinks_call.execute()
+                
+                # record the cufflinks_call object
+                yargs.call_records[cufflinks_call.call_id] = cufflinks_call
+            else:
+                pass
 
 
 
@@ -685,4 +737,4 @@ def main():
 
 
 if __name__ == "__main__":
-    trap = main()
+    main()
