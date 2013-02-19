@@ -29,13 +29,12 @@ import time
 import socket
 from collections import defaultdict
 
-import pprocess
 import yaml
 
-#try:
-    #import pp
-#except ImportError:
-    #pass
+try:
+    import pprocess
+except ImportError:
+    pass
 
 from blacktie.utils.misc import Bunch,bunchify
 from blacktie.utils.misc import email_notification
@@ -79,9 +78,6 @@ class BaseCall(object):
         self.out_dir = new_path
 
 
-
-    def 
-
     def set_call_id(self):
         if isinstance(self._conditions,list):
             condition_names = [x.name for x in self._conditions]
@@ -92,7 +88,6 @@ class BaseCall(object):
             condition_name = self._conditions['name']
             call_id = "%s_%s" % (self.prog_name,condition_name)
             self.call_id = call_id
-            
         else:
             raise
 
@@ -116,7 +111,6 @@ class BaseCall(object):
         email_body += "\n\n ==> stderr <==\n\n%s" % (self.stderr_msg)
         email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li))
 
-
     def build_out_dir_path(self):
         """
         *DOES:*
@@ -127,8 +121,6 @@ class BaseCall(object):
 
         base_dir = self.yargs.run_options.base_dir.rstrip('/')
         return "%s/%s" % (base_dir,self.call_id)
-
-
 
     def init_opt_dict(self):
         """
@@ -153,7 +145,6 @@ class BaseCall(object):
             opt_val = self.prog_yargs[opt]
             if opt_val != "from_conditions":
                 opt_dict[opt] = opt_val
-
         return opt_dict
 
     def construct_options_list(self):
@@ -179,7 +170,6 @@ class BaseCall(object):
 
         self.options_list = options_list
 
-
     def purge_progress_bars(self, stderr_str):
         lines = stderr_str.split('\n')
         no_bar = []
@@ -190,25 +180,25 @@ class BaseCall(object):
                 no_bar.append(line)
         return '\n'.join(no_bar)
 
-    def log_msg(self,msg):
-            self.stdout.write('\n%s\n' % (msg))
-            self.stderr.write('\n%s\n' % (msg))
-            self.stdout.flush()
-            self.stderr.flush()    
+    def log_msg(self,out_msg='',err_msg=''):
+        out = open(self.stdout,'a')
+        err = open(self.stderr,'a')
+        out.write('\n%s\n' % (out_msg))
+        err.write('\n%s\n' % (err_msg))
+        out.close()
+        err.close()    
     
     def log_start(self):
-        self.log_msg('[start %s]\n' % (self.call_id))
+        msg = '[start %s]\n' % (self.call_id)
+        self.log_msg(out_msg=msg,err_msg=msg)
         
-
     def log_end(self):
         
         self.stderr_msg = self.purge_progress_bars(self.stderr_msg)
 
-
-        self.stdout.write("%s\n\n%s\n[end %s]\n\n" % (self.cmd_string,self.stdout_msg,self.call_id))
-        self.stderr.write("%s\n\n%s\n[end %s]\n\n" % (self.cmd_string,self.stderr_msg,self.call_id))
-        self.stdout.flush()
-        self.stderr.flush()
+        out_msg = "%s\n\n%s\n[end %s]\n\n" % (self.cmd_string,self.stdout_msg,self.call_id)
+        err_msg = "%s\n\n%s\n[end %s]\n\n" % (self.cmd_string,self.stderr_msg,self.call_id)
+        self.log_msg(out_msg,err_msg)
 
     def execute(self):
         """
@@ -250,8 +240,6 @@ class BaseCall(object):
             return True
 
 
-
-
 class TophatCall(BaseCall):
     """
     Manage a single call to tophat and store associated run data.
@@ -267,7 +255,6 @@ class TophatCall(BaseCall):
         self.set_call_id()
         self.out_dir = self.get_out_dir()
 
-
         # set up options for program call
         self.opt_dict = self.init_opt_dict()
         self.opt_dict['o'] = self.out_dir
@@ -282,9 +269,6 @@ class TophatCall(BaseCall):
         # combine and save arg_str
         self.options_list.extend([bowtie_index,left_reads,right_reads])
         self.arg_str = ' '.join(self.options_list)
-
-
-
 
     def get_out_dir(self):
         option = self.prog_yargs.o
@@ -327,8 +311,6 @@ class TophatCall(BaseCall):
             return option
 
 
-
-
 class CufflinksCall(BaseCall):
     """
     Manage a single call to cufflinks and store associated run data.
@@ -359,9 +341,6 @@ class CufflinksCall(BaseCall):
         # combine and save arg_str
         self.options_list.extend([self.accepted_hits])
         self.arg_str = ' '.join(self.options_list)
-
-
-
 
     def get_out_dir(self):
         option = self.prog_yargs.o
@@ -413,7 +392,6 @@ class CufflinksCall(BaseCall):
                                                   % (bam_path))
             else:
                 return bam_path 
-        
         return bam_path
     
     def get_mask_file(self):
@@ -513,7 +491,6 @@ class CuffmergeCall(BaseCall):
                                                   % (gtf_path))
             else:
                 return gtf_path
-
         return gtf_path
 
 
@@ -630,8 +607,6 @@ def main():
 
     args = parser.parse_args()
 
-
-
     yargs = bunchify(yaml.load(open(args.config_file,'rU')))
 
     # set up run_id, log files, and email info
@@ -641,8 +616,8 @@ def main():
         run_id = runExternalApp('date',"+'%Y.%m.%d_%H:%M:%S'")[0].strip('\n')
 
     base_dir = yargs.run_options.base_dir.rstrip('/')
-    run_log = open('%s/%s.log' % (base_dir,run_id), 'w')
-    run_err = open('%s/%s.err' % (base_dir,run_id), 'w')
+    run_log = '%s/%s.log' % (base_dir,run_id)
+    run_err = '%s/%s.err' % (base_dir,run_id)
 
     email_info = Bunch({'email_from' : yargs.run_options.email_info.sender,
                         'email_to' : yargs.run_options.email_info.to,
@@ -665,15 +640,11 @@ def main():
         else:
             pass
         
- 
-    
     if args.prog in ['cufflinks','all']:
         # attempt to run more than one cufflinks call in parallel since cufflinks
         # seems to use only one processor no matter the value of -p you give it and
         # doesn't seem to consume massive amounts of memory        
         try:
-            #job_server = pp.Server(ncpus=yargs.cufflinks_options.p)
-            #pool = multiprocessing.Pool(yargs.cufflinks_options.p)
             queue = pprocess.Queue(limit=yargs.cufflinks_options.p)
             
             def run_cufflinks_call(cufflinks_call):
@@ -695,25 +666,13 @@ def main():
                 return cufflinks_call
             
             execute = queue.manage(pprocess.MakeParallel(run_cufflinks_call))
-            jobs = []
-            
-            
+     
             for condition in yargs.condition_queue:
                 cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_log,run_err,conditions=condition)
                 cufflinks_call = change_processor_count(cufflinks_call)
                 jobs.append(cufflinks_call)
                 execute(cufflinks_call)
-                #jobs.append(job_server.submit(func=run_cufflinks_call,
-                                              #args=(tuple([cufflinks_call])),
-                                              #depfuncs=(runExternalApp,email_notification,os.path.abspath,os.rename),
-                                              #modules=(),
-                                              #callback=None,
-                                              #callbackargs=(),
-                                              #group='default',
-                                              #globals=None))
-            
-            
-                
+
             # record the cufflinks_call objects
             for call in queue:
                 yargs.call_records[call.call_id] = call
