@@ -187,13 +187,13 @@ class BaseCall(object):
         err.write('\n%s\n' % (err_msg))
         out.close()
         err.close()    
-    
+
     def log_start(self):
         msg = '[start %s]\n' % (self.call_id)
         self.log_msg(out_msg=msg,err_msg=msg)
-        
+
     def log_end(self):
-        
+
         self.stderr_msg = self.purge_progress_bars(self.stderr_msg)
 
         out_msg = "%s\n\n%s\n[end %s]\n\n" % (self.cmd_string,self.stdout_msg,self.call_id)
@@ -218,10 +218,10 @@ class BaseCall(object):
             email_body = traceback.format_exc()
             email_body = self.purge_progress_bars(email_body)
             e = self.email_info
-            
+
             self.stdout_msg = "\nError in call.  Check error log.\n"
             self.stderr_msg = email_body
-            
+
             self.log_end()
 
             self._flag_out_dir()
@@ -364,7 +364,7 @@ class CufflinksCall(BaseCall):
             return genome_path
         else:
             return option
-        
+
     def get_accepted_hits(self):
         option = self.prog_yargs.positional_args.accepted_hits
         if option == 'from_conditions':
@@ -372,7 +372,7 @@ class CufflinksCall(BaseCall):
             return bam_path
         else:
             return option
-    
+
     def get_bam_path(self):
         th_call_id = "tophat_%s" % (self._conditions['name'])
         try:
@@ -380,9 +380,10 @@ class CufflinksCall(BaseCall):
             th_out_dir = th_call.out_dir
             bam_path = "%s/accepted_hits.bam" % (th_out_dir.rstrip('/'))
         except (KeyError,AttributeError) as exp:
-            self.log_msg("WARNING: unable to find matching tophat call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir."
-                         % (self._conditions['name']))
-            
+            msg = "WARNING: unable to find matching tophat call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
+                % (self._conditions['name'])            
+            self.log_msg(err_msg=msg)
+
             # try to guess correct tophat out directory
             base_dir = self.yargs.run_options.base_dir
             bam_path = "%s/%s/accepted_hits.bam" % (base_dir.rstrip('/'),th_call_id)
@@ -393,7 +394,7 @@ class CufflinksCall(BaseCall):
             else:
                 return bam_path 
         return bam_path
-    
+
     def get_mask_file(self):
         option = self.prog_yargs['mask-file']
         if option == 'from_conditions':
@@ -457,7 +458,7 @@ class CuffmergeCall(BaseCall):
             return genome_path
         else:
             return option
-        
+
     def get_cufflinks_gtfs(self):
         option = self.prog_yargs.positional_args.assembly_list
         if option == 'from_conditions':
@@ -471,7 +472,7 @@ class CuffmergeCall(BaseCall):
             return os.path.abspath(assembly_list_file.name)
         else:
             return option
-    
+
     def get_cuffGTF_path(self,condition):
         cl_call_id = "cufflinks_%s" % (condition['name'])
         try:
@@ -479,9 +480,10 @@ class CuffmergeCall(BaseCall):
             cl_out_dir = cl_call.out_dir
             gtf_path = "%s/transcripts.gtf" % (cl_out_dir.rstrip('/'))
         except (KeyError,AttributeError) as exp:
-            self.log_msg("WARNING: unable to find matching cufflinks call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir."
-                         % (condition['name']))
-            
+            msg = "WARNING: unable to find matching cufflinks call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
+                % (condition['name'])
+            self.log_msg(err_msg=msg)
+
             # try to guess correct cufflinks out directory
             base_dir = self.yargs.run_options.base_dir
             gtf_path = "%s/%s/" % (base_dir.rstrip('/'),cl_call_id)
@@ -511,82 +513,6 @@ def map_condition_groups(yargs):
 
 
 
-
-def cuffmerge_call(condition_group,yargs):
-    """
-    *GIVEN:*
-        * ``condition_group`` = list of condition_nums that are grouped by the smae group_id.
-        * ``yargs`` = parsed options from the yaml config file
-    *DOES:*
-        * Constructs cufflinks command string from config file data for this job.
-        * Runs cufflinks system call and records results from stdout and stderr.
-        * Tests for error-free completion of cufflinks.
-    *RETURNS:*
-        * Tuple = (stdout,stderr,cmd_string)
-    """
-    def get_out_dir():
-        option = yargs.cuffmerge_options.o
-        if option == 'from_conditions':
-            base_dir = yargs.run_options.base_dir
-            out_name = "cuffmerge_%s" % ("_".join([ job.name for job in [yargs.condition_queue[i] for i in condition_group] ]))
-            out_dir = "%s/%s" % (base_dir,out_name)
-            return out_dir
-        else:
-            return option
-
-    def get_gtf_anno():
-        option = yargs.cuffmerge_options['ref-gtf']
-        if option == 'from_conditions':
-            gtf_path = yargs.condition_queue[condition_num]['gtf_annotation']
-            return gtf_path
-        else:
-            return option
-
-    def get_genome():
-        option = yargs.cuffmerge_options['ref-sequence']
-        if option == 'from_conditions':
-            genome_path = yargs.condition_queue[condition_num]['genome_seq']
-            return genome_path
-        else:
-            return option
-
-    def get_cufflinks_gtfs(out_dir):
-        option = yargs.cuffmerge_options.positional_args.assembly_list
-        if option == 'from_conditions':
-            paths = []
-            for condition_num in condition_group:
-                gtf_dir = build_out_dir_path(yargs,condition_num,prog_name='cufflinks')
-                gtf_path = "%s/transcripts.gtf" % (gtf_dir.rstrip('/'))
-                paths.append(gtf_path)
-            assembly_list_file = open("%s/assembly_list.txt" % (out_dir.rstrip('/')),'w')
-            assembly_list_file.write("\n".join(paths))
-            assembly_list_file.close()
-            return os.path.abspath(assembly_list_file.name)
-        else:
-            return option
-
-
-    # set up empty arg/opt dict to populate based on yaml confFile state
-    opt_dict = init_opt_dict(yargs.cuffmerge_options)
-    opt_dict['o'] = get_out_dir()
-    opt_dict['ref-gtf'] = get_gtf_anno()
-    opt_dict['ref-sequence'] = get_genome()
-
-    #   - Now for the positional args
-    assembly_list = get_cufflinks_gtfs(opt_dict['o'])
-
-    cuffmerge_cmd_args = construct_options_list(opt_dict)
-
-    # add positional args to the end
-    cuffmerge_cmd_args.extend([assembly_list])
-    argStr = ' '.join(cuffmerge_cmd_args)
-
-    # Run program
-    #   - system call, collecting stdout/stderr, and checking for non-zero tophat return status handled by runExternalApp()
-    stdout,stderr = runExternalApp(progName='cuffmerge',argStr=argStr)
-
-    return (stdout,stderr,argStr)
-
 def main():
     """
     The main loop.  Lets ROCK!
@@ -599,7 +525,7 @@ def main():
     parser.add_argument('config_file', type=str,
                         help="""Path to a yaml formatted config file containing setup options for the runs.""")
     parser.add_argument('--prog', type=str, choices=['tophat','cufflinks','cuffmerge','cuffdiff','all'], default='tophat',
-                            help="""Which program do you want to run? (default: %(default)s)""")
+                        help="""Which program do you want to run? (default: %(default)s)""")
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -634,26 +560,26 @@ def main():
             # Prep Tophat Call
             tophat_call = TophatCall(yargs,email_info,run_id,run_log,run_err,conditions=condition)
             tophat_call.execute()
-            
+
             # record the tophat_call object
             yargs.call_records[tophat_call.call_id] = tophat_call
         else:
             pass
-        
+
     if args.prog in ['cufflinks','all']:
         # attempt to run more than one cufflinks call in parallel since cufflinks
         # seems to use only one processor no matter the value of -p you give it and
         # doesn't seem to consume massive amounts of memory        
         try:
             queue = pprocess.Queue(limit=yargs.cufflinks_options.p)
-            
+
             def run_cufflinks_call(cufflinks_call):
                 """
                 function to start each parallel cufflinks_call inside the parallel job server.
                 """
                 cufflinks_call.execute()
                 return cufflinks_call
-            
+
             def change_processor_count(cufflinks_call):
                 """
                 Since we will run multiple instances of CufflinksCall at once, reduce
@@ -664,9 +590,9 @@ def main():
                 cufflinks_call.options_list.extend([cufflinks_call.accepted_hits])
                 cufflinks_call.arg_str = ' '.join(cufflinks_call.options_list)
                 return cufflinks_call
-            
+
             execute = queue.manage(pprocess.MakeParallel(run_cufflinks_call))
-     
+            jobs = []
             for condition in yargs.condition_queue:
                 cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_log,run_err,conditions=condition)
                 cufflinks_call = change_processor_count(cufflinks_call)
@@ -676,18 +602,22 @@ def main():
             # record the cufflinks_call objects
             for call in queue:
                 yargs.call_records[call.call_id] = call
-            
-        except NameError:
-            # loop through the queued conditions and send reports for cufflinks    
-            for condition in yargs.condition_queue:   
-                # Prep cufflinks_call
-                cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_log,run_err,conditions=condition)
-                cufflinks_call.execute()
-                
-                # record the cufflinks_call object
-                yargs.call_records[cufflinks_call.call_id] = cufflinks_call
+
+        except NameError as exc:
+            if str(exc) == "name 'pprocess' is not defined":
+                print "Running cufflinks in serial NOT parallel."
+                # loop through the queued conditions and send reports for cufflinks    
+                for condition in yargs.condition_queue:   
+                    # Prep cufflinks_call
+                    cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_log,run_err,conditions=condition)
+                    cufflinks_call.execute()
+    
+                    # record the cufflinks_call object
+                    yargs.call_records[cufflinks_call.call_id] = cufflinks_call
+                else:
+                    pass
             else:
-                pass
+                raise exc
 
 
 
