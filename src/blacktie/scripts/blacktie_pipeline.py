@@ -39,6 +39,7 @@ except ImportError:
 
 from blacktie.utils.misc import Bunch,bunchify
 from blacktie.utils.misc import email_notification
+from blacktie.utils.misc import get_time
 from blacktie.utils.externals import runExternalApp
 from blacktie.utils import errors
 from blacktie.utils.calls import *
@@ -92,7 +93,8 @@ def main():
     if yargs.run_options.run_id:
         run_id = yargs.run_options.run_id
     else:
-        run_id = runExternalApp('date',"+'%Y.%m.%d_%H:%M:%S'")[0].strip('\n')
+        
+        run_id = get_time()
 
     base_dir = yargs.run_options.base_dir.rstrip('/')
     run_log  = '%s/%s.log' % (base_dir,run_id)
@@ -118,6 +120,7 @@ def main():
 
     # loop through the queued conditions and send reports for tophat 
     if args.prog in ['tophat','all']:
+        print 'Starting tophat step.'
         for condition in yargs.condition_queue:
 
             # Prep Tophat Call
@@ -127,12 +130,13 @@ def main():
             # record the tophat_call object
             yargs.call_records[tophat_call.call_id] = tophat_call
     else:
-        pass
+        print "Skipping tophat step."
 
     if args.prog in ['cufflinks','all']:
         # attempt to run more than one cufflinks call in parallel since cufflinks
         # seems to use only one processor no matter the value of -p you give it and
-        # doesn't seem to consume massive amounts of memory        
+        # doesn't seem to consume massive amounts of memory 
+        print "Starting cufflinks step."
         try:
             queue = pprocess.Queue(limit=yargs.cufflinks_options.p)
 
@@ -178,12 +182,14 @@ def main():
                     # record the cufflinks_call object
                     yargs.call_records[cufflinks_call.call_id] = cufflinks_call
             else:
-                pass
+                raise exc            
     else:
-        raise exc
+        print "Skipping cufflinks step."
+    
 
 
     if args.prog in ['cuffmerge','all']:
+        print "Starting cuffmerge step."
         for group in yargs.groups:
             
             # Prep cuffmerge call
@@ -194,7 +200,7 @@ def main():
             yargs.call_records[cuffmerge_call.call_id] = cuffmerge_call
             
     else:
-        pass
+        print "Skipping cuffmerge step."
 
 
 

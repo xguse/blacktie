@@ -21,6 +21,7 @@ import sys
 import inspect
 import smtplib
 import base64
+import time
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
@@ -52,14 +53,15 @@ def whoami():
 def email_notification(sender,to,subject,txt,pw):
     """
     """
+    msg = MIMEMultipart()
+    msg['From'] = sender
+    msg['To'] = to
+    msg['Subject'] = subject
+    msg.attach(MIMEText(txt))
+    
+    server = smtplib.SMTP("smtp.gmail.com", 587)    
+    
     try:
-        msg = MIMEMultipart()
-        msg['From'] = sender
-        msg['To'] = to
-        msg['Subject'] = subject
-        msg.attach(MIMEText(txt))
-        
-        server = smtplib.SMTP("smtp.gmail.com", 587)
         server.ehlo()
         server.starttls()
         server.ehlo()
@@ -75,10 +77,19 @@ def email_notification(sender,to,subject,txt,pw):
             smtplib.SMTPResponseException,
             smtplib.SMTPSenderRefused,
             smtplib.SMTPServerDisconnected) as e:
-        sys.stderr.write("Warning: %s was caught while trying to send your mail.\nContent:%s\n" % (e.__class__.__name__,e.message))
+        
+        sys.stderr.write("Warning: %s was caught while trying to send your mail.\nSubject:%s\n" % (e.__class__.__name__,subject))
+
+        server.rset()
+        
         
     
-        
+def get_time():
+    """
+    Return system time formatted as 'YYYY:MM:DD-hh:mm:ss'.
+    """
+    t = time.localtime()
+    return "%s.%s.%s-%s:%s:%s" % (t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,t.tm_min,t.tm_sec)
         
     
 

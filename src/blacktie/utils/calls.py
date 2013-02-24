@@ -16,9 +16,19 @@ calls.py
 ####################
 Code defining classes to represent and excute pipeline program calls.
 """
+import os
+import sys
+import base64
+import traceback
+import re
+import time
+import socket
+import shutil
+from collections import defaultdict
 
 from blacktie.utils.misc import Bunch,bunchify
 from blacktie.utils.misc import email_notification
+from blacktie.utils.misc import get_time
 from blacktie.utils.externals import runExternalApp
 from blacktie.utils import errors
 
@@ -77,7 +87,8 @@ class BaseCall(object):
 
     def notify_start_of_call(self):
         e = self.email_info
-        report_time = runExternalApp('date',"+'%Y%m%d_%H:%M'")[0].strip('\n')
+        
+        report_time = get_time()
         email_sub="[SITREP from %s] Run %s - Starting %s at %s" % (self._hostname,self.run_id,self.call_id,report_time)
         email_body="%s\n\n%s" % (email_sub,self.cmd_string)
         email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li))
@@ -85,13 +96,12 @@ class BaseCall(object):
     def notify_end_of_call(self):
         e = self.email_info
 
-        report_time = runExternalApp('date',"+'%Y%m%d_%H:%M'")[0].strip('\n')
+        report_time = get_time()
         email_sub="[SITREP from %s] Run %s - Exited %s at %s" % (self._hostname,self.run_id,self.call_id,report_time)
 
         #    repeat subject in body
         email_body=email_sub
-        email_body += "\n\n ==> stdout <==\n\n%s" % (self.stdout_msg)
-
+        
         email_body += "\n\n ==> stderr <==\n\n%s" % (self.stderr_msg)
         email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li))
 
