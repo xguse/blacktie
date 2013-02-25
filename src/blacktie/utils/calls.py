@@ -16,9 +16,19 @@ calls.py
 ####################
 Code defining classes to represent and excute pipeline program calls.
 """
+import os
+import sys
+import base64
+import traceback
+import re
+import time
+import socket
+import shutil
+from collections import defaultdict
 
 from blacktie.utils.misc import Bunch,bunchify
 from blacktie.utils.misc import email_notification
+from blacktie.utils.misc import get_time
 from blacktie.utils.externals import runExternalApp
 from blacktie.utils import errors
 
@@ -27,7 +37,7 @@ class BaseCall(object):
     """
     Defines common methods for all program call types.
     """
-    def __init__(self,yargs,email_info,run_id,run_log,run_err,conditions):
+    def __init__(self,yargs,email_info,run_id,run_logs,conditions):
         """
         *GIVEN*:
             * x
@@ -38,8 +48,7 @@ class BaseCall(object):
         self.yargs = yargs
         self.email_info = email_info
         self.run_id = run_id
-        self.stdout = run_log
-        self.stderr = run_err
+        self.log_dir = run_logs
         self.prgbar_regex = yargs.prgbar_regex
         self._conditions = conditions
         self.prog_yargs = None # over-ride in child __init__
@@ -58,6 +67,11 @@ class BaseCall(object):
         os.rename(os.path.abspath(self.out_dir),new_path)
         self.out_dir = new_path
 
+    def init_log_file(self):
+        log_file = "%s/%s.log" % (self.log_dir.rstrip('/'),self.call_id)
+        log_file = open(log_file,'w')
+        log_file.close()
+        self.log_file = os.path.abspath(log_file.name)
 
     def set_call_id(self):
         if isinstance(self._conditions,int) or isinstance(self._conditions,str):
@@ -77,7 +91,8 @@ class BaseCall(object):
 
     def notify_start_of_call(self):
         e = self.email_info
-        report_time = runExternalApp('date',"+'%Y%m%d_%H:%M'")[0].strip('\n')
+        
+        report_time = get_time()
         email_sub="[SITREP from %s] Run %s - Starting %s at %s" % (self._hostname,self.run_id,self.call_id,report_time)
         email_body="%s\n\n%s" % (email_sub,self.cmd_string)
         email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li))
@@ -85,13 +100,12 @@ class BaseCall(object):
     def notify_end_of_call(self):
         e = self.email_info
 
-        report_time = runExternalApp('date',"+'%Y%m%d_%H:%M'")[0].strip('\n')
+        report_time = get_time()
         email_sub="[SITREP from %s] Run %s - Exited %s at %s" % (self._hostname,self.run_id,self.call_id,report_time)
 
         #    repeat subject in body
         email_body=email_sub
-        email_body += "\n\n ==> stdout <==\n\n%s" % (self.stdout_msg)
-
+        
         email_body += "\n\n ==> stderr <==\n\n%s" % (self.stderr_msg)
         email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li))
 
@@ -164,25 +178,20 @@ class BaseCall(object):
                 no_bar.append(line)
         return '\n'.join(no_bar)
 
-    def log_msg(self,out_msg='',err_msg=''):
-        out = open(self.stdout,'a')
-        err = open(self.stderr,'a')
-        out.write('\n%s\n' % (out_msg))
-        err.write('\n%s\n' % (err_msg))
-        out.close()
-        err.close()    
+    def log_msg(self,log_msg=''):
+        log = open(self.log_file,'a')
+        log.write('\n%s\n' % (log_msg))
+        log.close()
 
     def log_start(self):
         msg = '[start %s]\n' % (self.call_id)
-        self.log_msg(out_msg=msg,err_msg=msg)
+        self.log_msg(log_msg=msg)
 
     def log_end(self):
 
         self.stderr_msg = self.purge_progress_bars(self.stderr_msg)
-
-        out_msg = "%s\n\n%s\n[end %s]\n\n" % (self.cmd_string,self.stdout_msg,self.call_id)
-        err_msg = "%s\n\n%s\n[end %s]\n\n" % (self.cmd_string,self.stderr_msg,self.call_id)
-        self.log_msg(out_msg,err_msg)
+        err_msg = "%s\n\n%s\n[end %s]" % (self.cmd_string,self.stderr_msg,self.call_id)
+        self.log_msg(err_msg)
 
     def execute(self):
         """
@@ -229,14 +238,15 @@ class TophatCall(BaseCall):
     Manage a single call to tophat and store associated run data.
     """
 
-    def __init__(self,yargs,email_info,run_id,run_log,run_err,conditions):
+    def __init__(self,yargs,email_info,run_id,run_logs,conditions):
 
         self.prog_name = 'tophat'
 
-        BaseCall.__init__(self,yargs,email_info,run_id,run_log,run_err,conditions)
+        BaseCall.__init__(self,yargs,email_info,run_id,run_logs,conditions)
 
         self.prog_yargs = self.yargs.tophat_options
         self.set_call_id()
+        self.init_log_file()
         self.out_dir = self.get_out_dir()
 
         # set up options for program call
@@ -300,11 +310,11 @@ class CufflinksCall(BaseCall):
     Manage a single call to cufflinks and store associated run data.
     """
 
-    def __init__(self,yargs,email_info,run_id,run_log,run_err,conditions):
+    def __init__(self,yargs,email_info,run_id,run_logs,conditions):
 
         self.prog_name = 'cufflinks'
 
-        BaseCall.__init__(self,yargs,email_info,run_id,run_log,run_err,conditions)
+        BaseCall.__init__(self,yargs,email_info,run_id,run_logs,conditions)
 
         self.prog_yargs = self.yargs.cufflinks_options
         self.set_call_id()
@@ -395,11 +405,11 @@ class CuffmergeCall(BaseCall):
     Manage a single call to cuffmerge and store associated run data.
     """
 
-    def __init__(self,yargs,email_info,run_id,run_log,run_err,conditions):
+    def __init__(self,yargs,email_info,run_id,run_logs,conditions):
 
         self.prog_name = 'cuffmerge'
 
-        BaseCall.__init__(self,yargs,email_info,run_id,run_log,run_err,conditions)
+        BaseCall.__init__(self,yargs,email_info,run_id,run_logs,conditions)
 
         self.prog_yargs = self.yargs.cuffmerge_options
         self.set_call_id()

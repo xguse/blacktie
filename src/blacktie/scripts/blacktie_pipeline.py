@@ -39,7 +39,9 @@ except ImportError:
 
 from blacktie.utils.misc import Bunch,bunchify
 from blacktie.utils.misc import email_notification
+from blacktie.utils.misc import get_time
 from blacktie.utils.externals import runExternalApp
+from blacktie.utils.externals import mkdirp
 from blacktie.utils import errors
 from blacktie.utils.calls import *
 
@@ -50,11 +52,11 @@ from blacktie.utils.calls import *
 def map_condition_groups(yargs):
     """
     *GIVEN:*
-        * ``xxx`` = xxx
+        * ``yargs`` = argument object generated from the yaml config file
     *DOES:*
-        * xxx
+        * creates a Bunch obj ``groups`` with key='group_id' from ``yargs``, value=list(condition_queue objects with 'group_id')
     *RETURNS:*
-        * xxxx
+        * ``groups``
     """
     groups = defaultdict(list)
     for condition in yargs.condition_queue:
@@ -78,7 +80,7 @@ def main():
     parser.add_argument('--prog', type=str, choices=['tophat','cufflinks','cuffmerge','cuffdiff','all'], default='tophat',
                         help="""Which program do you want to run? (default: %(default)s)""")
     parser.add_argument('--hide-logs', action='store_true', default=False,
-                        help="""Make your log files hidden to keep a tidy base directory. (default: %(default)s)""")    
+                        help="""Make your log directories hidden to keep a tidy base directory. (default: %(default)s)""")    
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -92,17 +94,21 @@ def main():
     if yargs.run_options.run_id:
         run_id = yargs.run_options.run_id
     else:
-        run_id = runExternalApp('date',"+'%Y.%m.%d_%H:%M:%S'")[0].strip('\n')
+        
+        run_id = get_time()
 
     base_dir = yargs.run_options.base_dir.rstrip('/')
-    run_log  = '%s/%s.log' % (base_dir,run_id)
-    run_err  = '%s/%s.err' % (base_dir,run_id)
-    yaml_out = '%s/%s.yaml' % (base_dir,run_id)
-    
     if args.hide_logs:
-        run_log  = '.' + run_log
-        run_err  = '.' + run_err
-        yaml_out = '.' + yaml_out
+        run_logs  = '%s/.%s.logs' % (base_dir,run_id)
+    else:
+        run_logs  = '%s/%s.logs' % (base_dir,run_id)
+    
+    mkdirp(run_logs)
+    
+        
+    yaml_out = '%s/%s.yaml' % (run_logs,run_id)
+    
+
     
     # copy yaml config file with run_id as name for records
     shutil.copyfile(args.config_file,yaml_out)
@@ -118,21 +124,23 @@ def main():
 
     # loop through the queued conditions and send reports for tophat 
     if args.prog in ['tophat','all']:
+        print 'Starting tophat step.'
         for condition in yargs.condition_queue:
 
             # Prep Tophat Call
-            tophat_call = TophatCall(yargs,email_info,run_id,run_log,run_err,conditions=condition)
+            tophat_call = TophatCall(yargs,email_info,run_id,run_logs,conditions=condition)
             tophat_call.execute()
 
             # record the tophat_call object
             yargs.call_records[tophat_call.call_id] = tophat_call
     else:
-        pass
+        print "Skipping tophat step."
 
     if args.prog in ['cufflinks','all']:
         # attempt to run more than one cufflinks call in parallel since cufflinks
         # seems to use only one processor no matter the value of -p you give it and
-        # doesn't seem to consume massive amounts of memory        
+        # doesn't seem to consume massive amounts of memory 
+        print "Starting cufflinks step."
         try:
             queue = pprocess.Queue(limit=yargs.cufflinks_options.p)
 
@@ -157,7 +165,7 @@ def main():
             execute = queue.manage(pprocess.MakeParallel(run_cufflinks_call))
             jobs = []
             for condition in yargs.condition_queue:
-                cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_log,run_err,conditions=condition)
+                cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_logs,conditions=condition)
                 cufflinks_call = change_processor_count(cufflinks_call)
                 jobs.append(cufflinks_call)
                 execute(cufflinks_call)
@@ -172,18 +180,20 @@ def main():
                 # loop through the queued conditions and send reports for cufflinks    
                 for condition in yargs.condition_queue:   
                     # Prep cufflinks_call
-                    cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_log,run_err,conditions=condition)
+                    cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_logs,conditions=condition)
                     cufflinks_call.execute()
 
                     # record the cufflinks_call object
                     yargs.call_records[cufflinks_call.call_id] = cufflinks_call
             else:
-                pass
+                raise exc            
     else:
-        raise exc
+        print "Skipping cufflinks step."
+    
 
 
     if args.prog in ['cuffmerge','all']:
+        print "Starting cuffmerge step."
         for group in yargs.groups:
             
             # Prep cuffmerge call
@@ -194,7 +204,7 @@ def main():
             yargs.call_records[cuffmerge_call.call_id] = cuffmerge_call
             
     else:
-        pass
+        print "Skipping cuffmerge step."
 
 
 
