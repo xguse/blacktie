@@ -26,13 +26,17 @@ from blacktie.utils.errors import *
 
 # ++++++++ Verifiying/preparing external environment ++++++++
 def whereis(program):
+    """
+    returns path of program if it exists in your ``$PATH`` variable or ``None`` otherwise
+    """
     for path in os.environ.get('PATH', '').split(':'):
         if os.path.exists(os.path.join(path, program)) and not os.path.isdir(os.path.join(path, program)):
             return os.path.join(path, program)
     return None
 
 def mkdirp(path):
-    """Create new dir while creating any parent dirs in the path as needed.
+    """
+    Create new dir while creating any parent dirs in the path as needed.
     """
 
     if not os.path.isdir(path):
@@ -47,7 +51,9 @@ def mkdirp(path):
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 def runExternalApp(progName,argStr):
-    """Convenience func to handle calling and monitoring output of external programs."""
+    """
+    Convenience func to handle calling and monitoring output of external programs.
+    """
     
     # Ensure program is callable.
     if not whereis(progName):
