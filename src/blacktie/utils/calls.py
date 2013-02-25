@@ -37,7 +37,7 @@ class BaseCall(object):
     """
     Defines common methods for all program call types.
     """
-    def __init__(self,yargs,email_info,run_id,run_log,run_err,conditions):
+    def __init__(self,yargs,email_info,run_id,run_logs,conditions):
         """
         *GIVEN*:
             * x
@@ -48,8 +48,7 @@ class BaseCall(object):
         self.yargs = yargs
         self.email_info = email_info
         self.run_id = run_id
-        self.stdout = run_log
-        self.stderr = run_err
+        self.log_dir = run_logs
         self.prgbar_regex = yargs.prgbar_regex
         self._conditions = conditions
         self.prog_yargs = None # over-ride in child __init__
@@ -68,6 +67,11 @@ class BaseCall(object):
         os.rename(os.path.abspath(self.out_dir),new_path)
         self.out_dir = new_path
 
+    def init_log_file(self):
+        log_file = "%s/%s.log" % (self.log_dir.rstrip('/'),self.call_id)
+        log_file = open(log_file,'w')
+        log_file.close()
+        self.log_file = os.path.abspath(log_file.name)
 
     def set_call_id(self):
         if isinstance(self._conditions,int) or isinstance(self._conditions,str):
@@ -174,25 +178,20 @@ class BaseCall(object):
                 no_bar.append(line)
         return '\n'.join(no_bar)
 
-    def log_msg(self,out_msg='',err_msg=''):
-        out = open(self.stdout,'a')
-        err = open(self.stderr,'a')
-        out.write('\n%s\n' % (out_msg))
-        err.write('\n%s\n' % (err_msg))
-        out.close()
-        err.close()    
+    def log_msg(self,log_msg=''):
+        log = open(self.log_file,'a')
+        log.write('\n%s\n' % (log_msg))
+        log.close()
 
     def log_start(self):
         msg = '[start %s]\n' % (self.call_id)
-        self.log_msg(out_msg=msg,err_msg=msg)
+        self.log_msg(log_msg=msg)
 
     def log_end(self):
 
         self.stderr_msg = self.purge_progress_bars(self.stderr_msg)
-
-        out_msg = "%s\n\n%s\n[end %s]\n\n" % (self.cmd_string,self.stdout_msg,self.call_id)
-        err_msg = "%s\n\n%s\n[end %s]\n\n" % (self.cmd_string,self.stderr_msg,self.call_id)
-        self.log_msg(out_msg,err_msg)
+        err_msg = "%s\n\n%s\n[end %s]" % (self.cmd_string,self.stderr_msg,self.call_id)
+        self.log_msg(err_msg)
 
     def execute(self):
         """
@@ -239,14 +238,15 @@ class TophatCall(BaseCall):
     Manage a single call to tophat and store associated run data.
     """
 
-    def __init__(self,yargs,email_info,run_id,run_log,run_err,conditions):
+    def __init__(self,yargs,email_info,run_id,run_logs,conditions):
 
         self.prog_name = 'tophat'
 
-        BaseCall.__init__(self,yargs,email_info,run_id,run_log,run_err,conditions)
+        BaseCall.__init__(self,yargs,email_info,run_id,run_logs,conditions)
 
         self.prog_yargs = self.yargs.tophat_options
         self.set_call_id()
+        self.init_log_file()
         self.out_dir = self.get_out_dir()
 
         # set up options for program call
@@ -310,11 +310,11 @@ class CufflinksCall(BaseCall):
     Manage a single call to cufflinks and store associated run data.
     """
 
-    def __init__(self,yargs,email_info,run_id,run_log,run_err,conditions):
+    def __init__(self,yargs,email_info,run_id,run_logs,conditions):
 
         self.prog_name = 'cufflinks'
 
-        BaseCall.__init__(self,yargs,email_info,run_id,run_log,run_err,conditions)
+        BaseCall.__init__(self,yargs,email_info,run_id,run_logs,conditions)
 
         self.prog_yargs = self.yargs.cufflinks_options
         self.set_call_id()
@@ -405,11 +405,11 @@ class CuffmergeCall(BaseCall):
     Manage a single call to cuffmerge and store associated run data.
     """
 
-    def __init__(self,yargs,email_info,run_id,run_log,run_err,conditions):
+    def __init__(self,yargs,email_info,run_id,run_logs,conditions):
 
         self.prog_name = 'cuffmerge'
 
-        BaseCall.__init__(self,yargs,email_info,run_id,run_log,run_err,conditions)
+        BaseCall.__init__(self,yargs,email_info,run_id,run_logs,conditions)
 
         self.prog_yargs = self.yargs.cuffmerge_options
         self.set_call_id()

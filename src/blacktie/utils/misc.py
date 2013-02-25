@@ -89,7 +89,7 @@ def get_time():
     Return system time formatted as 'YYYY:MM:DD-hh:mm:ss'.
     """
     t = time.localtime()
-    return "%s.%s.%s-%s:%s:%s" % (t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,t.tm_min,t.tm_sec)
+    return time.strftime('%Y.%m.%d-%H:%M:%S',t)
         
     
 
