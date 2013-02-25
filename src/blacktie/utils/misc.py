@@ -29,7 +29,7 @@ from email.MIMEText import MIMEText
 
 class Bunch(dict):
     """
-    A dict like class to facilitate setting and access to tree-like data.
+    A dict like class to facilitate setting and access to tree-like data.  Allows access to dictionary keys through 'dot' notation: "yourDict.key = value".
     """
     def __init__(self, *args, **kwds):
         super(Bunch,self).__init__(*args,**kwds)
@@ -37,7 +37,7 @@ class Bunch(dict):
 
 def bunchify(dict_tree):
     """
-    TODO: doc
+    Traverses a dictionary tree and converts all sub-dictionaries to Bunch() objects.
     """
     for k,v in dict_tree.iteritems():
         if type(v) == type({}):
@@ -46,13 +46,27 @@ def bunchify(dict_tree):
 
 
 def whoami():
-    """Returns the name of the currently active function."""
+    """
+    Returns the name of the currently active function.
+    """
     return inspect.stack()[1][3]
 
 
 def email_notification(sender,to,subject,txt,pw):
     """
+    *GIVEN*:
+        * ``sender`` = email address of sender
+        * ``to`` = email addres of recipient
+        * ``subject`` = subject text
+        * ``txt`` = body text
+        * ``pw`` = password of ``sender`` 
+    *DOES*:
+        * Sends email to recipient using GMAIL only for now.
+        * TODO: make this adjustable for other emails
+    *RETURNS*:
+        * ``None``
     """
+    # TODO: make this adjustable for other emails
     msg = MIMEMultipart()
     msg['From'] = sender
     msg['To'] = to
