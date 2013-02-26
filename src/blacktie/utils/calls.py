@@ -29,7 +29,7 @@ from collections import defaultdict
 from blacktie.utils.misc import Bunch,bunchify
 from blacktie.utils.misc import email_notification
 from blacktie.utils.misc import get_time
-from blacktie.utils.externals import runExternalApp
+from blacktie.utils.externals import runExternalApp,mkdirp
 from blacktie.utils import errors
 
 
@@ -89,8 +89,8 @@ class BaseCall(object):
             # this should mean that we are dealing with a "group" type call
             self.group_id = self._conditions
             self._conditions = self.yargs.groups[self.group_id]
-            condition_names = [x.name for x in self._conditions]
-            call_id = "%s_%s" % (self.prog_name,"-".join(condition_names))
+            condition_names = [x['name'] for x in self._conditions]
+            call_id = "%s_%s" % (self.prog_name,".".join(condition_names))
             self.call_id = call_id
 
         elif isinstance(self._conditions,dict):
@@ -222,7 +222,7 @@ class BaseCall(object):
 
         self.stderr_msg = self.purge_progress_bars(self.stderr_msg)
         err_msg = "%s\n\n%s\n[end %s]" % (self.cmd_string,self.stderr_msg,self.call_id)
-        self.log_msg(err_msg)
+        self.log_msg(log_msg=err_msg)
 
     def execute(self):
         """
@@ -373,6 +373,7 @@ class CufflinksCall(BaseCall):
 
         self.prog_yargs = self.yargs.cufflinks_options
         self.set_call_id()
+        self.init_log_file()
         self.out_dir = self.get_out_dir()
 
 
@@ -431,7 +432,7 @@ class CufflinksCall(BaseCall):
         except (KeyError,AttributeError) as exp:
             msg = "WARNING: unable to find matching tophat call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
                 % (self._conditions['name'])            
-            self.log_msg(err_msg=msg)
+            self.log_msg(log_msg=msg)
 
             # try to guess correct tophat out directory
             base_dir = self.yargs.run_options.base_dir
@@ -480,6 +481,7 @@ class CuffmergeCall(BaseCall):
 
         self.prog_yargs = self.yargs.cuffmerge_options
         self.set_call_id()
+        self.init_log_file()
         self.out_dir = self.get_out_dir()
 
 
@@ -539,6 +541,7 @@ class CuffmergeCall(BaseCall):
             for condition in self._conditions:
                 gtf_path = self.get_cuffGTF_path(condition)
                 paths.append(gtf_path)
+            mkdirp(self.out_dir)
             assembly_list_file = open("%s/assembly_list.txt" % (self.out_dir.rstrip('/')),'w')
             assembly_list_file.write("\n".join(paths))
             assembly_list_file.close()
@@ -555,11 +558,11 @@ class CuffmergeCall(BaseCall):
         except (KeyError,AttributeError) as exp:
             msg = "WARNING: unable to find matching cufflinks call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
                 % (condition['name'])
-            self.log_msg(err_msg=msg)
+            self.log_msg(log_msg=msg)
 
             # try to guess correct cufflinks out directory
             base_dir = self.yargs.run_options.base_dir
-            gtf_path = "%s/%s/" % (base_dir.rstrip('/'),cl_call_id)
+            gtf_path = "%s/%s/transcripts.gtf" % (base_dir.rstrip('/'),cl_call_id)
             if not os.path.exists(gtf_path):
                 # TODO: build framework to handle this non-fatally
                 raise errors.MissingArgumentError("I could not find an appropriate transcripts.gtf file. Failed to find: %s" \
@@ -594,6 +597,7 @@ class CuffdiffCall(BaseCall):
 
         self.prog_yargs = self.yargs.cuffdiff_options
         self.set_call_id()
+        self.init_log_file()
         self.out_dir = self.get_out_dir()
 
 
@@ -669,7 +673,7 @@ class CuffdiffCall(BaseCall):
         except (KeyError,AttributeError) as exp:
             msg = "WARNING: unable to find matching cufflinks call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
                 % (condition['name'])
-            self.log_msg(err_msg=msg)
+            self.log_msg(log_msg=msg)
 
             # try to guess correct cufflinks out directory
             base_dir = self.yargs.run_options.base_dir

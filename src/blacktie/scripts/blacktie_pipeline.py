@@ -197,7 +197,7 @@ def main():
         for group in yargs.groups:
             
             # Prep cuffmerge call
-            cuffmerge_call = CuffmergeCall(yargs,email_info,run_id,run_logs,run_err,conditions=condition)
+            cuffmerge_call = CuffmergeCall(yargs,email_info,run_id,run_logs,conditions=group)
             cuffmerge_call.execute()
 
             # record the tophat_call object
