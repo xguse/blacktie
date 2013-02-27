@@ -4,12 +4,16 @@ This file STILL requires editing
 This package is still VERY raw and, while quite functional in many respects, not complete.
 The tophat and cufflinks and cuffmerge steps have been written and passed preliminary functionality tests. 
 
-I seek collaboration and 
-contributions to improve this tool.  Its goal is to simplify the integration of all the
-input/output streams of the tophat/cufflinks workflow into a single yaml based config
+**I seek collaboration and 
+contributions to improve this tool.**  
+
+PLEASE take it and run with it, but send me your progress!
+
+Its goal is to **simplify the integration of all the
+input/output streams of the tophat/cufflinks workflow** into a single yaml based config
 file and automate as much of everything else as possible so that once the config file
-is filled out, the entire process of analysing a multi-condition RNA-seq experiment can
-be run with a single command.  
+is filled out, **the entire process of analysing a multi-condition RNA-seq experiment can
+be run with a single command.**  
 
 I have not had time to fill in ALL the doc strings but will continue to update them regularly.
 
