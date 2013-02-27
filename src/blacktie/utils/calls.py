@@ -29,7 +29,7 @@ from collections import defaultdict
 from blacktie.utils.misc import Bunch,bunchify
 from blacktie.utils.misc import email_notification
 from blacktie.utils.misc import get_time
-from blacktie.utils.externals import runExternalApp
+from blacktie.utils.externals import runExternalApp,mkdirp
 from blacktie.utils import errors
 
 
@@ -89,8 +89,8 @@ class BaseCall(object):
             # this should mean that we are dealing with a "group" type call
             self.group_id = self._conditions
             self._conditions = self.yargs.groups[self.group_id]
-            condition_names = [x.name for x in self._conditions]
-            call_id = "%s_%s" % (self.prog_name,"-".join(condition_names))
+            condition_names = [x['name'] for x in self._conditions]
+            call_id = "%s_%s" % (self.prog_name,".".join(condition_names))
             self.call_id = call_id
 
         elif isinstance(self._conditions,dict):
@@ -222,7 +222,7 @@ class BaseCall(object):
 
         self.stderr_msg = self.purge_progress_bars(self.stderr_msg)
         err_msg = "%s\n\n%s\n[end %s]" % (self.cmd_string,self.stderr_msg,self.call_id)
-        self.log_msg(err_msg)
+        self.log_msg(log_msg=err_msg)
 
     def execute(self):
         """
@@ -373,6 +373,7 @@ class CufflinksCall(BaseCall):
 
         self.prog_yargs = self.yargs.cufflinks_options
         self.set_call_id()
+        self.init_log_file()
         self.out_dir = self.get_out_dir()
 
 
@@ -431,7 +432,7 @@ class CufflinksCall(BaseCall):
         except (KeyError,AttributeError) as exp:
             msg = "WARNING: unable to find matching tophat call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
                 % (self._conditions['name'])            
-            self.log_msg(err_msg=msg)
+            self.log_msg(log_msg=msg)
 
             # try to guess correct tophat out directory
             base_dir = self.yargs.run_options.base_dir
@@ -480,6 +481,123 @@ class CuffmergeCall(BaseCall):
 
         self.prog_yargs = self.yargs.cuffmerge_options
         self.set_call_id()
+        self.init_log_file()
+        self.out_dir = self.get_out_dir()
+
+
+        # set up options for program call
+        self.opt_dict = self.init_opt_dict()
+        self.opt_dict['o'] = self.out_dir
+        self.opt_dict['ref-gtf'] = self.get_gtf_anno()
+        self.opt_dict['ref-sequence'] = self.get_genome()
+        self.construct_options_list()
+
+        # now the positional args
+        assembly_list = self.get_cufflinks_gtfs()
+
+        # combine and save arg_str
+        self.options_list.extend([assembly_list])
+        self.arg_str = ' '.join(self.options_list)
+
+    def get_out_dir(self):
+        option = self.prog_yargs.o
+        if option == 'from_conditions':
+            return self.build_out_dir_path()
+        else:
+            return option
+
+    def get_gtf_anno(self):
+        option = self.prog_yargs['ref-gtf']
+        if option == 'from_conditions':
+            # Make sure all conditions agree on anno.gtf
+            gtf_path = set([c['gtf_annotation'] for c in self._conditions])
+            if len(gtf_path) == 1:
+                gtf_path = gtf_path.pop()
+            else:
+                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in group %s do not agree on which "ref-gtf" to use: %s.' \
+                                                    % (self.group_id,gtf_path))
+            return gtf_path
+        else:
+            return option
+
+    def get_genome(self):
+        option = self.prog_yargs['ref-sequence']
+        if option == 'from_conditions':
+            # Make sure all conditions agree on their genome seq
+            genome_path = set([c['genome_seq'] for c in self._conditions])
+            if len(genome_path) == 1:
+                genome_path = genome_path.pop()
+            else:
+                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in group %s do not agree on which "ref-sequence" to use: %s.' \
+                                                    % (self.group_id,genome_path))
+            return genome_path
+        else:
+            return option
+
+    def get_cufflinks_gtfs(self):
+        option = self.prog_yargs.positional_args.assembly_list
+        if option == 'from_conditions':
+            paths = []
+            for condition in self._conditions:
+                gtf_path = self.get_cuffGTF_path(condition)
+                paths.append(gtf_path)
+            mkdirp(self.out_dir)
+            assembly_list_file = open("%s/assembly_list.txt" % (self.out_dir.rstrip('/')),'w')
+            assembly_list_file.write("\n".join(paths))
+            assembly_list_file.close()
+            return os.path.abspath(assembly_list_file.name)
+        else:
+            return option
+
+    def get_cuffGTF_path(self,condition):
+        cl_call_id = "cufflinks_%s" % (condition['name'])
+        try:
+            cl_call = self.yargs.call_records[cl_call_id]
+            cl_out_dir = cl_call.out_dir
+            gtf_path = "%s/transcripts.gtf" % (cl_out_dir.rstrip('/'))
+        except (KeyError,AttributeError) as exp:
+            msg = "WARNING: unable to find matching cufflinks call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
+                % (condition['name'])
+            self.log_msg(log_msg=msg)
+
+            # try to guess correct cufflinks out directory
+            base_dir = self.yargs.run_options.base_dir
+            gtf_path = "%s/%s/transcripts.gtf" % (base_dir.rstrip('/'),cl_call_id)
+            if not os.path.exists(gtf_path):
+                # TODO: build framework to handle this non-fatally
+                raise errors.MissingArgumentError("I could not find an appropriate transcripts.gtf file. Failed to find: %s" \
+                                                  % (gtf_path))
+            else:
+                return gtf_path
+        return gtf_path
+    
+    
+class CuffdiffCall(BaseCall):
+    """
+    Manage a single call to cuffdiff and store associated run data.
+    """
+
+    def __init__(self,yargs,email_info,run_id,run_logs,conditions):
+        """
+        *GIVEN*:
+            * ``yargs`` = argument tree generated by parsing the yaml config file
+            * ``email_info`` = Bunch() object containing keys: ``email_from``, ``email_to``, ``email_li``
+            * ``run_id`` = id for the whole set of calls
+            * ``run_logs`` = the directory where log file should be put
+            * ``conditions`` = one or a list of condition-dictionaries from ``yargs.condition_queue``
+        *DOES*:
+            * initializes the CuffdiffCall object
+        *RETURNS*:
+            * an initialized CuffdiffCall object
+        """
+
+        self.prog_name = 'cuffdiff'
+
+        BaseCall.__init__(self,yargs,email_info,run_id,run_logs,conditions)
+
+        self.prog_yargs = self.yargs.cuffdiff_options
+        self.set_call_id()
+        self.init_log_file()
         self.out_dir = self.get_out_dir()
 
 
@@ -555,7 +673,7 @@ class CuffmergeCall(BaseCall):
         except (KeyError,AttributeError) as exp:
             msg = "WARNING: unable to find matching cufflinks call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
                 % (condition['name'])
-            self.log_msg(err_msg=msg)
+            self.log_msg(log_msg=msg)
 
             # try to guess correct cufflinks out directory
             base_dir = self.yargs.run_options.base_dir
