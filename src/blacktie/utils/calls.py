@@ -262,6 +262,14 @@ class BaseCall(object):
                 raise
         finally:
             return True
+        
+    def print_cmd(self):
+        """
+        Given a properly initiated object: construct the system call string and print it out.
+        """
+        self.cmd_string = "%s %s" % (self.prog_name,self.arg_str)
+        print self.cmd_string + '\n'
+            
 
 
 class TophatCall(BaseCall):

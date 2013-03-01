@@ -80,7 +80,9 @@ def main():
     parser.add_argument('--prog', type=str, choices=['tophat','cufflinks','cuffmerge','cuffdiff','all'], default='tophat',
                         help="""Which program do you want to run? (default: %(default)s)""")
     parser.add_argument('--hide-logs', action='store_true', default=False,
-                        help="""Make your log directories hidden to keep a tidy base directory. (default: %(default)s)""")    
+                        help="""Make your log directories hidden to keep a tidy 'looking' base directory. (default: %(default)s)""")
+    parser.add_argument('-n', action='store_true', default=False,
+                        help="""Do nothing but print out the commands that WOULD be run. (default: %(default)s)""")    
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -124,24 +126,31 @@ def main():
 
     # loop through the queued conditions and send reports for tophat 
     if args.prog in ['tophat','all']:
-        print 'Starting tophat step.'
+        print 'Starting tophat step.\n'
         for condition in yargs.condition_queue:
 
             # Prep Tophat Call
             tophat_call = TophatCall(yargs,email_info,run_id,run_logs,conditions=condition)
-            tophat_call.execute()
-
-            # record the tophat_call object
-            yargs.call_records[tophat_call.call_id] = tophat_call
+            if not args.n:
+                tophat_call.execute()
+                # record the tophat_call object
+                yargs.call_records[tophat_call.call_id] = tophat_call                
+            else:
+                tophat_call.print_cmd()
+                
+            
     else:
-        print "Skipping tophat step."
+        print "Skipping tophat step.\n"
 
     if args.prog in ['cufflinks','all']:
         # attempt to run more than one cufflinks call in parallel since cufflinks
         # seems to use only one processor no matter the value of -p you give it and
         # doesn't seem to consume massive amounts of memory 
-        print "Starting cufflinks step."
+        print "Starting cufflinks step.\n"
         try:
+            if args.n:
+                raise errors.BlacktieError("user said do nothing!")
+            
             queue = pprocess.Queue(limit=yargs.cufflinks_options.p)
 
             def run_cufflinks_call(cufflinks_call):
@@ -174,37 +183,41 @@ def main():
             for call in queue:
                 yargs.call_records[call.call_id] = call
 
-        except NameError as exc:
-            if str(exc) == "name 'pprocess' is not defined":
+        except (NameError,errors.BlacktieError) as exc:
+            if (str(exc) == "name 'pprocess' is not defined") or (str(exc) == "user said do nothing!"):
                 print "Running cufflinks in serial NOT parallel."
                 # loop through the queued conditions and send reports for cufflinks    
                 for condition in yargs.condition_queue:   
                     # Prep cufflinks_call
                     cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_logs,conditions=condition)
-                    cufflinks_call.execute()
+                    if not args.n:
+                        cufflinks_call.execute()
+                    else:
+                        cufflinks_call.print_cmd()
 
                     # record the cufflinks_call object
                     yargs.call_records[cufflinks_call.call_id] = cufflinks_call
             else:
                 raise exc            
     else:
-        print "Skipping cufflinks step."
+        print "Skipping cufflinks step.\n"
     
 
 
     if args.prog in ['cuffmerge','all']:
-        print "Starting cuffmerge step."
+        print "Starting cuffmerge step.\n"
         for group in yargs.groups:
-            
             # Prep cuffmerge call
             cuffmerge_call = CuffmergeCall(yargs,email_info,run_id,run_logs,conditions=group)
-            cuffmerge_call.execute()
-
-            # record the tophat_call object
-            yargs.call_records[cuffmerge_call.call_id] = cuffmerge_call
-            
+            if not args.n:
+                cuffmerge_call.execute()
+    
+                # record the tophat_call object
+                yargs.call_records[cuffmerge_call.call_id] = cuffmerge_call
+            else:
+                cuffmerge_call.print_cmd()
     else:
-        print "Skipping cuffmerge step."
+        print "Skipping cuffmerge step.\n"
 
 
 
