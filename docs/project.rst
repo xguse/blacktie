@@ -15,3 +15,17 @@ Lessons Learned
 I want to collaborate with you!
 ------------------------------
 Contact me at wadunn83@gmail.com if you are a Python coder and want to or already have made improvements on this code.
+
+
+Current Features:
+-----------------
+* simple command line interface allows almost ANYBODY to fully analyze RNA-seq data with tophat/cufflinks
+* get email updates through gmail sender address
+* run mutiple complex tophat/cufflinks experiements with a single command
+* ** and more! **
+
+Future Features:
+----------------
+* ability to generate SGE qsub-able scripts instead of running the system calls itself
+* email updates from arbitrary smtp servers
+* ** more soon... **
