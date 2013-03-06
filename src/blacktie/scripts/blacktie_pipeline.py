@@ -83,7 +83,7 @@ def main():
                         help="""Make your log directories hidden to keep a tidy 'looking' base directory. (default: %(default)s)""")
     parser.add_argument('--dry-run', action='store_true', default=False,
                         help="""Walk through all steps that would be run and print out the command lines;
-                        however, do not send the commands to the sytem to be run. (default: %(default)s)""")    
+                        however, do not send the commands to the system to be run. (default: %(default)s)""")    
 
     if len(sys.argv) == 1:
         parser.print_help()
