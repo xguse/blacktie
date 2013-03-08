@@ -463,16 +463,16 @@ class CufflinksCall(BaseCall):
         return bam_path
 
     def get_mask_file(self):
-        option = self.prog_yargs['mask-file']
-        if option == 'from_conditions':
-            try:
+        try:
+            option = self.prog_yargs['mask-file']
+            if option == 'from_conditions':
                 mask_path = self._conditions['mask_file']
                 return mask_path
-            except KeyError:
-                return False
-        else:
-            return option
-
+            else:
+                return option
+        except KeyError:
+            return False
+        
 class CuffmergeCall(BaseCall):
     """
     Manage a single call to cuffmerge and store associated run data.
@@ -650,7 +650,7 @@ class CuffdiffCall(BaseCall):
         self.construct_options_list()
 
         # now the positional args
-        transcripts_gtf = self.get_cuffmerge_gtf()  # TODO
+        transcripts_gtf = self.get_cuffmerge_gtf(conditions)  
         sample_bams = self.get_sample_bams()
 
         # combine and save arg_str
@@ -713,15 +713,15 @@ class CuffdiffCall(BaseCall):
         return bam_path
     
     def get_mask_file(self):
-        option = self.prog_yargs['mask-file']
-        if option == 'from_conditions':
-            try:
+        try:
+            option = self.prog_yargs['mask-file']
+            if option == 'from_conditions':
                 mask_path = self._conditions['mask_file']
                 return mask_path
-            except KeyError:
-                return False
-        else:
-            return option
+            else:
+                return option
+        except KeyError:
+            return False
         
     def get_labels(self):
         option = self.prog_yargs['labels']

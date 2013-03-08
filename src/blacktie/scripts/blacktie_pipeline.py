@@ -216,6 +216,21 @@ def main():
             
     else:
         print "[Note] Skipping cuffmerge step.\n"
+    
+        
+    if args.prog in ['cuffdiff','all']:
+        print "[Note] Starting cuffdiff step.\n"
+        for group in yargs.groups:
+            
+            # Prep cuffmerge call
+            cuffdiff_call = CuffdiffCall(yargs,email_info,run_id,run_logs,conditions=group,dry_run=args.dry_run)
+            cuffdiff_call.execute()
+
+            # record the tophat_call object
+            yargs.call_records[cuffdiff_call.call_id] = cuffdiff_call
+            
+    else:
+        print "[Note] Skipping cuffdiff step.\n"    
 
 
 
