@@ -587,9 +587,12 @@ class CuffmergeCall(BaseCall):
             base_dir = self.yargs.run_options.base_dir
             gtf_path = "%s/%s/transcripts.gtf" % (base_dir.rstrip('/'),cl_call_id)
             if not os.path.exists(gtf_path):
-                # TODO: build framework to handle this non-fatally
-                raise errors.MissingArgumentError("I could not find an appropriate transcripts.gtf file. Failed to find: %s" \
-                                                  % (gtf_path))
+                if not self.dry_run:
+                    # TODO: build framework to handle this non-fatally
+                    raise errors.MissingArgumentError("I could not find an appropriate transcripts.gtf file. Failed to find: %s" \
+                                                      % (gtf_path))
+                else:
+                    pass
             else:
                 return gtf_path
         return gtf_path
@@ -654,7 +657,7 @@ class CuffdiffCall(BaseCall):
         sample_bams = self.get_sample_bams()
 
         # combine and save arg_str
-        self.options_list.extend([transcripts_gtf])
+        self.options_list.extend([transcripts_gtf,sample_bams])
         self.arg_str = ' '.join(self.options_list)
 
     def get_out_dir(self):
@@ -716,7 +719,13 @@ class CuffdiffCall(BaseCall):
         try:
             option = self.prog_yargs['mask-file']
             if option == 'from_conditions':
-                mask_path = self._conditions['mask_file']
+                # Make sure all conditions agree on their mask-file
+                mask_path = set([c['mask_file'] for c in self._conditions])
+                if len(mask_path) == 1:
+                    mask_path = mask_path.pop()
+                else:
+                    raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in group %s do not agree on which "ref-sequence" to use: %s.' \
+                                                        % (self.group_id,mask_path))
                 return mask_path
             else:
                 return option
