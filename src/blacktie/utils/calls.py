@@ -455,9 +455,12 @@ class CufflinksCall(BaseCall):
             base_dir = self.yargs.run_options.base_dir
             bam_path = "%s/%s/accepted_hits.bam" % (base_dir.rstrip('/'),th_call_id)
             if not os.path.exists(bam_path):
-                # TODO: build framework to handle this non-fatally
-                raise errors.MissingArgumentError("I could not find an appropriate accepted_hits.bam file. Failed to find: %s" \
-                                                  % (bam_path))
+                if not self.dry_run:
+                    # TODO: build framework to handle this non-fatally
+                    raise errors.MissingArgumentError("I could not find an appropriate accepted_hits.bam file. Failed to find: %s" \
+                                                      % (bam_path))
+                else:
+                    pass
             else:
                 return bam_path 
         return bam_path
@@ -708,9 +711,13 @@ class CuffdiffCall(BaseCall):
             base_dir = self.yargs.run_options.base_dir
             bam_path = "%s/%s/accepted_hits.bam" % (base_dir.rstrip('/'),th_call_id)
             if not os.path.exists(bam_path):
-                # TODO: build framework to handle this non-fatally
-                raise errors.MissingArgumentError("I could not find an appropriate accepted_hits.bam file. Failed to find: %s" \
-                                                  % (bam_path))
+                if not self.dry_run:
+                    # TODO: build framework to handle this non-fatally
+                    raise errors.MissingArgumentError("I could not find an appropriate accepted_hits.bam file. Failed to find: %s" \
+                                                      % (bam_path))
+                
+                else:
+                    pass
             else:
                 return bam_path
         return bam_path
@@ -757,9 +764,12 @@ class CuffdiffCall(BaseCall):
             base_dir = self.yargs.run_options.base_dir
             gtf_path = "%s/%s/merged.gtf" % (base_dir.rstrip('/'),cm_call_id)
             if not os.path.exists(gtf_path):
-                # TODO: build framework to handle this non-fatally
-                raise errors.MissingArgumentError("I could not find an appropriate merged.gtf file. Failed to find: %s" \
-                                                  % (gtf_path))
+                if not self.dry_run:
+                    # TODO: build framework to handle this non-fatally
+                    raise errors.MissingArgumentError("I could not find an appropriate merged.gtf file. Failed to find: %s" \
+                                                      % (gtf_path))
+                else:
+                    pass
             else:
                 return gtf_path
         return gtf_path
