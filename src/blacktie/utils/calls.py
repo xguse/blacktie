@@ -653,7 +653,7 @@ class CuffdiffCall(BaseCall):
         self.construct_options_list()
 
         # now the positional args
-        transcripts_gtf = self.get_cuffmerge_gtf(conditions)  
+        transcripts_gtf = self.get_cuffmerge_gtf()  
         sample_bams = self.get_sample_bams()
 
         # combine and save arg_str
@@ -742,15 +742,15 @@ class CuffdiffCall(BaseCall):
         else:
             return option
         
-    def get_cuffmerge_gtf(self,condition):
+    def get_cuffmerge_gtf(self):
         cm_call_id = self.call_id.replace('cuffdiff','cuffmerge')
         try:
             cm_call = self.yargs.call_records[cm_call_id]
             cm_out_dir = cm_call.out_dir
             gtf_path = "%s/merged.gtf" % (cm_out_dir.rstrip('/'))
         except (KeyError,AttributeError) as exp:
-            msg = "WARNING: unable to find matching cuffmerge call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
-                % (condition['name'])
+            msg = "WARNING: unable to find matching cuffmerge call record in memory for group: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
+                % (cm_call_id)
             self.log_msg(log_msg=msg)
 
             # try to guess correct cuffmerge out directory
@@ -758,7 +758,7 @@ class CuffdiffCall(BaseCall):
             gtf_path = "%s/%s/merged.gtf" % (base_dir.rstrip('/'),cm_call_id)
             if not os.path.exists(gtf_path):
                 # TODO: build framework to handle this non-fatally
-                raise errors.MissingArgumentError("I could not find an appropriate accepted_hits.bam file. Failed to find: %s" \
+                raise errors.MissingArgumentError("I could not find an appropriate merged.gtf file. Failed to find: %s" \
                                                   % (gtf_path))
             else:
                 return gtf_path
