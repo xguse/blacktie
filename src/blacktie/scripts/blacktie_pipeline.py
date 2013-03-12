@@ -81,9 +81,11 @@ def main():
                         help="""Which program do you want to run? (default: %(default)s)""")
     parser.add_argument('--hide-logs', action='store_true', default=False,
                         help="""Make your log directories hidden to keep a tidy 'looking' base directory. (default: %(default)s)""")
-    parser.add_argument('--dry-run', action='store_true', default=False,
-                        help="""Walk through all steps that would be run and print out the command lines;
-                        however, do not send the commands to the system to be run. (default: %(default)s)""")    
+    parser.add_argument('--mode', type=str, choices=['analyze','dry_run','qsub_script'], default='analyze',
+                        help="""1) 'analyze': run the analysis pipeline. 2) 'dry_run': walk through all steps that
+                        would be run and print out the command lines; however, do not send the commands to the
+                        system to be run. 3) 'qsub_script': generate bash scripts suitable to be sent to a compute cluster's
+                        SGE through the qsub command. (default: %(default)s)""")    
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -107,7 +109,7 @@ def main():
         run_logs  = '%s/%s.logs' % (base_dir,run_id)
     
     
-    if not args.dry_run:
+    if not args.mode == 'dry_run':
         mkdirp(run_logs)
     else:
         pass
@@ -118,7 +120,7 @@ def main():
 
     
     # copy yaml config file with run_id as name for records
-    if not args.dry_run:
+    if not args.mode == 'dry_run':
         shutil.copyfile(args.config_file,yaml_out)
     else:
         pass
@@ -137,7 +139,7 @@ def main():
         for condition in yargs.condition_queue:
 
             # Prep Tophat Call
-            tophat_call = TophatCall(yargs,email_info,run_id,run_logs,conditions=condition,dry_run=args.dry_run)
+            tophat_call = TophatCall(yargs,email_info,run_id,run_logs,conditions=condition,mode=args.mode)
             tophat_call.execute()
 
             # record the tophat_call object
@@ -151,7 +153,7 @@ def main():
         # doesn't seem to consume massive amounts of memory 
         print "[Note] Starting cufflinks step.\n"
         try:
-            if args.dry_run:
+            if args.mode == 'dry_run':
                 raise errors.BlacktieError('dry run')
             queue = pprocess.Queue(limit=yargs.cufflinks_options.p)
 
@@ -176,7 +178,7 @@ def main():
             execute = queue.manage(pprocess.MakeParallel(run_cufflinks_call))
             jobs = []
             for condition in yargs.condition_queue:
-                cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_logs,conditions=condition,dry_run=args.dry_run)
+                cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_logs,conditions=condition,mode=args.mode)
                 cufflinks_call = change_processor_count(cufflinks_call)
                 jobs.append(cufflinks_call)
                 execute(cufflinks_call)
@@ -191,7 +193,7 @@ def main():
                 # loop through the queued conditions and send reports for cufflinks    
                 for condition in yargs.condition_queue:   
                     # Prep cufflinks_call
-                    cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_logs,conditions=condition,dry_run=args.dry_run)
+                    cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_logs,conditions=condition,mode=args.mode)
                     cufflinks_call.execute()
 
                     # record the cufflinks_call object
@@ -208,7 +210,7 @@ def main():
         for group in yargs.groups:
             
             # Prep cuffmerge call
-            cuffmerge_call = CuffmergeCall(yargs,email_info,run_id,run_logs,conditions=group,dry_run=args.dry_run)
+            cuffmerge_call = CuffmergeCall(yargs,email_info,run_id,run_logs,conditions=group,mode=args.mode)
             cuffmerge_call.execute()
 
             # record the tophat_call object
@@ -223,7 +225,7 @@ def main():
         for group in yargs.groups:
             
             # Prep cuffmerge call
-            cuffdiff_call = CuffdiffCall(yargs,email_info,run_id,run_logs,conditions=group,dry_run=args.dry_run)
+            cuffdiff_call = CuffdiffCall(yargs,email_info,run_id,run_logs,conditions=group,mode=args.mode)
             cuffdiff_call.execute()
 
             # record the tophat_call object
