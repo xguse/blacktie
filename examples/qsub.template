@@ -1,0 +1,45 @@
+#!/bin/bash
+#$ -S /bin/bash
+#$ -q ${queues}
+#$ -M ${email_addy}
+#$ -m beas
+#$ -e /data/users/dunnw/logs/${call_id}.e
+#$ -o /data/users/dunnw/logs/${call_id}.o
+#$ -N ${job_name}
+#$ -R y
+#$ -pe openmp ${core_range}
+
+# load virtualenv
+# source /data/users/dunnw/py273/bin/activate
+
+module load bowtie2/2.0.2
+module load tophat/2.0.6
+module load cufflinks/2.0.2
+module load samtools/0.1.18
+
+
+# basic staging stuff
+DATAHOME="${datahome}"
+MYSCRATCH="/scratch/$${}{USER}"
+
+
+mkdir -p $MYSCRATCH
+cd $MYSCRATCH
+
+
+# Remind me what will be done
+echo ''
+echo "${cmd_str}"
+echo ''
+
+# Run my job
+${cmd_str}
+
+
+# Pack up and send it home
+tar -zcvf ${call_id}.tar.gz ${out_dir}
+cp ${call_id}.tar.gz $${}{DATAHOME}/
+
+# Back into the shadows
+cd $HOME
+rm -rf $MYSCRATCH
