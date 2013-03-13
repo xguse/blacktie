@@ -261,6 +261,7 @@ class BaseCall(object):
         job_name = "%s_%s" % (nicknames[self.prog_name], '_'.join(self.call_id.split('_')[1:]))
         kw.job_name = job_name
         kw.out_dir = self.out_dir
+        kw.ld_library_path = qsub_options.ld_library_path
         
         # need to make sure we use the number of cores that the SGE gave us
         kw.cmd_str = self.cmd_string.replace('-p %s' % (self.opt_dict['p']),'-p $CORES')

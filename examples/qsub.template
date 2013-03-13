@@ -9,6 +9,8 @@
 #$ -R y
 #$ -pe openmp ${core_range}
 
+LD_LIBRARY_PATH="${ld_library_path}$${}{LD_LIBRARY_PATH}"
+
 # load virtualenv
 # source /data/users/dunnw/py273/bin/activate
 
