@@ -1,5 +1,5 @@
 Blacktie Auto-Generated Code Documentation
-=======================================
+==========================================
 
 .. automodule:: blacktie.__init__
     :members:

@@ -10,7 +10,8 @@ Contents:
 
 .. toctree::
    :maxdepth: 3
-
+   
+   install
    tutorial
    project
    code
