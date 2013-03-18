@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Blacktie: a python RNA-seq pipeline for tophat/cufflinks documentation build configuration file, created by
-# sphinx-quickstart on Mon Feb 25 07:48:21 2013.
+# Blacktie documentation build configuration file, created by
+# sphinx-quickstart on Mon Mar 18 13:09:00 2013.
 #
 # This file is execfile()d with the current directory set to its containing dir.
 #
@@ -25,7 +25,7 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.coverage', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.coverage', 'sphinx.ext.pngmath', 'sphinx.ext.viewcode']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -106,7 +106,7 @@ html_theme = 'default'
 #html_title = None
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = 'Blacktie'
+#html_short_title = None
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -115,7 +115,7 @@ html_short_title = 'Blacktie'
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = '_static/favicon.ico'
+#html_favicon = None
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -124,7 +124,7 @@ html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
-html_last_updated_fmt = '%b %d, %Y'
+#html_last_updated_fmt = '%b %d, %Y'
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
@@ -164,7 +164,7 @@ html_last_updated_fmt = '%b %d, %Y'
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'Blacktie'
+htmlhelp_basename = 'Blacktiedoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -174,7 +174,7 @@ latex_elements = {
 #'papersize': 'letterpaper',
 
 # The font size ('10pt', '11pt' or '12pt').
-'pointsize': '11pt',
+#'pointsize': '10pt',
 
 # Additional stuff for the LaTeX preamble.
 #'preamble': '',
@@ -183,7 +183,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'Blacktie.tex', u'Blacktie',
+  ('index', 'Blacktie.tex', u'Blacktie Documentation',
    u'Augustine Dunn', 'manual'),
 ]
 
@@ -196,7 +196,7 @@ latex_documents = [
 #latex_use_parts = False
 
 # If true, show page references after internal links.
-latex_show_pagerefs = True
+#latex_show_pagerefs = False
 
 # If true, show URL addresses after external links.
 #latex_show_urls = False
@@ -213,7 +213,7 @@ latex_show_pagerefs = True
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'Blacktie', u'Blacktie Documentation',
+    ('index', 'blacktie', u'Blacktie Documentation',
      [u'Augustine Dunn'], 1)
 ]
 
@@ -227,8 +227,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'Blacktie', u'Blacktie',
-   u'Augustine Dunn', 'Blacktie', 'A python RNA-seq pipeline for tophat/cufflinks.',
+  ('index', 'Blacktie', u'Blacktie Documentation',
+   u'Augustine Dunn', 'Blacktie', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -239,4 +239,4 @@ texinfo_documents = [
 #texinfo_domain_indices = True
 
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
-texinfo_show_urls = 'footnote'
+#texinfo_show_urls = 'footnote'

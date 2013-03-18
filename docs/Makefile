@@ -77,17 +77,17 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/BlacktieapythonRNA-seqpipelinefortophatcufflinks.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/Blacktie.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/BlacktieapythonRNA-seqpipelinefortophatcufflinks.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/Blacktie.qhc"
 
 devhelp:
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/BlacktieapythonRNA-seqpipelinefortophatcufflinks"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/BlacktieapythonRNA-seqpipelinefortophatcufflinks"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/Blacktie"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/Blacktie"
 	@echo "# devhelp"
 
 epub:
