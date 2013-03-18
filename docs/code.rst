@@ -1,8 +1,6 @@
 Blacktie Auto-Generated Code Documentation
 ==========================================
 
-.. automodule:: blacktie.__init__
-    :members:
 
 .. automodule:: blacktie.scripts.__init__
     :members:
