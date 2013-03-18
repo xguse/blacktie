@@ -11,9 +11,9 @@
 #******************************************************************************
 
 """
-####################
+######################
 encode_mail_li_file.py
-####################
+######################
 Script to encode your email log in pswrd so that it will be obscured to MOST BUT NOT ALL people.
 """
 import argparse

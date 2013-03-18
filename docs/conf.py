@@ -40,7 +40,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Blacktie: a python RNA-seq pipeline for tophat/cufflinks'
+project = u'Blacktie'
 copyright = u'2013, Augustine Dunn'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -106,7 +106,7 @@ html_theme = 'default'
 #html_title = None
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-#html_short_title = None
+html_short_title = 'Blacktie'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -115,7 +115,7 @@ html_theme = 'default'
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-#html_favicon = None
+html_favicon = '_static/favicon.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -124,7 +124,7 @@ html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
-#html_last_updated_fmt = '%b %d, %Y'
+html_last_updated_fmt = '%b %d, %Y'
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
@@ -164,7 +164,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'BlacktieapythonRNA-seqpipelinefortophatcufflinksdoc'
+htmlhelp_basename = 'Blacktie'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -174,7 +174,7 @@ latex_elements = {
 #'papersize': 'letterpaper',
 
 # The font size ('10pt', '11pt' or '12pt').
-#'pointsize': '10pt',
+'pointsize': '11pt',
 
 # Additional stuff for the LaTeX preamble.
 #'preamble': '',
@@ -183,7 +183,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'BlacktieapythonRNA-seqpipelinefortophatcufflinks.tex', u'Blacktie: a python RNA-seq pipeline for tophat/cufflinks Documentation',
+  ('index', 'Blacktie.tex', u'Blacktie',
    u'Augustine Dunn', 'manual'),
 ]
 
@@ -196,7 +196,7 @@ latex_documents = [
 #latex_use_parts = False
 
 # If true, show page references after internal links.
-#latex_show_pagerefs = False
+latex_show_pagerefs = True
 
 # If true, show URL addresses after external links.
 #latex_show_urls = False
@@ -213,7 +213,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'blacktieapythonrna-seqpipelinefortophatcufflinks', u'Blacktie: a python RNA-seq pipeline for tophat/cufflinks Documentation',
+    ('index', 'Blacktie', u'Blacktie Documentation',
      [u'Augustine Dunn'], 1)
 ]
 
@@ -227,8 +227,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'BlacktieapythonRNA-seqpipelinefortophatcufflinks', u'Blacktie: a python RNA-seq pipeline for tophat/cufflinks Documentation',
-   u'Augustine Dunn', 'BlacktieapythonRNA-seqpipelinefortophatcufflinks', 'One line description of project.',
+  ('index', 'Blacktie', u'Blacktie',
+   u'Augustine Dunn', 'Blacktie', 'A python RNA-seq pipeline for tophat/cufflinks.',
    'Miscellaneous'),
 ]
 
@@ -239,4 +239,4 @@ texinfo_documents = [
 #texinfo_domain_indices = True
 
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
-#texinfo_show_urls = 'footnote'
+texinfo_show_urls = 'footnote'

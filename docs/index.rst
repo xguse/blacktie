@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Blacktie: a python RNA-seq pipeline for tophat/cufflinks's documentation!
-====================================================================================
+Welcome to Blacktie's documentation! A python RNA-seq pipeline for tophat/cufflinks
+===================================================================================
 
 Contents:
 
@@ -12,8 +12,8 @@ Contents:
    :maxdepth: 3
    
    install
-   tutorial
    project
+   tutorial
    code
 
 
