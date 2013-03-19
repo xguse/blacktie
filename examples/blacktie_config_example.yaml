@@ -1,14 +1,63 @@
+# The document starts after the '---'
+
+# By the way: everything after a '#' on a line
+# will be ignored by the program and acts as a
+# comment or note to explain things.
 
 ---
+# run_options is a dictionary that contains variables that will be needed for
+# many or all stages of the run
 run_options:
   base_dir: /path/to/project/base_dir
-  run_id: False     # if false; uses current date/time for uniqe run_id everytime
-  bowtie_indexes_dir: /path/to/bowtie2_indexes
+  run_id: False         #  name your run: if false; uses current date/time for uniqe run_id everytime
+  bowtie_indexes_dir: /path/to/bowtie2_indexes 
   email_info:
-    sender: from_me@email.com
+    sender: from_me@gmail.com           # for now only sending from gmail accounts is supported (will change soon)
     to: to_you@email.com
-    li: /path/to/file/containing/base64_encoded/login_info # base64_encoded pswrd for from_me@email.com
+    li: /path/to/file/containing/base64_encoded/login_info      # base64_encoded pswrd for from_me@email.com
 
+
+
+# `tophat_options`:
+# -----------------
+# This is a dictionary that contains variables needed for all the tophat runs.
+# The names of the key:value combinations are taken directly from the tophat
+# option names but have the leading '-' removed.
+
+# -o becomes o; --library-type becomes library-type
+
+# **This is true for the cufflinks, cuffmerge, cuffdiff option dictionaries.** 
+
+# `from_conditions`:
+# ------------------
+# This is a special value that tells blacktie that you don't want to name a single
+# value for this option but would rather set the value individually for each of
+# your samples/conditions.  If you set the `o` value here: 
+
+#    **all of your different sample results would
+#      be written to the same output directory and
+#      each would overwrite the next!**
+# Hence: from_conditions
+
+# However if you made all of your libraries the same way, things like `r` and
+# `mate-std-dev` can be set here to avoid writing the same values over and over
+# and perhaps making a mistake or two.
+
+# `positional_args`:
+# ------------------
+# This is a dictionary inside of the `tophat_options` dictionary.
+# It is where you put the arguments to tophat that do not have 'flags' to make
+# their identity explicit like `-o path/to/output_dir` or `--library-type fr-unstranded`
+
+# For tophat, these values are 
+#     [1] the bowtie index name
+#     [2] the fastq files containing the left_reads
+#     [3] the fastq files containing the right_reads
+
+# They will be different for cufflinks, cuffmerge, cuffdiff so consult the
+# respective help text or manuals, but you should be fine if you just use what
+# I have set up in this file already.
+ 
 tophat_options:
   o: from_conditions
   library-type: fr-unstranded
@@ -54,55 +103,77 @@ cuffdiff_options:
     sample_bams: from_conditions
 
 
+# `condition_queue`:
+# ------------------
+# This is a list of info related to each sample/condition contained in your RNA-sequence
+# experiment(s)
+
+# `name`: the name of this condition and suffix of the `output_dir` for each 
+#         program.  Usually something like a time-point ID or treatment type.
+#         Should be as short as possible while still being a useful label. 
+
+# `group_id`: this is how you group different experiments to be included in a
+#             single cuffmerge/cuffdiff program call.  All conditions in a time
+#             series should share the same `group_id` and be placed in
+#             `condition_queue` in the order that you want them to be sent to
+#             cuffdiff.
+
+# `left_reads`: a list of the paths to fastq files containing left reads for
+#               each condition. 
+
+# `right_reads`: list of fastqs containing the right mates for the fastqs in
+#                `left_reads`.
+#                 **NOTE** right mate file must be in same order as provided to `left_reads`
+
 condition_queue:
   -
-    name: control_1
+    name: exp1_control
     group_id: 0
     left_reads:
-      - /path/to/control_1/techRep1.left_reads.fastq
-      - /path/to/control_1/techRep2.left_reads.fastq
+      - /path/to/exp1_control/techRep1.left_reads.fastq
+      - /path/to/exp1_control/techRep2.left_reads.fastq
     right_reads:
-      - /path/to/control_1/techRep1.right_reads.fastq
-      - /path/to/control_1/techRep2.right_reads.fastq
+      - /path/to/exp1_control/techRep1.right_reads.fastq
+      - /path/to/exp1_control/techRep2.right_reads.fastq
     genome_seq: /path/to/species/genome.fa
     gtf_annotation: /path/to/species/annotation.gtf
     bowtie2_index: species.bowtie2_index.basename
 
   -
-    name: treatment_1
+    name: exp1_treatment
     group_id: 0
     left_reads:
-      - /path/to/treatment_1/techRep1.left_reads.fastq
-      - /path/to/treatment_1/techRep2.left_reads.fastq
+      - /path/to/exp1_treatment/techRep1.left_reads.fastq
+      - /path/to/exp1_treatment/techRep2.left_reads.fastq
     right_reads:
-      - /path/to/treatment_1/techRep1.right_reads.fastq
-      - /path/to/treatment_1/techRep2.right_reads.fastq
+      - /path/to/exp1_treatment/techRep1.right_reads.fastq
+      - /path/to/exp1_treatment/techRep2.right_reads.fastq
     genome_seq: /path/to/species/genome.fa
     gtf_annotation: /path/to/species/annotation.gtf
     bowtie2_index: species.bowtie2_index.basename
 
   -
-    name: control_2
+    name: exp2_control
     group_id: 1
     left_reads:
-      - /path/to/control_2/techRep1.left_reads.fastq
-      - /path/to/control_2/techRep2.left_reads.fastq
+      - /path/to/exp2_control/techRep1.left_reads.fastq
+      - /path/to/exp2_control/techRep2.left_reads.fastq
     right_reads:
-      - /path/to/control_2/techRep1.right_reads.fastq
-      - /path/to/control_2/techRep2.right_reads.fastq
+      - /path/to/exp2_control/techRep1.right_reads.fastq
+      - /path/to/exp2_control/techRep2.right_reads.fastq
     genome_seq: /path/to/species/genome.fa
     gtf_annotation: /path/to/species/annotation.gtf
     bowtie2_index: species.bowtie2_index.basename
 
   -
-    name: treatment_2
+    name: exp2_treatment
     group_id: 1
     left_reads:
-      - /path/to/treatment_2/techRep1.left_reads.fastq
-      - /path/to/treatment_2/techRep2.left_reads.fastq
+      - /path/to/exp2_treatment/techRep1.left_reads.fastq
+      - /path/to/exp2_treatment/techRep2.left_reads.fastq
     right_reads:
-      - /path/to/treatment_2/techRep1.right_reads.fastq
-      - /path/to/treatment_2/techRep2.right_reads.fastq
+      - /path/to/exp2_treatment/techRep1.right_reads.fastq
+      - /path/to/exp2_treatment/techRep2.right_reads.fastq
     genome_seq: /path/to/species/genome.fa
     gtf_annotation: /path/to/species/annotation.gtf
     bowtie2_index: species.bowtie2_index.basename
