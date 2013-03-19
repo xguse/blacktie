@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Tutorial &mdash; Blacktie 0.1_dev documentation</title>
+    <title>Getting started &mdash; Blacktie 0.1_dev documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -54,11 +54,282 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="tutorial">
-<h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="watch-this-space">
-<h2><em>Watch this space!</em><a class="headerlink" href="#watch-this-space" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="getting-started">
+<h1>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Make sure that you have successfully installed the blacktie module before trying the activities below.</p>
 </div>
+<p>To test whether your installation was successful, open a new terminal session and type the following command.</p>
+<div class="highlight-python"><pre>$ blacktie</pre>
+</div>
+<p>You should see the help text for blacktie and it should look something like this:</p>
+<div class="highlight-none"><div class="highlight"><pre>usage: blacktie [-h] [--prog {tophat,cufflinks,cuffmerge,cuffdiff,all}]
+                [--hide-logs] [--mode {analyze,dry_run,qsub_script}]
+                config_file
+
+This script reads options from a yaml formatted file and organizes the
+execution of tophat/cufflinks runs for multiple condition sets.
+
+positional arguments:
+  config_file           Path to a yaml formatted config file containing setup
+                        options for the runs.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --prog {tophat,cufflinks,cuffmerge,cuffdiff,all}
+                        Which program do you want to run? (default: tophat)
+  --hide-logs           Make your log directories hidden to keep a tidy
+                        &#39;looking&#39; base directory. (default: False)
+  --mode {analyze,dry_run,qsub_script}
+                        1) &#39;analyze&#39;: run the analysis pipeline. 2) &#39;dry_run&#39;:
+                        walk through all steps that would be run and print out
+                        the command lines; however, do not send the commands
+                        to the system to be run. 3) &#39;qsub_script&#39;: generate
+                        bash scripts suitable to be sent to a compute
+                        cluster&#39;s SGE through the qsub command. (default:
+                        analyze)
+</pre></div>
+</div>
+<p>If this worked, great! Let&#8217;s move on to what all that means.</p>
+<div class="section" id="the-configuration-file">
+<h2>The configuration file<a class="headerlink" href="#the-configuration-file" title="Permalink to this headline">¶</a></h2>
+<p>The configuration file is a <a class="reference external" href="http://en.wikipedia.org/wiki/YAML">YAML-based</a> document that is where we will store all of the complexity of the options, input and output files of the typical tophat/cufflinks workflow.  This way we have though about what we want to do with our RNA-seq data from start to finish before we actually start the analysis.  Also, this config file acts as a check on our poor memory.  If you get strange results you don&#8217;t have to worry about whether you entered the samples backwards since you can go back to this config file and see exactly what files and settings were used.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you are running blacktie in <tt class="docutils literal"><span class="pre">analyze</span></tt> mode, you will have many more files created that document every step of the process where the output files are actually placed as well as central log files.</p>
+</div>
+<p>Here is a dummy example of a config file:</p>
+<div class="highlight-yaml"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
+ 67
+ 68
+ 69
+ 70
+ 71
+ 72
+ 73
+ 74
+ 75
+ 76
+ 77
+ 78
+ 79
+ 80
+ 81
+ 82
+ 83
+ 84
+ 85
+ 86
+ 87
+ 88
+ 89
+ 90
+ 91
+ 92
+ 93
+ 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104
+105
+106
+107
+108</pre></div></td><td class="code"><div class="highlight"><pre><span class="nn">---</span>
+<span class="l-Scalar-Plain">run_options</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">base_dir</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/project/base_dir</span>
+  <span class="l-Scalar-Plain">run_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">False</span>     <span class="c1"># if false; uses current date/time for uniqe run_id everytime</span>
+  <span class="l-Scalar-Plain">bowtie_indexes_dir</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/bowtie2_indexes</span>
+  <span class="l-Scalar-Plain">email_info</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">sender</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_me@email.com</span>
+    <span class="l-Scalar-Plain">to</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">to_you@email.com</span>
+    <span class="l-Scalar-Plain">li</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/file/containing/base64_encoded/login_info</span> <span class="c1"># base64_encoded pswrd for from_me@email.com</span>
+
+<span class="l-Scalar-Plain">tophat_options</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">o</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+  <span class="l-Scalar-Plain">library-type</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">fr-unstranded</span>
+  <span class="l-Scalar-Plain">p</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">6</span>
+  <span class="l-Scalar-Plain">r</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">125</span>
+  <span class="l-Scalar-Plain">mate-std-dev</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">25</span>
+  <span class="l-Scalar-Plain">G</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+  <span class="l-Scalar-Plain">no-coverage-search</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
+  <span class="l-Scalar-Plain">positional_args</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+    <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+    <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+
+<span class="l-Scalar-Plain">cufflinks_options</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">o</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+  <span class="l-Scalar-Plain">p</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">7</span>
+  <span class="l-Scalar-Plain">GTF-guide</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+  <span class="l-Scalar-Plain">3-overhang-tolerance</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">5000</span>
+  <span class="l-Scalar-Plain">frag-bias-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span> <span class="c1"># if not False; path to genome fasta</span>
+  <span class="l-Scalar-Plain">multi-read-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
+  <span class="l-Scalar-Plain">upper-quartile-norm</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
+  <span class="l-Scalar-Plain">positional_args</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">accepted_hits</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+
+<span class="l-Scalar-Plain">cuffmerge_options</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">o</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span> <span class="c1"># output directory</span>
+  <span class="l-Scalar-Plain">ref-gtf</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+  <span class="l-Scalar-Plain">p</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">6</span>
+  <span class="l-Scalar-Plain">ref-sequence</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+  <span class="l-Scalar-Plain">positional_args</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">assembly_list</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span> <span class="c1"># file with path to cufflinks gtf files to be merged</span>
+
+<span class="l-Scalar-Plain">cuffdiff_options</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">o</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+  <span class="l-Scalar-Plain">labels</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+  <span class="l-Scalar-Plain">p</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">6</span>
+  <span class="l-Scalar-Plain">time-series</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
+  <span class="l-Scalar-Plain">upper-quartile-norm</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
+  <span class="l-Scalar-Plain">frag-bias-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+  <span class="l-Scalar-Plain">multi-read-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
+  <span class="l-Scalar-Plain">positional_args</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">transcripts_gtf</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+    <span class="l-Scalar-Plain">sample_bams</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+
+
+<span class="l-Scalar-Plain">condition_queue</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span>
+    <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">control_1</span>
+    <span class="l-Scalar-Plain">group_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0</span>
+    <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/control_1/techRep1.left_reads.fastq</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/control_1/techRep2.left_reads.fastq</span>
+    <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/control_1/techRep1.right_reads.fastq</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/control_1/techRep2.right_reads.fastq</span>
+    <span class="l-Scalar-Plain">genome_seq</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/genome.fa</span>
+    <span class="l-Scalar-Plain">gtf_annotation</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/annotation.gtf</span>
+    <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">species.bowtie2_index.basename</span>
+
+  <span class="p-Indicator">-</span>
+    <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">treatment_1</span>
+    <span class="l-Scalar-Plain">group_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0</span>
+    <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/treatment_1/techRep1.left_reads.fastq</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/treatment_1/techRep2.left_reads.fastq</span>
+    <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/treatment_1/techRep1.right_reads.fastq</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/treatment_1/techRep2.right_reads.fastq</span>
+    <span class="l-Scalar-Plain">genome_seq</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/genome.fa</span>
+    <span class="l-Scalar-Plain">gtf_annotation</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/annotation.gtf</span>
+    <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">species.bowtie2_index.basename</span>
+
+  <span class="p-Indicator">-</span>
+    <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">control_2</span>
+    <span class="l-Scalar-Plain">group_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">1</span>
+    <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/control_2/techRep1.left_reads.fastq</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/control_2/techRep2.left_reads.fastq</span>
+    <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/control_2/techRep1.right_reads.fastq</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/control_2/techRep2.right_reads.fastq</span>
+    <span class="l-Scalar-Plain">genome_seq</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/genome.fa</span>
+    <span class="l-Scalar-Plain">gtf_annotation</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/annotation.gtf</span>
+    <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">species.bowtie2_index.basename</span>
+
+  <span class="p-Indicator">-</span>
+    <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">treatment_2</span>
+    <span class="l-Scalar-Plain">group_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">1</span>
+    <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/treatment_2/techRep1.left_reads.fastq</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/treatment_2/techRep2.left_reads.fastq</span>
+    <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/treatment_2/techRep1.right_reads.fastq</span>
+      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/treatment_2/techRep2.right_reads.fastq</span>
+    <span class="l-Scalar-Plain">genome_seq</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/genome.fa</span>
+    <span class="l-Scalar-Plain">gtf_annotation</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/annotation.gtf</span>
+    <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">species.bowtie2_index.basename</span>
+<span class="nn">...</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+<div class="section" id="using-e-mail-notifications">
+<h2>Using e-mail notifications<a class="headerlink" href="#using-e-mail-notifications" title="Permalink to this headline">¶</a></h2>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ipsum risus, scelerisque vitae consequat sit amet, placerat vitae turpis. Aliquam cursus justo vitae quam convallis vel auctor dui tristique. Nam justo nisl, pretium a scelerisque dictum, tincidunt sit amet diam. Donec neque nisi, ornare quis varius nec, scelerisque nec tellus. Maecenas neque purus, lobortis ac malesuada ut, vestibulum non dui. Proin tempor dolor est, quis facilisis orci. Maecenas varius dolor nec urna pellentesque adipiscing. Quisque mi lorem, fringilla non elementum quis, cursus sed nibh. Phasellus pellentesque turpis non enim interdum eget molestie purus interdum. Nunc id nunc justo, sit amet euismod velit.</p>
+</div>
+<div class="section" id="using-different-modes">
+<h2>Using different modes<a class="headerlink" href="#using-different-modes" title="Permalink to this headline">¶</a></h2>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ipsum risus, scelerisque vitae consequat sit amet, placerat vitae turpis. Aliquam cursus justo vitae quam convallis vel auctor dui tristique. Nam justo nisl, pretium a scelerisque dictum, tincidunt sit amet diam. Donec neque nisi, ornare quis varius nec, scelerisque nec tellus. Maecenas neque purus, lobortis ac malesuada ut, vestibulum non dui. Proin tempor dolor est, quis facilisis orci. Maecenas varius dolor nec urna pellentesque adipiscing. Quisque mi lorem, fringilla non elementum quis, cursus sed nibh. Phasellus pellentesque turpis non enim interdum eget molestie purus interdum. Nunc id nunc justo, sit amet euismod velit.</p>
+</div>
+</div>
+<div class="section" id="tutorial">
+<h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ipsum risus, scelerisque vitae consequat sit amet, placerat vitae turpis. Aliquam cursus justo vitae quam convallis vel auctor dui tristique. Nam justo nisl, pretium a scelerisque dictum, tincidunt sit amet diam. Donec neque nisi, ornare quis varius nec, scelerisque nec tellus. Maecenas neque purus, lobortis ac malesuada ut, vestibulum non dui. Proin tempor dolor est, quis facilisis orci. Maecenas varius dolor nec urna pellentesque adipiscing. Quisque mi lorem, fringilla non elementum quis, cursus sed nibh. Phasellus pellentesque turpis non enim interdum eget molestie purus interdum. Nunc id nunc justo, sit amet euismod velit.</p>
 </div>
 
 
@@ -69,10 +340,13 @@
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Tutorial</a><ul>
-<li><a class="reference internal" href="#watch-this-space"><em>Watch this space!</em></a></li>
+<li><a class="reference internal" href="#">Getting started</a><ul>
+<li><a class="reference internal" href="#the-configuration-file">The configuration file</a></li>
+<li><a class="reference internal" href="#using-e-mail-notifications">Using e-mail notifications</a></li>
+<li><a class="reference internal" href="#using-different-modes">Using different modes</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#tutorial">Tutorial</a></li>
 </ul>
 
   <h4>Previous topic</h4>
