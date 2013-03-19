@@ -42,7 +42,7 @@ After installing the requirements: ::
   $ [sudo] python setup.py install
 
 Test to see whether the install worked
-======================================
+--------------------------------------
 To test whether your installation was successful, open a new terminal session and type the following command. ::
 
   $ blacktie
