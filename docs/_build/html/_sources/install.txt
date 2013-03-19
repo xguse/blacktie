@@ -39,7 +39,7 @@ After installing the requirements: ::
   $ wget https://github.com/xguse/blacktie/archive/master.zip
   $ unzip master.zip
   $ cd blacktie-master
-  $ sudo python setup.py install
+  $ [sudo] python setup.py install
 
 Test to see whether the install worked
 ======================================
@@ -77,4 +77,4 @@ You should see the help text for blacktie and it should look something like this
 			  cluster's SGE through the qsub command. (default:
 			  analyze)
 
-If this worked, great! Let's move on to what all that means.
+If this worked, great! 
