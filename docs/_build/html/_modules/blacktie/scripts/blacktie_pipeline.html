@@ -1,0 +1,335 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>blacktie.scripts.blacktie_pipeline &mdash; Blacktie 0.1_dev documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1_dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="Blacktie 0.1_dev documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Blacktie 0.1_dev documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for blacktie.scripts.blacktie_pipeline</h1><div class="highlight"><pre>
+<span class="c">#*****************************************************************************</span>
+<span class="c">#  blacktie_pipeline.py (part of the blacktie package)</span>
+<span class="c">#</span>
+<span class="c">#  (c) 2013 - Augustine Dunn</span>
+<span class="c">#  James Laboratory</span>
+<span class="c">#  Department of Biochemistry and Molecular Biology</span>
+<span class="c">#  University of California Irvine</span>
+<span class="c">#  wadunn83@gmail.com</span>
+<span class="c">#</span>
+<span class="c">#  Licenced under the GNU General Public License 2.0 license.</span>
+<span class="c">#******************************************************************************</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">####################</span>
+<span class="sd">blacktie_pipeline.py</span>
+<span class="sd">####################</span>
+<span class="sd">Code defining an object oriented python pipeline script to allow simplified</span>
+<span class="sd">coordination of data through parts or all of the popular Tophat/Cufflinks</span>
+<span class="sd">RNA-seq analysis suite.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">pprocess</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="kn">from</span> <span class="nn">blacktie.utils.misc</span> <span class="kn">import</span> <span class="n">Bunch</span><span class="p">,</span><span class="n">bunchify</span>
+<span class="kn">from</span> <span class="nn">blacktie.utils.misc</span> <span class="kn">import</span> <span class="n">email_notification</span>
+<span class="kn">from</span> <span class="nn">blacktie.utils.misc</span> <span class="kn">import</span> <span class="n">get_time</span>
+<span class="kn">from</span> <span class="nn">blacktie.utils.externals</span> <span class="kn">import</span> <span class="n">runExternalApp</span>
+<span class="kn">from</span> <span class="nn">blacktie.utils.externals</span> <span class="kn">import</span> <span class="n">mkdirp</span>
+<span class="kn">from</span> <span class="nn">blacktie.utils</span> <span class="kn">import</span> <span class="n">errors</span>
+<span class="kn">from</span> <span class="nn">blacktie.utils.calls</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+
+
+
+<div class="viewcode-block" id="map_condition_groups"><a class="viewcode-back" href="../../../code.html#blacktie.scripts.blacktie_pipeline.map_condition_groups">[docs]</a><span class="k">def</span> <span class="nf">map_condition_groups</span><span class="p">(</span><span class="n">yargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    *GIVEN:*</span>
+<span class="sd">        * ``yargs`` = argument object generated from the yaml config file</span>
+<span class="sd">    *DOES:*</span>
+<span class="sd">        * creates a Bunch obj ``groups`` with key=&#39;group_id&#39; from ``yargs``, value=list(condition_queue objects with &#39;group_id&#39;)</span>
+<span class="sd">    *RETURNS:*</span>
+<span class="sd">        * ``groups``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="n">yargs</span><span class="o">.</span><span class="n">condition_queue</span><span class="p">:</span>
+        <span class="n">groups</span><span class="p">[</span><span class="n">condition</span><span class="p">[</span><span class="s">&#39;group_id&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="n">Bunch</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">groups</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">groups</span>
+
+
+</div>
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../code.html#blacktie.scripts.blacktie_pipeline.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The main loop.  Lets ROCK!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;This script reads options from a yaml formatted file and organizes the execution of tophat/cufflinks runs for multiple condition sets.&quot;&quot;&quot;</span>
+
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="n">desc</span><span class="p">)</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;config_file&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s">&quot;&quot;&quot;Path to a yaml formatted config file containing setup options for the runs.&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;--prog&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;tophat&#39;</span><span class="p">,</span><span class="s">&#39;cufflinks&#39;</span><span class="p">,</span><span class="s">&#39;cuffmerge&#39;</span><span class="p">,</span><span class="s">&#39;cuffdiff&#39;</span><span class="p">,</span><span class="s">&#39;all&#39;</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="s">&#39;tophat&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s">&quot;&quot;&quot;Which program do you want to run? (default: </span><span class="si">%(default)s</span><span class="s">)&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;--hide-logs&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s">&quot;&quot;&quot;Make your log directories hidden to keep a tidy &#39;looking&#39; base directory. (default: </span><span class="si">%(default)s</span><span class="s">)&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;--mode&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;analyze&#39;</span><span class="p">,</span><span class="s">&#39;dry_run&#39;</span><span class="p">,</span><span class="s">&#39;qsub_script&#39;</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="s">&#39;analyze&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s">&quot;&quot;&quot;1) &#39;analyze&#39;: run the analysis pipeline. 2) &#39;dry_run&#39;: walk through all steps that</span>
+<span class="s">                        would be run and print out the command lines; however, do not send the commands to the</span>
+<span class="s">                        system to be run. 3) &#39;qsub_script&#39;: generate bash scripts suitable to be sent to a compute cluster&#39;s</span>
+<span class="s">                        SGE through the qsub command. (default: </span><span class="si">%(default)s</span><span class="s">)&quot;&quot;&quot;</span><span class="p">)</span>    
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">print_help</span><span class="p">()</span>
+        <span class="nb">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="n">yargs</span> <span class="o">=</span> <span class="n">bunchify</span><span class="p">(</span><span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config_file</span><span class="p">,</span><span class="s">&#39;rU&#39;</span><span class="p">)))</span>
+
+    <span class="c"># set up run_id, log files, and email info</span>
+    <span class="k">if</span> <span class="n">yargs</span><span class="o">.</span><span class="n">run_options</span><span class="o">.</span><span class="n">run_id</span><span class="p">:</span>
+        <span class="n">run_id</span> <span class="o">=</span> <span class="n">yargs</span><span class="o">.</span><span class="n">run_options</span><span class="o">.</span><span class="n">run_id</span>
+    <span class="k">else</span><span class="p">:</span>
+        
+        <span class="n">run_id</span> <span class="o">=</span> <span class="n">get_time</span><span class="p">()</span>
+
+    <span class="n">base_dir</span> <span class="o">=</span> <span class="n">yargs</span><span class="o">.</span><span class="n">run_options</span><span class="o">.</span><span class="n">base_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">hide_logs</span><span class="p">:</span>
+        <span class="n">run_logs</span>  <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">/.</span><span class="si">%s</span><span class="s">.logs&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">base_dir</span><span class="p">,</span><span class="n">run_id</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">run_logs</span>  <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">.logs&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">base_dir</span><span class="p">,</span><span class="n">run_id</span><span class="p">)</span>
+    
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;dry_run&#39;</span><span class="p">:</span>
+        <span class="n">mkdirp</span><span class="p">(</span><span class="n">run_logs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">pass</span>
+    
+        
+    <span class="n">yaml_out</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">.yaml&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">run_logs</span><span class="p">,</span><span class="n">run_id</span><span class="p">)</span>
+    
+
+    
+    <span class="c"># copy yaml config file with run_id as name for records</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;dry_run&#39;</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config_file</span><span class="p">,</span><span class="n">yaml_out</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="n">email_info</span> <span class="o">=</span> <span class="n">Bunch</span><span class="p">({</span><span class="s">&#39;email_from&#39;</span> <span class="p">:</span> <span class="n">yargs</span><span class="o">.</span><span class="n">run_options</span><span class="o">.</span><span class="n">email_info</span><span class="o">.</span><span class="n">sender</span><span class="p">,</span>
+                        <span class="s">&#39;email_to&#39;</span> <span class="p">:</span> <span class="n">yargs</span><span class="o">.</span><span class="n">run_options</span><span class="o">.</span><span class="n">email_info</span><span class="o">.</span><span class="n">to</span><span class="p">,</span>
+                        <span class="s">&#39;email_li&#39;</span> <span class="p">:</span> <span class="nb">open</span><span class="p">(</span><span class="n">yargs</span><span class="o">.</span><span class="n">run_options</span><span class="o">.</span><span class="n">email_info</span><span class="o">.</span><span class="n">li</span><span class="p">,</span><span class="s">&#39;rU&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)})</span>
+
+    <span class="n">yargs</span><span class="o">.</span><span class="n">prgbar_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;&gt;.+Processing.+\[.+\].+%\w*$&#39;</span><span class="p">)</span>
+    <span class="n">yargs</span><span class="o">.</span><span class="n">groups</span> <span class="o">=</span> <span class="n">map_condition_groups</span><span class="p">(</span><span class="n">yargs</span><span class="p">)</span>
+    <span class="n">yargs</span><span class="o">.</span><span class="n">call_records</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c"># loop through the queued conditions and send reports for tophat </span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">prog</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;tophat&#39;</span><span class="p">,</span><span class="s">&#39;all&#39;</span><span class="p">]:</span>
+        <span class="k">print</span> <span class="s">&#39;[Note] Starting tophat step.</span><span class="se">\n</span><span class="s">&#39;</span>
+        <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="n">yargs</span><span class="o">.</span><span class="n">condition_queue</span><span class="p">:</span>
+
+            <span class="c"># Prep Tophat Call</span>
+            <span class="n">tophat_call</span> <span class="o">=</span> <span class="n">TophatCall</span><span class="p">(</span><span class="n">yargs</span><span class="p">,</span><span class="n">email_info</span><span class="p">,</span><span class="n">run_id</span><span class="p">,</span><span class="n">run_logs</span><span class="p">,</span><span class="n">conditions</span><span class="o">=</span><span class="n">condition</span><span class="p">,</span><span class="n">mode</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span>
+            <span class="n">tophat_call</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+            <span class="c"># record the tophat_call object</span>
+            <span class="n">yargs</span><span class="o">.</span><span class="n">call_records</span><span class="p">[</span><span class="n">tophat_call</span><span class="o">.</span><span class="n">call_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">tophat_call</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;[Note] Skipping tophat step.</span><span class="se">\n</span><span class="s">&quot;</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">prog</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;cufflinks&#39;</span><span class="p">,</span><span class="s">&#39;all&#39;</span><span class="p">]:</span>
+        <span class="c"># attempt to run more than one cufflinks call in parallel since cufflinks</span>
+        <span class="c"># seems to use only one processor no matter the value of -p you give it and</span>
+        <span class="c"># doesn&#39;t seem to consume massive amounts of memory </span>
+        <span class="k">print</span> <span class="s">&quot;[Note] Starting cufflinks step.</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;dry_run&#39;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">BlacktieError</span><span class="p">(</span><span class="s">&#39;dry run&#39;</span><span class="p">)</span>
+            <span class="n">queue</span> <span class="o">=</span> <span class="n">pprocess</span><span class="o">.</span><span class="n">Queue</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="n">yargs</span><span class="o">.</span><span class="n">cufflinks_options</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+
+            <span class="k">def</span> <span class="nf">run_cufflinks_call</span><span class="p">(</span><span class="n">cufflinks_call</span><span class="p">):</span>
+                <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                function to start each parallel cufflinks_call inside the parallel job server.</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+                <span class="n">cufflinks_call</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+                <span class="k">return</span> <span class="n">cufflinks_call</span>
+
+            <span class="k">def</span> <span class="nf">change_processor_count</span><span class="p">(</span><span class="n">cufflinks_call</span><span class="p">):</span>
+                <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                Since we will run multiple instances of CufflinksCall at once, reduce</span>
+<span class="sd">                the number of processors any one system call thinks it can use.</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+                <span class="n">cufflinks_call</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;p&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+                <span class="n">cufflinks_call</span><span class="o">.</span><span class="n">construct_options_list</span><span class="p">()</span>
+                <span class="n">cufflinks_call</span><span class="o">.</span><span class="n">options_list</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">cufflinks_call</span><span class="o">.</span><span class="n">accepted_hits</span><span class="p">])</span>
+                <span class="n">cufflinks_call</span><span class="o">.</span><span class="n">arg_str</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cufflinks_call</span><span class="o">.</span><span class="n">options_list</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">cufflinks_call</span>
+
+            <span class="n">execute</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">manage</span><span class="p">(</span><span class="n">pprocess</span><span class="o">.</span><span class="n">MakeParallel</span><span class="p">(</span><span class="n">run_cufflinks_call</span><span class="p">))</span>
+            <span class="n">jobs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="n">yargs</span><span class="o">.</span><span class="n">condition_queue</span><span class="p">:</span>
+                <span class="n">cufflinks_call</span> <span class="o">=</span> <span class="n">CufflinksCall</span><span class="p">(</span><span class="n">yargs</span><span class="p">,</span><span class="n">email_info</span><span class="p">,</span><span class="n">run_id</span><span class="p">,</span><span class="n">run_logs</span><span class="p">,</span><span class="n">conditions</span><span class="o">=</span><span class="n">condition</span><span class="p">,</span><span class="n">mode</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span>
+                <span class="n">cufflinks_call</span> <span class="o">=</span> <span class="n">change_processor_count</span><span class="p">(</span><span class="n">cufflinks_call</span><span class="p">)</span>
+                <span class="n">jobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cufflinks_call</span><span class="p">)</span>
+                <span class="n">execute</span><span class="p">(</span><span class="n">cufflinks_call</span><span class="p">)</span>
+
+            <span class="c"># record the cufflinks_call objects</span>
+            <span class="k">for</span> <span class="n">call</span> <span class="ow">in</span> <span class="n">queue</span><span class="p">:</span>
+                <span class="n">yargs</span><span class="o">.</span><span class="n">call_records</span><span class="p">[</span><span class="n">call</span><span class="o">.</span><span class="n">call_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">call</span>
+
+        <span class="k">except</span> <span class="p">(</span><span class="ne">NameError</span><span class="p">,</span> <span class="n">errors</span><span class="o">.</span><span class="n">BlacktieError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;name &#39;pprocess&#39; is not defined&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;dry run&quot;</span><span class="p">):</span>
+                <span class="k">print</span> <span class="s">&quot;Running cufflinks in serial NOT parallel.</span><span class="se">\n</span><span class="s">&quot;</span>
+                <span class="c"># loop through the queued conditions and send reports for cufflinks    </span>
+                <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="n">yargs</span><span class="o">.</span><span class="n">condition_queue</span><span class="p">:</span>   
+                    <span class="c"># Prep cufflinks_call</span>
+                    <span class="n">cufflinks_call</span> <span class="o">=</span> <span class="n">CufflinksCall</span><span class="p">(</span><span class="n">yargs</span><span class="p">,</span><span class="n">email_info</span><span class="p">,</span><span class="n">run_id</span><span class="p">,</span><span class="n">run_logs</span><span class="p">,</span><span class="n">conditions</span><span class="o">=</span><span class="n">condition</span><span class="p">,</span><span class="n">mode</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span>
+                    <span class="n">cufflinks_call</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+                    <span class="c"># record the cufflinks_call object</span>
+                    <span class="n">yargs</span><span class="o">.</span><span class="n">call_records</span><span class="p">[</span><span class="n">cufflinks_call</span><span class="o">.</span><span class="n">call_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">cufflinks_call</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exc</span>            
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;[Note] Skipping cufflinks step.</span><span class="se">\n</span><span class="s">&quot;</span>
+    
+
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">prog</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;cuffmerge&#39;</span><span class="p">,</span><span class="s">&#39;all&#39;</span><span class="p">]:</span>
+        <span class="k">print</span> <span class="s">&quot;[Note] Starting cuffmerge step.</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">yargs</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            
+            <span class="c"># Prep cuffmerge call</span>
+            <span class="n">cuffmerge_call</span> <span class="o">=</span> <span class="n">CuffmergeCall</span><span class="p">(</span><span class="n">yargs</span><span class="p">,</span><span class="n">email_info</span><span class="p">,</span><span class="n">run_id</span><span class="p">,</span><span class="n">run_logs</span><span class="p">,</span><span class="n">conditions</span><span class="o">=</span><span class="n">group</span><span class="p">,</span><span class="n">mode</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span>
+            <span class="n">cuffmerge_call</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+            <span class="c"># record the tophat_call object</span>
+            <span class="n">yargs</span><span class="o">.</span><span class="n">call_records</span><span class="p">[</span><span class="n">cuffmerge_call</span><span class="o">.</span><span class="n">call_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">cuffmerge_call</span>
+            
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;[Note] Skipping cuffmerge step.</span><span class="se">\n</span><span class="s">&quot;</span>
+    
+        
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">prog</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;cuffdiff&#39;</span><span class="p">,</span><span class="s">&#39;all&#39;</span><span class="p">]:</span>
+        <span class="k">print</span> <span class="s">&quot;[Note] Starting cuffdiff step.</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">yargs</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            
+            <span class="c"># Prep cuffmerge call</span>
+            <span class="n">cuffdiff_call</span> <span class="o">=</span> <span class="n">CuffdiffCall</span><span class="p">(</span><span class="n">yargs</span><span class="p">,</span><span class="n">email_info</span><span class="p">,</span><span class="n">run_id</span><span class="p">,</span><span class="n">run_logs</span><span class="p">,</span><span class="n">conditions</span><span class="o">=</span><span class="n">group</span><span class="p">,</span><span class="n">mode</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span>
+            <span class="n">cuffdiff_call</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+            <span class="c"># record the tophat_call object</span>
+            <span class="n">yargs</span><span class="o">.</span><span class="n">call_records</span><span class="p">[</span><span class="n">cuffdiff_call</span><span class="o">.</span><span class="n">call_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">cuffdiff_call</span>
+            
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;[Note] Skipping cuffdiff step.</span><span class="se">\n</span><span class="s">&quot;</span>    
+
+
+
+</div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Blacktie 0.1_dev documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Augustine Dunn.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
