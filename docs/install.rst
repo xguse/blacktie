@@ -39,7 +39,7 @@ After installing the requirements: ::
   $ wget https://github.com/xguse/blacktie/archive/master.zip
   $ unzip master.zip
   $ cd blacktie-master
-  $ sudo python setup.py install
+  $ [sudo] python setup.py install
 
 Test to see whether the install worked
 ======================================
