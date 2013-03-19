@@ -77,4 +77,4 @@ You should see the help text for blacktie and it should look something like this
 			  cluster's SGE through the qsub command. (default:
 			  analyze)
 
-If this worked, great! Let's move on to what all that means.
+If this worked, great! 
