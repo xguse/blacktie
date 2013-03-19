@@ -27,7 +27,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Blacktie 0.1_dev documentation" href="index.html" />
     <link rel="next" title="Blacktie Auto-Generated Code Documentation" href="code.html" />
-    <link rel="prev" title="Project Summary" href="project.html" /> 
+    <link rel="prev" title="Installation" href="install.html" /> 
   </head>
   <body>
     <div class="related">
@@ -43,7 +43,7 @@
           <a href="code.html" title="Blacktie Auto-Generated Code Documentation"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="project.html" title="Project Summary"
+          <a href="install.html" title="Installation"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">Blacktie 0.1_dev documentation</a> &raquo;</li> 
       </ul>
@@ -468,7 +468,11 @@ optional arguments:
 </div>
 <div class="section" id="using-e-mail-notifications">
 <h2>Using e-mail notifications<a class="headerlink" href="#using-e-mail-notifications" title="Permalink to this headline">¶</a></h2>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ipsum risus, scelerisque vitae consequat sit amet, placerat vitae turpis. Aliquam cursus justo vitae quam convallis vel auctor dui tristique. Nam justo nisl, pretium a scelerisque dictum, tincidunt sit amet diam. Donec neque nisi, ornare quis varius nec, scelerisque nec tellus. Maecenas neque purus, lobortis ac malesuada ut, vestibulum non dui. Proin tempor dolor est, quis facilisis orci. Maecenas varius dolor nec urna pellentesque adipiscing. Quisque mi lorem, fringilla non elementum quis, cursus sed nibh. Phasellus pellentesque turpis non enim interdum eget molestie purus interdum. Nunc id nunc justo, sit amet euismod velit.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">For now, only gmail addresses can be used to <em>send</em> notifications because the server settings are hardcoded into the functions right now.  I will soon add this info to the config file and then any smtp server will be usable.  <em>Any</em> email can be used as the recipient. Also: gmail&#8217;s 2-step authentication will NOT work.  Sorry.  I will look into how to deal with that eventually.</p>
+</div>
+<p>You will need to provide your password in order to use the email notifications but it is not a good idea to store human readable passwords lying around your system.  So the file that is used to store your password must contain a version of your password that has been encoded in base64.  This will scramble your password beyond most people&#8217;s ability to read it as a password as long as you don&#8217;t name it something silly like <tt class="docutils literal"><span class="pre">password_file.txt</span></tt>.</p>
 </div>
 <div class="section" id="using-different-modes">
 <h2>Using different modes<a class="headerlink" href="#using-different-modes" title="Permalink to this headline">¶</a></h2>
@@ -498,8 +502,8 @@ optional arguments:
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="project.html"
-                        title="previous chapter">Project Summary</a></p>
+  <p class="topless"><a href="install.html"
+                        title="previous chapter">Installation</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="code.html"
                         title="next chapter">Blacktie Auto-Generated Code Documentation</a></p>
@@ -538,7 +542,7 @@ optional arguments:
           <a href="code.html" title="Blacktie Auto-Generated Code Documentation"
              >next</a> |</li>
         <li class="right" >
-          <a href="project.html" title="Project Summary"
+          <a href="install.html" title="Installation"
              >previous</a> |</li>
         <li><a href="index.html">Blacktie 0.1_dev documentation</a> &raquo;</li> 
       </ul>
