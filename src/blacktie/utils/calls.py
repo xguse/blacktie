@@ -134,9 +134,9 @@ class BaseCall(object):
 
     def build_out_dir_path(self):
         """
-        *DOES:*
+        **DOES:**
             * builds correct ``out_dir`` path based on state of ``self``.
-        *RETURNS:*
+        **RETURNS:**
             * ``out_dir``
         """
 
@@ -145,11 +145,11 @@ class BaseCall(object):
 
     def init_opt_dict(self):
         """
-        *DOES:*
+        **DOES:**
             * based on option names in the yaml file for this phase,
               build a dict with non-job-specific values set and job-specific
               values set to False
-        *RETURNS:*
+        **RETURNS:**
             * partially populated ``opt_dict``
         """
         opt_dict = defaultdict(bool)
@@ -170,7 +170,7 @@ class BaseCall(object):
 
     def construct_options_list(self):
         """
-        *DOES:*
+        **DOES:**
             * converts ``opt_dict`` into list encoding proper options to send to the current program: saves to ``self``.
         """
         options_list = []
@@ -275,7 +275,7 @@ class BaseCall(object):
         
     def execute(self):
         """
-        *DOES:*
+        **DOES:**
             * calls correct program, records results, and manages errors.
         """
         
@@ -368,6 +368,9 @@ class TophatCall(BaseCall):
         self.arg_str = ' '.join(self.options_list)
 
     def get_out_dir(self):
+        """
+        Handles ``yaml_config.tophat_options.o: from_conditions``.
+        """
         option = self.prog_yargs.o
         if option == 'from_conditions':
             return self.build_out_dir_path()
@@ -375,6 +378,9 @@ class TophatCall(BaseCall):
             return option
 
     def get_gtf_anno(self):
+        """
+        Handles ``yaml_config.tophat_options.G: from_conditions``.
+        """
         option = self.prog_yargs.G
         if option == 'from_conditions':
             gtf_path = self._conditions['gtf_annotation']
@@ -383,6 +389,9 @@ class TophatCall(BaseCall):
             return option
 
     def get_bt_idx(self):
+        """
+        Handles ``yaml_config.tophat_options.positional_args.bowtie2_index: from_conditions``.
+        """
         option = self.prog_yargs.positional_args.bowtie2_index
         if option == 'from_conditions':
             bt_idx_dir = self.yargs.run_options.bowtie_indexes_dir.rstrip('/')
@@ -392,6 +401,9 @@ class TophatCall(BaseCall):
             return option
 
     def get_lt_reads(self):
+        """
+        Handles ``yaml_config.tophat_options.positional_args.left_reads: from_conditions``.
+        """
         option = self.prog_yargs.positional_args.left_reads
         if option == 'from_conditions':
             lt_reads = self._conditions['left_reads']
@@ -400,6 +412,9 @@ class TophatCall(BaseCall):
             return option
 
     def get_rt_reads(self):
+        """
+        Handles ``yaml_config.tophat_options.positional_args.right_reads: from_conditions``.
+        """
         option = self.prog_yargs.positional_args.right_reads
         if option == 'from_conditions':
             rt_reads = self._conditions['right_reads']
@@ -453,6 +468,9 @@ class CufflinksCall(BaseCall):
         self.arg_str = ' '.join(self.options_list)
 
     def get_out_dir(self):
+        """
+        Handles ``yaml_config.cufflinks_options.o: from_conditions``.
+        """
         option = self.prog_yargs.o
         if option == 'from_conditions':
             return self.build_out_dir_path()
@@ -460,6 +478,9 @@ class CufflinksCall(BaseCall):
             return option
 
     def get_gtf_anno(self):
+        """
+        Handles ``yaml_config.cufflinks_options.GTF-guide: from_conditions``.
+        """
         option = self.prog_yargs['GTF-guide']
         if option == 'from_conditions':
             gtf_path = self._conditions['gtf_annotation']
@@ -468,6 +489,9 @@ class CufflinksCall(BaseCall):
             return option
 
     def get_genome(self):
+        """
+        Handles ``yaml_config.cufflinks_options.frag-bias-correct: from_conditions``.
+        """
         option = self.prog_yargs['frag-bias-correct']
         if option == 'from_conditions':
             genome_path = self._conditions['genome_seq']
@@ -476,6 +500,9 @@ class CufflinksCall(BaseCall):
             return option
 
     def get_accepted_hits(self):
+        """
+        Handles ``yaml_config.cufflinks_options.positional_args.accepted_hits: from_conditions``.
+        """
         option = self.prog_yargs.positional_args.accepted_hits
         if option == 'from_conditions':
             bam_path = self.get_bam_path()
@@ -484,6 +511,9 @@ class CufflinksCall(BaseCall):
             return option
 
     def get_bam_path(self):
+        """
+        Supports ``self.get_accepted_hits()``.
+        """
         th_call_id = "tophat_%s" % (self._conditions['name'])
         try:
             th_call = self.yargs.call_records[th_call_id]
@@ -509,6 +539,9 @@ class CufflinksCall(BaseCall):
         return bam_path
 
     def get_mask_file(self):
+        """
+        Handles ``yaml_config.cufflinks_options.mask-file: from_conditions``.
+        """
         try:
             option = self.prog_yargs['mask-file']
             if option == 'from_conditions':
@@ -563,6 +596,9 @@ class CuffmergeCall(BaseCall):
         self.arg_str = ' '.join(self.options_list)
 
     def get_out_dir(self):
+        """
+        Handles ``yaml_config.cuffmerge_options.o: from_conditions``.
+        """
         option = self.prog_yargs.o
         if option == 'from_conditions':
             return self.build_out_dir_path()
@@ -570,6 +606,9 @@ class CuffmergeCall(BaseCall):
             return option
 
     def get_gtf_anno(self):
+        """
+        Handles ``yaml_config.cuffmerge_options.ref-gtf: from_conditions``.
+        """
         option = self.prog_yargs['ref-gtf']
         if option == 'from_conditions':
             # Make sure all conditions agree on anno.gtf
@@ -584,6 +623,9 @@ class CuffmergeCall(BaseCall):
             return option
 
     def get_genome(self):
+        """
+        Handles ``yaml_config.cuffmerge_options.ref-sequence: from_conditions``.
+        """
         option = self.prog_yargs['ref-sequence']
         if option == 'from_conditions':
             # Make sure all conditions agree on their genome seq
@@ -598,6 +640,9 @@ class CuffmergeCall(BaseCall):
             return option
 
     def get_cufflinks_gtfs(self):
+        """
+        Handles ``yaml_config.cuffmerge_options.positional_args.assembly_list: from_conditions``.
+        """
         option = self.prog_yargs.positional_args.assembly_list
         if option == 'from_conditions':
             paths = []
@@ -619,6 +664,9 @@ class CuffmergeCall(BaseCall):
             return option
 
     def get_cuffGTF_path(self,condition):
+        """
+        Supports ``self.get_cufflinks_gtfs()``.
+        """
         cl_call_id = "cufflinks_%s" % (condition['name'])
         try:
             cl_call = self.yargs.call_records[cl_call_id]
@@ -646,19 +694,7 @@ class CuffmergeCall(BaseCall):
     
 class CuffdiffCall(BaseCall):
     """
-Manage a single call to cuffdiff and store associated run data.
-    **GIVEN:**
-        * ``yargs`` = argument tree generated by parsing the yaml config file
-        * ``email_info`` = Bunch() object containing keys: ``email_from``, ``email_to``, ``email_li``
-        * ``run_id`` = id for the whole set of calls
-        * ``run_logs`` = the directory where log file should be put
-        * ``conditions`` = one or a list of condition-dictionaries from ``yargs.condition_queue``
-    
-    **DOES:**
-        * initializes the CuffdiffCall object
-
-    **RETURNS:**
-        * an initialized CuffdiffCall object
+    Manage a single call to cuffdiff and store associated run data.
     """
 
     def __init__(self,yargs,email_info,run_id,run_logs,conditions,mode):
@@ -709,6 +745,9 @@ Manage a single call to cuffdiff and store associated run data.
         self.arg_str = ' '.join(self.options_list)
 
     def get_out_dir(self):
+        """
+        Handles ``yaml_config.cuffdiff_options.o: from_conditions``.
+        """
         option = self.prog_yargs.o
         if option == 'from_conditions':
             return self.build_out_dir_path()
@@ -716,6 +755,9 @@ Manage a single call to cuffdiff and store associated run data.
             return option
 
     def get_genome(self):
+        """
+        Handles ``yaml_config.cuffdiff_options.frag-bias-correct: from_conditions``.
+        """
         option = self.prog_yargs['frag-bias-correct']
         if option == 'from_conditions':
             # Make sure all conditions agree on their genome seq
@@ -730,6 +772,9 @@ Manage a single call to cuffdiff and store associated run data.
             return option
 
     def get_sample_bams(self):
+        """
+        Handles ``yaml_config.cuffdiff_options.positional_args.sample_bams: from_conditions``.
+        """
         # TODO: support replicate bams as: " samp1_r1.bam,samp1_r2.bam samp2_r1.bam,samp2_r2.bam "
         option = self.prog_yargs.positional_args.sample_bams
         if option == 'from_conditions':
@@ -742,6 +787,9 @@ Manage a single call to cuffdiff and store associated run data.
             return option
 
     def get_bam_path(self,condition):
+        """
+        Supports ``self.get_sample_bams()``.
+        """
         th_call_id = "tophat_%s" % (condition['name'])
         try:
             th_call = self.yargs.call_records[th_call_id]
@@ -768,6 +816,9 @@ Manage a single call to cuffdiff and store associated run data.
         return bam_path
     
     def get_mask_file(self):
+        """
+        Handles ``yaml_config.cuffdiff_options.mask-file: from_conditions``.
+        """
         try:
             option = self.prog_yargs['mask-file']
             if option == 'from_conditions':
@@ -785,6 +836,9 @@ Manage a single call to cuffdiff and store associated run data.
             return False
         
     def get_labels(self):
+        """
+        Handles ``yaml_config.cuffdiff_options.labels: from_conditions``.
+        """
         option = self.prog_yargs['labels']
         if option == 'from_conditions':
             labels = []
@@ -795,6 +849,9 @@ Manage a single call to cuffdiff and store associated run data.
             return option
         
     def get_cuffmerge_gtf(self):
+        """
+        Handles ``yaml_config.cuffdiff_options.positional_args.transcripts_gtf: from_conditions``.
+        """
         cm_call_id = self.call_id.replace('cuffdiff','cuffmerge')
         try:
             cm_call = self.yargs.call_records[cm_call_id]
