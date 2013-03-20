@@ -32,8 +32,15 @@ Install using standard ``setup.py`` script: ::
   $ cd blacktie
   $ [sudo] python setup.py install
 
-Installing without using ``git`` for the download
----------------------------------------------------------
+Use ``pip`` to obtain the package from `PyPI <https://pypi.python.org/pypi>`_
+------------------------------------------------------------------------------
+::
+
+  $ [sudo] pip install blacktie Mako PyYAML pprocess
+
+
+Installing without using ``git`` or ``pip`` for the download
+------------------------------------------------------------
 After installing the requirements: ::
 
   $ wget https://github.com/xguse/blacktie/archive/master.zip

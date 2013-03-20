@@ -2,8 +2,9 @@
 ####################
 blacktie
 ####################
-Main executable hook.  This exposes script to analyze with the pipeline.
--------------
+Main executable hook.
+---------------------
+This exposes script to analyze with the pipeline.
 """
 
 from blacktie.scripts.blacktie_pipeline import *

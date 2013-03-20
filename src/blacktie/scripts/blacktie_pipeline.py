@@ -51,11 +51,11 @@ from blacktie.utils.calls import *
 
 def map_condition_groups(yargs):
     """
-    *GIVEN:*
+    **GIVEN:**
         * ``yargs`` = argument object generated from the yaml config file
-    *DOES:*
+    **DOES:**
         * creates a Bunch obj ``groups`` with key='group_id' from ``yargs``, value=list(condition_queue objects with 'group_id')
-    *RETURNS:*
+    **RETURNS:**
         * ``groups``
     """
     groups = defaultdict(list)

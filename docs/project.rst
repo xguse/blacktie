@@ -13,7 +13,7 @@ Lessons Learned
 * *watch this space*
 
 I want to collaborate with you!
-------------------------------
+-------------------------------
 Contact me at wadunn83@gmail.com if you are a Python coder and want to or already have made improvements on this code.
 
 
