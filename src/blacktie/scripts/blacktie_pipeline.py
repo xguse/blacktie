@@ -74,7 +74,9 @@ def main():
     desc = """This script reads options from a yaml formatted file and organizes the execution of tophat/cufflinks runs for multiple condition sets."""
 
     parser = argparse.ArgumentParser(description=desc)
-
+    
+    parser.add_argument('--version', action='version', version='%(prog)s 0.1_dev',
+                        help="""Print version number.""")    
     parser.add_argument('config_file', type=str,
                         help="""Path to a yaml formatted config file containing setup options for the runs.""")
     parser.add_argument('--prog', type=str, choices=['tophat','cufflinks','cuffmerge','cuffdiff','all'], default='tophat',
