@@ -27,7 +27,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="Blacktie 0.1_dev documentation" href="index.html" />
     <link rel="next" title="Blacktie Auto-Generated Code Documentation" href="code.html" />
-    <link rel="prev" title="Project Summary" href="project.html" /> 
+    <link rel="prev" title="Installation" href="install.html" /> 
   </head>
   <body>
     <div class="related">
@@ -43,7 +43,7 @@
           <a href="code.html" title="Blacktie Auto-Generated Code Documentation"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="project.html" title="Project Summary"
+          <a href="install.html" title="Installation"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">Blacktie 0.1_dev documentation</a> &raquo;</li> 
       </ul>
@@ -64,7 +64,9 @@
 <div class="highlight-python"><pre>$ blacktie</pre>
 </div>
 <p>You should see the help text for blacktie and it should look something like this:</p>
-<div class="highlight-none"><div class="highlight"><pre>usage: blacktie [-h] [--prog {tophat,cufflinks,cuffmerge,cuffdiff,all}]
+<div class="highlight-none"><div class="highlight"><pre>$ blacktie -h
+
+usage: blacktie [-h] [--prog {tophat,cufflinks,cuffmerge,cuffdiff,all}]
                 [--hide-logs] [--mode {analyze,dry_run,qsub_script}]
                 config_file
 
@@ -92,6 +94,19 @@ optional arguments:
 </pre></div>
 </div>
 <p>If this worked, great! Let&#8217;s move on to what all that means.</p>
+<div class="section" id="the-prog-option">
+<h2>The <tt class="docutils literal"><span class="pre">--prog</span></tt> option<a class="headerlink" href="#the-prog-option" title="Permalink to this headline">¶</a></h2>
+<p>This tells <tt class="docutils literal"><span class="pre">blacktie</span></tt> which part of the pipeline you would like to run.  Any part can be run individually as long as the correct files exist.  You can also run the whole thing from <tt class="docutils literal"><span class="pre">tophat</span></tt> to <tt class="docutils literal"><span class="pre">cuffdiff</span></tt> in one fell swoop if you like!</p>
+</div>
+<div class="section" id="the-hide-logs-option">
+<h2>The <tt class="docutils literal"><span class="pre">--hide-logs</span></tt> option<a class="headerlink" href="#the-hide-logs-option" title="Permalink to this headline">¶</a></h2>
+<p>This names your log files so that they are hidden in &#8220;<a href="#id1"><span class="problematic" id="id2">*</span></a>nix&#8221; systems.</p>
+</div>
+<div class="section" id="the-modes-option">
+<h2>The <tt class="docutils literal"><span class="pre">--modes</span></tt> option<a class="headerlink" href="#the-modes-option" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">blacktie</span></tt> can run in three modes.  The first (<tt class="docutils literal"><span class="pre">analyze</span></tt>) actually runs the pipeline and does the analyses.  However, it can be useful to simply see what WOULD be done and make sure that <tt class="docutils literal"><span class="pre">`blacktie</span></tt> is producing command line calls that match what you THINK it should.  For this use the <tt class="docutils literal"><span class="pre">dry_run</span></tt> mode.</p>
+<p>Further, if you are working on a compute cluster running something like a &#8220;Sun Grid Engine&#8221; (SGE) that you submit jobs to with <tt class="docutils literal"><span class="pre">qsub</span></tt>, it may not be a good idea to submit a job running all of <tt class="docutils literal"><span class="pre">blacktie</span></tt> as a single <tt class="docutils literal"><span class="pre">qsub</span></tt> job.  For this it can be helpful to have <tt class="docutils literal"><span class="pre">blacktie</span></tt> write all of your <tt class="docutils literal"><span class="pre">qsub</span></tt> scripts for you based on a template. Each bash script represents a single program call to the tophat/cufflinks suite.</p>
+</div>
 <div class="section" id="the-configuration-file">
 <h2>The configuration file<a class="headerlink" href="#the-configuration-file" title="Permalink to this headline">¶</a></h2>
 <p>The configuration file is a <a class="reference external" href="http://en.wikipedia.org/wiki/YAML">YAML-based</a> document that is where we will store all of the complexity of the options, input and output files of the typical tophat/cufflinks workflow.  This way we have though about what we want to do with our RNA-seq data from start to finish before we actually start the analysis.  Also, this config file acts as a check on our poor memory.  If you get strange results you don&#8217;t have to worry about whether you entered the samples backwards since you can go back to this config file and see exactly what files and settings were used.</p>
@@ -468,11 +483,37 @@ optional arguments:
 </div>
 <div class="section" id="using-e-mail-notifications">
 <h2>Using e-mail notifications<a class="headerlink" href="#using-e-mail-notifications" title="Permalink to this headline">¶</a></h2>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ipsum risus, scelerisque vitae consequat sit amet, placerat vitae turpis. Aliquam cursus justo vitae quam convallis vel auctor dui tristique. Nam justo nisl, pretium a scelerisque dictum, tincidunt sit amet diam. Donec neque nisi, ornare quis varius nec, scelerisque nec tellus. Maecenas neque purus, lobortis ac malesuada ut, vestibulum non dui. Proin tempor dolor est, quis facilisis orci. Maecenas varius dolor nec urna pellentesque adipiscing. Quisque mi lorem, fringilla non elementum quis, cursus sed nibh. Phasellus pellentesque turpis non enim interdum eget molestie purus interdum. Nunc id nunc justo, sit amet euismod velit.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">For now, only gmail addresses can be used to <em>send</em> notifications because the server settings are hardcoded into the functions right now.  I will soon add this info to the config file and then any smtp server will be usable.  <em>Any</em> email can be used as the recipient.</p>
 </div>
-<div class="section" id="using-different-modes">
-<h2>Using different modes<a class="headerlink" href="#using-different-modes" title="Permalink to this headline">¶</a></h2>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ipsum risus, scelerisque vitae consequat sit amet, placerat vitae turpis. Aliquam cursus justo vitae quam convallis vel auctor dui tristique. Nam justo nisl, pretium a scelerisque dictum, tincidunt sit amet diam. Donec neque nisi, ornare quis varius nec, scelerisque nec tellus. Maecenas neque purus, lobortis ac malesuada ut, vestibulum non dui. Proin tempor dolor est, quis facilisis orci. Maecenas varius dolor nec urna pellentesque adipiscing. Quisque mi lorem, fringilla non elementum quis, cursus sed nibh. Phasellus pellentesque turpis non enim interdum eget molestie purus interdum. Nunc id nunc justo, sit amet euismod velit.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Also: gmail&#8217;s 2-step authentication will NOT work.  Sorry.  I will look into how to deal with that eventually.</p>
+</div>
+<p>You will need to provide your password in order to use the email notifications but it is not a good idea to store human readable passwords lying around your system.  So the file that is used to store your password must contain a version of your password that has been encoded in base64.  This will scramble your password beyond most people&#8217;s ability to read it as a password as long as you don&#8217;t name it something silly like <tt class="docutils literal"><span class="pre">password_file.txt</span></tt>.</p>
+<p>The help text for <tt class="docutils literal"><span class="pre">blacktie-encode</span></tt> is:</p>
+<div class="highlight-none"><div class="highlight"><pre>$ blacktie-encode -h
+
+usage: blacktie-encode [-h] input_file
+
+This script takes a path to a file where you have placed your password for the
+email you want blacktie to use as the &quot;sender&quot; in its notification emails. It
+will replace the file with one containing your password once it has encoded it
+out of human readable plain-text into seemingly meaningless text. **THIS IS
+NOT FOOLPROOF:** If someone knows exactly what to look for they might figure
+it out. ALWAYS use good password practices and never use the same password for
+multiple important accounts!
+
+positional arguments:
+  input_file  Path to a file where you have placed your password for the email
+              you want blacktie to use as the &quot;sender&quot; in its notification
+              emails.
+
+optional arguments:
+  -h, --help  show this help message and exit
+</pre></div>
+</div>
 </div>
 </div>
 <div class="section" id="tutorial">
@@ -489,17 +530,19 @@ optional arguments:
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Getting started</a><ul>
+<li><a class="reference internal" href="#the-prog-option">The <tt class="docutils literal"><span class="pre">--prog</span></tt> option</a></li>
+<li><a class="reference internal" href="#the-hide-logs-option">The <tt class="docutils literal"><span class="pre">--hide-logs</span></tt> option</a></li>
+<li><a class="reference internal" href="#the-modes-option">The <tt class="docutils literal"><span class="pre">--modes</span></tt> option</a></li>
 <li><a class="reference internal" href="#the-configuration-file">The configuration file</a></li>
 <li><a class="reference internal" href="#using-e-mail-notifications">Using e-mail notifications</a></li>
-<li><a class="reference internal" href="#using-different-modes">Using different modes</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#tutorial">Tutorial</a></li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="project.html"
-                        title="previous chapter">Project Summary</a></p>
+  <p class="topless"><a href="install.html"
+                        title="previous chapter">Installation</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="code.html"
                         title="next chapter">Blacktie Auto-Generated Code Documentation</a></p>
@@ -538,7 +581,7 @@ optional arguments:
           <a href="code.html" title="Blacktie Auto-Generated Code Documentation"
              >next</a> |</li>
         <li class="right" >
-          <a href="project.html" title="Project Summary"
+          <a href="install.html" title="Installation"
              >previous</a> |</li>
         <li><a href="index.html">Blacktie 0.1_dev documentation</a> &raquo;</li> 
       </ul>

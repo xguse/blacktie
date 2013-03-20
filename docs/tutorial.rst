@@ -10,6 +10,8 @@ You should see the help text for blacktie and it should look something like this
 
 .. code-block:: none
   
+  $ blacktie -h
+  
   usage: blacktie [-h] [--prog {tophat,cufflinks,cuffmerge,cuffdiff,all}]
 		  [--hide-logs] [--mode {analyze,dry_run,qsub_script}]
 		  config_file
@@ -37,6 +39,20 @@ You should see the help text for blacktie and it should look something like this
 			  analyze)
 
 If this worked, great! Let's move on to what all that means.
+
+The ``--prog`` option
+---------------------
+This tells ``blacktie`` which part of the pipeline you would like to run.  Any part can be run individually as long as the correct files exist.  You can also run the whole thing from ``tophat`` to ``cuffdiff`` in one fell swoop if you like!
+
+The ``--hide-logs`` option
+--------------------------
+This names your log files so that they are hidden in "*nix" systems.
+
+The ``--modes`` option
+----------------------
+``blacktie`` can run in three modes.  The first (``analyze``) actually runs the pipeline and does the analyses.  However, it can be useful to simply see what WOULD be done and make sure that ```blacktie`` is producing command line calls that match what you THINK it should.  For this use the ``dry_run`` mode. 
+
+Further, if you are working on a compute cluster running something like a "Sun Grid Engine" (SGE) that you submit jobs to with ``qsub``, it may not be a good idea to submit a job running all of ``blacktie`` as a single ``qsub`` job.  For this it can be helpful to have ``blacktie`` write all of your ``qsub`` scripts for you based on a template. Each bash script represents a single program call to the tophat/cufflinks suite.
 
 The configuration file
 ----------------------
@@ -235,11 +251,37 @@ Here is a dummy example of a config file:
 
 Using e-mail notifications
 --------------------------
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ipsum risus, scelerisque vitae consequat sit amet, placerat vitae turpis. Aliquam cursus justo vitae quam convallis vel auctor dui tristique. Nam justo nisl, pretium a scelerisque dictum, tincidunt sit amet diam. Donec neque nisi, ornare quis varius nec, scelerisque nec tellus. Maecenas neque purus, lobortis ac malesuada ut, vestibulum non dui. Proin tempor dolor est, quis facilisis orci. Maecenas varius dolor nec urna pellentesque adipiscing. Quisque mi lorem, fringilla non elementum quis, cursus sed nibh. Phasellus pellentesque turpis non enim interdum eget molestie purus interdum. Nunc id nunc justo, sit amet euismod velit.
+.. Note:: For now, only gmail addresses can be used to *send* notifications because the server settings are hardcoded into the functions right now.  I will soon add this info to the config file and then any smtp server will be usable.  *Any* email can be used as the recipient. 
 
-Using different modes
----------------------
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ipsum risus, scelerisque vitae consequat sit amet, placerat vitae turpis. Aliquam cursus justo vitae quam convallis vel auctor dui tristique. Nam justo nisl, pretium a scelerisque dictum, tincidunt sit amet diam. Donec neque nisi, ornare quis varius nec, scelerisque nec tellus. Maecenas neque purus, lobortis ac malesuada ut, vestibulum non dui. Proin tempor dolor est, quis facilisis orci. Maecenas varius dolor nec urna pellentesque adipiscing. Quisque mi lorem, fringilla non elementum quis, cursus sed nibh. Phasellus pellentesque turpis non enim interdum eget molestie purus interdum. Nunc id nunc justo, sit amet euismod velit.
+.. warning:: Also: gmail's 2-step authentication will NOT work.  Sorry.  I will look into how to deal with that eventually.
+
+You will need to provide your password in order to use the email notifications but it is not a good idea to store human readable passwords lying around your system.  So the file that is used to store your password must contain a version of your password that has been encoded in base64.  This will scramble your password beyond most people's ability to read it as a password as long as you don't name it something silly like ``password_file.txt``.   
+
+The help text for ``blacktie-encode`` is:
+
+.. code-block:: none
+
+  $ blacktie-encode -h
+  
+  usage: blacktie-encode [-h] input_file
+
+  This script takes a path to a file where you have placed your password for the
+  email you want blacktie to use as the "sender" in its notification emails. It
+  will replace the file with one containing your password once it has encoded it
+  out of human readable plain-text into seemingly meaningless text. **THIS IS
+  NOT FOOLPROOF:** If someone knows exactly what to look for they might figure
+  it out. ALWAYS use good password practices and never use the same password for
+  multiple important accounts!
+
+  positional arguments:
+    input_file  Path to a file where you have placed your password for the email
+		you want blacktie to use as the "sender" in its notification
+		emails.
+
+  optional arguments:
+    -h, --help  show this help message and exit
+
+
 
 Tutorial
 ===============
