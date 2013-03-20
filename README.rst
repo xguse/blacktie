@@ -1,4 +1,4 @@
-Welcome to Blactie!
+Welcome to Blacktie!
 ==========================
 
 This package is functional but under heavy development so you may want to periodically
