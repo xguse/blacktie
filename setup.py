@@ -6,7 +6,7 @@ README = open(os.path.join(here, 'README.rst')).read()
 NEWS = open(os.path.join(here, 'NEWS.txt')).read()
 
 
-version = '0.1'
+version = '0.1_dev'
 
 install_requires = [ 'PyYAML',
     # List your project dependencies here.
@@ -26,7 +26,7 @@ setup(name='blacktie',
     author='Augustine Dunn',
     author_email='wadunn83@gmail.com',
     url='https://github.com/xguse/',
-    license='GPL',
+    license='GPL 3',
     packages=find_packages('src'),
     package_dir = {'': 'src'},include_package_data=True,
     zip_safe=False,
