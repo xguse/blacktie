@@ -2,7 +2,7 @@
 ####################
 blacktie
 ####################
-Project root.
+Main executable hook.  This exposes script to analyze with the pipeline.
 -------------
 """
 
