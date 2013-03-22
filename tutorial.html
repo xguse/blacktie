@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Getting started &mdash; Blacktie 0.1_dev documentation</title>
+    <title>Getting started &mdash; Blacktie 0.1.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.1_dev',
+        VERSION:     '0.1.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Blacktie 0.1_dev documentation" href="index.html" />
+    <link rel="top" title="Blacktie 0.1.1 documentation" href="index.html" />
     <link rel="next" title="Blacktie Auto-Generated Code Documentation" href="code.html" />
     <link rel="prev" title="Installation" href="install.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="install.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Blacktie 0.1_dev documentation</a> &raquo;</li> 
+        <li><a href="index.html">Blacktie 0.1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -400,7 +400,11 @@ rm -rf <span class="nv">$MYSCRATCH</span>
 179
 180
 181
-182</pre></div></td><td class="code"><div class="highlight"><pre><span class="c1"># The document starts after the &#39;---&#39;</span>
+182
+183
+184
+185
+186</pre></div></td><td class="code"><div class="highlight"><pre><span class="c1"># The document starts after the &#39;---&#39;</span>
 
 <span class="c1"># By the way: everything after a &#39;#&#39; on a line</span>
 <span class="c1"># will be ignored by the program and acts as a</span>
@@ -411,12 +415,15 @@ rm -rf <span class="nv">$MYSCRATCH</span>
 <span class="c1"># many or all stages of the run</span>
 <span class="l-Scalar-Plain">run_options</span><span class="p-Indicator">:</span>
   <span class="l-Scalar-Plain">base_dir</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/project/base_dir</span>
-  <span class="l-Scalar-Plain">run_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">False</span>         <span class="c1">#  name your run: if false; uses current date/time for uniqe run_id everytime</span>
+  <span class="l-Scalar-Plain">run_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">False</span>            <span class="c1">#  name your run: if false; uses current date/time for uniqe run_id everytime</span>
   <span class="l-Scalar-Plain">bowtie_indexes_dir</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/bowtie2_indexes</span> 
   <span class="l-Scalar-Plain">email_info</span><span class="p-Indicator">:</span>
-    <span class="l-Scalar-Plain">sender</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_me@gmail.com</span>           <span class="c1"># for now only sending from gmail accounts is supported (will change soon)</span>
+    <span class="l-Scalar-Plain">sender</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_me@gmail.com</span>           
     <span class="l-Scalar-Plain">to</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">to_you@email.com</span>
     <span class="l-Scalar-Plain">li</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/file/containing/base64_encoded/login_info</span>      <span class="c1"># base64_encoded pswrd for from_me@email.com</span>
+  <span class="l-Scalar-Plain">custom_smtp</span><span class="p-Indicator">:</span> 
+    <span class="l-Scalar-Plain">host</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">smtp.gmail.com</span>   <span class="c1"># or what ever your email smtp server is</span>
+    <span class="l-Scalar-Plain">port</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">587</span>              <span class="c1"># or which ever port your smtp server uses</span>
 
 
 
@@ -476,9 +483,10 @@ rm -rf <span class="nv">$MYSCRATCH</span>
 <span class="l-Scalar-Plain">cufflinks_options</span><span class="p-Indicator">:</span>
   <span class="l-Scalar-Plain">o</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
   <span class="l-Scalar-Plain">p</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">7</span>
-  <span class="l-Scalar-Plain">GTF-guide</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+  <span class="l-Scalar-Plain">GTF-guide</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>  <span class="c1"># If you want to use annotation as *TRUTH* set this to False and set &#39;GTF&#39; to &#39;from_conditions&#39;</span>
+  <span class="l-Scalar-Plain">GTF</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">False</span>                  <span class="c1"># if an option set to false, it will be ommited from the command string </span>
   <span class="l-Scalar-Plain">3-overhang-tolerance</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">5000</span>
-  <span class="l-Scalar-Plain">frag-bias-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span> <span class="c1"># if not False; path to genome fasta</span>
+  <span class="l-Scalar-Plain">frag-bias-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span> 
   <span class="l-Scalar-Plain">multi-read-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
   <span class="l-Scalar-Plain">upper-quartile-norm</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
   <span class="l-Scalar-Plain">positional_args</span><span class="p-Indicator">:</span>
@@ -584,16 +592,24 @@ rm -rf <span class="nv">$MYSCRATCH</span>
 <span class="nn">...</span>
 </pre></div>
 </td></tr></table></div>
+<div class="admonition-todo admonition" id="index-0">
+<p class="first admonition-title">Todo</p>
+<p class="last">Add the slots for custom email server options.</p>
+</div>
 </div>
 <div class="section" id="using-e-mail-notifications">
 <h2>Using e-mail notifications<a class="headerlink" href="#using-e-mail-notifications" title="Permalink to this headline">¶</a></h2>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">For now, only gmail addresses can be used to <em>send</em> notifications because the server settings are hardcoded into the functions right now.  I will soon add this info to the config file and then any smtp server will be usable.  <em>Any</em> email can be used as the recipient.</p>
+<p class="last">New in vX.X: any smtp server should now be usable if you code the host and port into the yaml config file.  <em>Any</em> email can be used as the recipient.</p>
+</div>
+<div class="admonition-todo admonition" id="index-1">
+<p class="first admonition-title">Todo</p>
+<p class="last">change vX.X to actual version number about email server</p>
 </div>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">Also: gmail&#8217;s 2-step authentication will NOT work.  Sorry.  I will look into how to deal with that eventually.</p>
+<p class="last">gmail&#8217;s 2-step authentication will NOT work.  Sorry.  I will look into how to deal with that eventually.</p>
 </div>
 <p>You will need to provide your password in order to use the email notifications but it is not a good idea to store human readable passwords lying around your system.  So the file that is used to store your password must contain a version of your password that has been encoded in base64.  This will scramble your password beyond most people&#8217;s ability to read it as a password as long as you don&#8217;t name it something silly like <tt class="docutils literal"><span class="pre">password_file.txt</span></tt>.</p>
 <p>The help text for <tt class="docutils literal"><span class="pre">blacktie-encode</span></tt> is:</p>
@@ -687,7 +703,7 @@ optional arguments:
         <li class="right" >
           <a href="install.html" title="Installation"
              >previous</a> |</li>
-        <li><a href="index.html">Blacktie 0.1_dev documentation</a> &raquo;</li> 
+        <li><a href="index.html">Blacktie 0.1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

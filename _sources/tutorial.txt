@@ -78,12 +78,15 @@ Here is a dummy example of a config file:
    :language: yaml
    :linenos:
 
+.. todo:: Add the slots for custom email server options.
 
 Using e-mail notifications
 --------------------------
-.. Note:: For now, only gmail addresses can be used to *send* notifications because the server settings are hardcoded into the functions right now.  I will soon add this info to the config file and then any smtp server will be usable.  *Any* email can be used as the recipient. 
+.. Note:: New in vX.X: any smtp server should now be usable if you code the host and port into the yaml config file.  *Any* email can be used as the recipient. 
 
-.. warning:: Also: gmail's 2-step authentication will NOT work.  Sorry.  I will look into how to deal with that eventually.
+.. todo:: change vX.X to actual version number about email server
+
+.. warning:: gmail's 2-step authentication will NOT work.  Sorry.  I will look into how to deal with that eventually.
 
 You will need to provide your password in order to use the email notifications but it is not a good idea to store human readable passwords lying around your system.  So the file that is used to store your password must contain a version of your password that has been encoded in base64.  This will scramble your password beyond most people's ability to read it as a password as long as you don't name it something silly like ``password_file.txt``.   
 
