@@ -53,6 +53,11 @@ def mkdirp(path):
 def runExternalApp(progName,argStr):
     """
     Convenience func to handle calling and monitoring output of external programs.
+    
+    :param progName: name of system program command
+    :param argStr: string containing command line options for ``progName``
+    
+    :returns: subprocess.communicate object
     """
     
     # Ensure program is callable.
