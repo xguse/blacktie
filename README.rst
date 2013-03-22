@@ -23,6 +23,11 @@ I have not had time to fill in ALL the doc strings but updating them regularly.
 If you want to use/contribute before the docs are complete, please feel free to contact me at 
 wadunn83@gmail.com for guidance.
 
+Issue tracking
+--------------
+If you find issues, bugs, or have feature requests, please go here to submit them: https://github.com/xguse/blacktie/issues
+
+
 Usage
 -----
 ::

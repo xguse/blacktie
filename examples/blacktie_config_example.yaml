@@ -9,12 +9,15 @@
 # many or all stages of the run
 run_options:
   base_dir: /path/to/project/base_dir
-  run_id: False         #  name your run: if false; uses current date/time for uniqe run_id everytime
+  run_id: False            #  name your run: if false; uses current date/time for uniqe run_id everytime
   bowtie_indexes_dir: /path/to/bowtie2_indexes 
   email_info:
-    sender: from_me@gmail.com           # for now only sending from gmail accounts is supported (will change soon)
+    sender: from_me@gmail.com           
     to: to_you@email.com
     li: /path/to/file/containing/base64_encoded/login_info      # base64_encoded pswrd for from_me@email.com
+  custom_smtp: 
+    host: smtp.gmail.com   # or what ever your email smtp server is
+    port: 587              # or which ever port your smtp server uses
 
 
 
@@ -74,9 +77,10 @@ tophat_options:
 cufflinks_options:
   o: from_conditions
   p: 7
-  GTF-guide: from_conditions
+  GTF-guide: from_conditions  # If you want to use annotation as *TRUTH* set this to False and set 'GTF' to 'from_conditions'
+  GTF: False                  # if an option set to false, it will be ommited from the command string 
   3-overhang-tolerance: 5000
-  frag-bias-correct: from_conditions # if not False; path to genome fasta
+  frag-bias-correct: from_conditions 
   multi-read-correct: True
   upper-quartile-norm: True
   positional_args:

@@ -6,9 +6,9 @@ README = open(os.path.join(here, 'README.rst')).read()
 NEWS = open(os.path.join(here, 'NEWS.txt')).read()
 
 
-version = '0.1_dev'
+version = '0.1.1'
 
-install_requires = [ 'PyYAML',
+install_requires = [ 'PyYAML', 'Mako',
     # List your project dependencies here.
     # For more details, see:
     # http://packages.python.org/distribute/setuptools.html#declaring-dependencies
