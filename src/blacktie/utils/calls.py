@@ -439,7 +439,7 @@ class CufflinksCall(BaseCall):
 
         :returns: an initialized ``CufflinksCall`` object
         
-        .. todo:: add support for --GTF in addition to currently supported --GTF-guide
+        .. todo:: **DONE** add support for --GTF in addition to currently supported --GTF-guide
         """
 
         self.prog_name = 'cufflinks'
@@ -473,7 +473,7 @@ class CufflinksCall(BaseCall):
         """
         Makes sure that conflicting options were not imported from yaml config file.
         
-        .. todo:: GTF and GTF-guide should not be used together but both can be ommited
+        .. todo:: **DONE** GTF and GTF-guide should not be used together but both can be ommited
         """
         options = self.prog_yargs
         

@@ -5,6 +5,9 @@ I want to collaborate with you!
 -------------------------------
 Contact me at wadunn83@gmail.com if you are a Python coder and want to or already have made improvements on this code.
 
+Issue tracking
+--------------
+If you find issues, bugs, or have feature requests, please go here to submit them: https://github.com/xguse/blacktie/issues
 
 Goals
 -----
@@ -14,7 +17,7 @@ Goals
 * ... *more and better to come* ...
 
 
-Current Features:
+Current Features
 -----------------
 * simple command line interface allows almost ANYBODY to fully analyze RNA-seq data with tophat/cufflinks
 * get email updates through gmail sender address
@@ -22,13 +25,14 @@ Current Features:
 * ability to generate SGE qsub-able scripts instead of running the system calls itself
 * ** and more! **
 
-Future Features:
+Future Features
 ----------------
 * email updates from arbitrary smtp servers
 * preliminary cummeRbund analysis and visualization
 * ** more soon... **
 
 
-ToDo List:
+ToDo List
 ----------
+
 .. todolist::

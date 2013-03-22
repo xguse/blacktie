@@ -5,6 +5,9 @@ I want to collaborate with you!
 -------------------------------
 Contact me at wadunn83@gmail.com if you are a Python coder and want to or already have made improvements on this code.
 
+Issue tracking
+--------------
+If you find issues, bugs, or have feature requests, please go here to submit them: https://github.com/xguse/blacktie/issues
 
 Goals
 -----
