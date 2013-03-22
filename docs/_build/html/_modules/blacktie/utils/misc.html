@@ -103,28 +103,31 @@
     <span class="k">return</span> <span class="n">inspect</span><span class="o">.</span><span class="n">stack</span><span class="p">()[</span><span class="mi">1</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span>
 
 </div>
-<div class="viewcode-block" id="email_notification"><a class="viewcode-back" href="../../../code.html#blacktie.utils.misc.email_notification">[docs]</a><span class="k">def</span> <span class="nf">email_notification</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span><span class="n">to</span><span class="p">,</span><span class="n">subject</span><span class="p">,</span><span class="n">txt</span><span class="p">,</span><span class="n">pw</span><span class="p">):</span>
+<div class="viewcode-block" id="email_notification"><a class="viewcode-back" href="../../../code.html#blacktie.utils.misc.email_notification">[docs]</a><span class="k">def</span> <span class="nf">email_notification</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span><span class="n">to</span><span class="p">,</span><span class="n">subject</span><span class="p">,</span><span class="n">txt</span><span class="p">,</span><span class="n">pw</span><span class="p">,</span><span class="n">server_info</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    *GIVEN*:</span>
-<span class="sd">        * ``sender`` = email address of sender</span>
-<span class="sd">        * ``to`` = email addres of recipient</span>
-<span class="sd">        * ``subject`` = subject text</span>
-<span class="sd">        * ``txt`` = body text</span>
-<span class="sd">        * ``pw`` = password of ``sender`` </span>
-<span class="sd">    *DOES*:</span>
-<span class="sd">        * Sends email to recipient using GMAIL only for now.</span>
-<span class="sd">        * TODO: make this adjustable for other emails</span>
-<span class="sd">    *RETURNS*:</span>
-<span class="sd">        * ``None``</span>
+<span class="sd">    Sends email to recipient using GMAIL server by default but will now accept ``server_info`` to customize this.</span>
+<span class="sd">    </span>
+<span class="sd">    :param sender: email address of sender</span>
+<span class="sd">    :param to: email addres of recipient</span>
+<span class="sd">    :param subject: subject text</span>
+<span class="sd">    :param txt: body text</span>
+<span class="sd">    :param pw: password of ``sender``</span>
+<span class="sd">    :param server_info: dictionary = {&#39;host&#39;:``str``,&#39;port&#39;:``int``}</span>
+
+<span class="sd">    :returns: None</span>
+<span class="sd">    </span>
+<span class="sd">    .. todo:: **DONE** make ``email_notification()`` adjustable for other email servers</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c"># TODO: make this adjustable for other emails</span>
+    
     <span class="n">msg</span> <span class="o">=</span> <span class="n">MIMEMultipart</span><span class="p">()</span>
     <span class="n">msg</span><span class="p">[</span><span class="s">&#39;From&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sender</span>
     <span class="n">msg</span><span class="p">[</span><span class="s">&#39;To&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to</span>
     <span class="n">msg</span><span class="p">[</span><span class="s">&#39;Subject&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">subject</span>
     <span class="n">msg</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="n">MIMEText</span><span class="p">(</span><span class="n">txt</span><span class="p">))</span>
-    
-    <span class="n">server</span> <span class="o">=</span> <span class="n">smtplib</span><span class="o">.</span><span class="n">SMTP</span><span class="p">(</span><span class="s">&quot;smtp.gmail.com&quot;</span><span class="p">,</span> <span class="mi">587</span><span class="p">)</span>    
+
+    <span class="n">host</span> <span class="o">=</span> <span class="n">server_info</span><span class="p">[</span><span class="s">&#39;host&#39;</span><span class="p">]</span>
+    <span class="n">port</span> <span class="o">=</span> <span class="n">server_info</span><span class="p">[</span><span class="s">&#39;port&#39;</span><span class="p">]</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">smtplib</span><span class="o">.</span><span class="n">SMTP</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
     
     <span class="k">try</span><span class="p">:</span>
         <span class="n">server</span><span class="o">.</span><span class="n">ehlo</span><span class="p">()</span>
