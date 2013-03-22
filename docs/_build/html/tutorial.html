@@ -400,7 +400,8 @@ rm -rf <span class="nv">$MYSCRATCH</span>
 179
 180
 181
-182</pre></div></td><td class="code"><div class="highlight"><pre><span class="c1"># The document starts after the &#39;---&#39;</span>
+182
+183</pre></div></td><td class="code"><div class="highlight"><pre><span class="c1"># The document starts after the &#39;---&#39;</span>
 
 <span class="c1"># By the way: everything after a &#39;#&#39; on a line</span>
 <span class="c1"># will be ignored by the program and acts as a</span>
@@ -476,9 +477,10 @@ rm -rf <span class="nv">$MYSCRATCH</span>
 <span class="l-Scalar-Plain">cufflinks_options</span><span class="p-Indicator">:</span>
   <span class="l-Scalar-Plain">o</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
   <span class="l-Scalar-Plain">p</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">7</span>
-  <span class="l-Scalar-Plain">GTF-guide</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+  <span class="l-Scalar-Plain">GTF-guide</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>  <span class="c1"># If you want to use annotation as *TRUTH* set this to False and set &#39;GTF&#39; to &#39;from_conditions&#39;</span>
+  <span class="l-Scalar-Plain">GTF</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">False</span>                  <span class="c1"># if an option set to false, it will be ommited from the command string </span>
   <span class="l-Scalar-Plain">3-overhang-tolerance</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">5000</span>
-  <span class="l-Scalar-Plain">frag-bias-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span> <span class="c1"># if not False; path to genome fasta</span>
+  <span class="l-Scalar-Plain">frag-bias-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span> 
   <span class="l-Scalar-Plain">multi-read-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
   <span class="l-Scalar-Plain">upper-quartile-norm</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
   <span class="l-Scalar-Plain">positional_args</span><span class="p-Indicator">:</span>
