@@ -104,6 +104,11 @@
 <div class="viewcode-block" id="runExternalApp"><a class="viewcode-back" href="../../../code.html#blacktie.utils.externals.runExternalApp">[docs]</a><span class="k">def</span> <span class="nf">runExternalApp</span><span class="p">(</span><span class="n">progName</span><span class="p">,</span><span class="n">argStr</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convenience func to handle calling and monitoring output of external programs.</span>
+<span class="sd">    </span>
+<span class="sd">    :param progName: name of system program command</span>
+<span class="sd">    :param argStr: string containing command line options for ``progName``</span>
+<span class="sd">    </span>
+<span class="sd">    :returns: subprocess.communicate object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     
     <span class="c"># Ensure program is callable.</span>
