@@ -49,7 +49,7 @@ class SystemCallError(BlacktieError):
 
 
 class SanityCheckError(BlacktieError):
-    """When values that "should" not be possible happen; like if a variable was changed unexpectedly."""
+    """When a 'state check' comes back as conflicting or nonsensical."""
     pass
 
 class UnexpectedValueError(BlacktieError):
