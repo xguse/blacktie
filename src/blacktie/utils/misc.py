@@ -52,28 +52,31 @@ def whoami():
     return inspect.stack()[1][3]
 
 
-def email_notification(sender,to,subject,txt,pw):
+def email_notification(sender,to,subject,txt,pw,server_info):
     """
-    *GIVEN*:
-        * ``sender`` = email address of sender
-        * ``to`` = email addres of recipient
-        * ``subject`` = subject text
-        * ``txt`` = body text
-        * ``pw`` = password of ``sender`` 
-    *DOES*:
-        * Sends email to recipient using GMAIL only for now.
-        * TODO: make this adjustable for other emails
-    *RETURNS*:
-        * ``None``
+    Sends email to recipient using GMAIL server by default but will now accept ``server_info`` to customize this.
+    
+    :param sender: email address of sender
+    :param to: email addres of recipient
+    :param subject: subject text
+    :param txt: body text
+    :param pw: password of ``sender``
+    :param server_info: dictionary = {'host':``str``,'port':``int``}
+
+    :returns: None
+    
+    .. todo:: **DONE** make ``email_notification()`` adjustable for other email servers
     """
-    # TODO: make this adjustable for other emails
+    
     msg = MIMEMultipart()
     msg['From'] = sender
     msg['To'] = to
     msg['Subject'] = subject
     msg.attach(MIMEText(txt))
-    
-    server = smtplib.SMTP("smtp.gmail.com", 587)    
+
+    host = server_info['host']
+    port = server_info['port']
+    server = smtplib.SMTP(host, port)
     
     try:
         server.ehlo()
