@@ -75,7 +75,7 @@ def main():
 
     parser = argparse.ArgumentParser(description=desc)
     
-    parser.add_argument('--version', action='version', version='%(prog)s 0.1_dev',
+    parser.add_argument('--version', action='version', version='%(prog)s 0.1.1',
                         help="""Print version number.""")    
     parser.add_argument('config_file', type=str,
                         help="""Path to a yaml formatted config file containing setup options for the runs.""")

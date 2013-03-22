@@ -35,7 +35,7 @@ def main():
 
     parser = argparse.ArgumentParser(description=desc)
 
-    parser.add_argument('--version', action='version', version='%(prog)s 0.1_dev',
+    parser.add_argument('--version', action='version', version='%(prog)s 0.1.1',
                         help="""Print version number.""")
     parser.add_argument('input_file', type=str,
                         help="""Path to a file where you have placed your password for the email
