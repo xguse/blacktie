@@ -72,3 +72,9 @@ Credits
 .. _Buildout: http://www.buildout.org/
 .. _Distribute: http://pypi.python.org/pypi/distribute
 .. _`modern-package-template`: http://pypi.python.org/pypi/modern-package-template
+
+
+.. image:: https://d2weczhvl823v0.cloudfront.net/xguse/blacktie/trend.png
+   :alt: Bitdeli badge
+   :target: https://bitdeli.com/free
+
