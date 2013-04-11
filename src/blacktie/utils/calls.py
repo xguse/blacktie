@@ -91,17 +91,27 @@ class BaseCall(object):
         """
         builds and stores this call's call ID in ``self.call_id``
         """
+        def get_condition_id(condition_dict):
+            """
+            Constructs condition ID
+            :param condition_dict: a dictionary containing consition info like name, replicate_id, etc.
+            :returns: an ID used to set the call_id of this call.
+            """
+            
+            condition_id = "%s_%s" % (self._conditions['name'],self._conditions['replicate_id'])
+            return condition_id
+            
         if isinstance(self._conditions,int) or isinstance(self._conditions,str):
             # this should mean that we are dealing with a "group" type call
             self.experiment_id = self._conditions
             self._conditions = self.yargs.groups[self.experiment_id]
-            condition_names = ['_'.join([x['name'],str(x['replicate_id'])]) for x in self._conditions]
-            call_id = "%s_%s" % (self.prog_name,".".join(condition_names))
+            condition_ids = [get_condition_id(x) for x in self._conditions]
+            call_id = "%s_%s" % (self.prog_name,".".join(condition_ids))
             self.call_id = call_id
 
         elif isinstance(self._conditions,dict):
-            condition_name = self._conditions['name']
-            call_id = "%s_%s" % (self.prog_name,condition_name)
+            condition_id = get_condition_id(self._conditions)
+            call_id = "%s_%s" % (self.prog_name,condition_id)
             self.call_id = call_id
         else:
             raise
