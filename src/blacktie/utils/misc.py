@@ -16,15 +16,34 @@ misc.py
 ####################
 Code facilitating random aspects of this package.
 """
-
+import os
 import sys
 import inspect
 import smtplib
 import base64
 import time
+import re
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
+
+def get_version_number(path_to_setup):
+    """
+    Provides access to current version info contained in setup.py
+    """
+    
+    setup_path = path_to_setup
+    with open(setup_path, 'rb') as f:
+        match = re.search(
+            '\s*[\'"]?version[\'"]?\s*[=:]\s*[\'"]?([^\'",]+)[\'"]?',
+            f.read().decode('utf-8'), re.I)
+
+    if match:
+        version_string = match.group(1)
+        return version_string
+
+    else:
+        print("No version definition found in ", setup_path)
 
 
 class Bunch(dict):
