@@ -87,30 +87,31 @@ class BaseCall(object):
         else:
             pass
 
+    def get_condition_id(self,condition_dict):
+        """
+        Constructs condition ID
+        :param condition_dict: a dictionary containing consition info like name, replicate_id, etc.
+        :returns: an ID used to construct the call_id of a call.
+        """
+        
+        condition_id = "%s_%s" % (self._conditions['name'],self._conditions['replicate_id'])
+        return condition_id
+
     def set_call_id(self):
         """
         builds and stores this call's call ID in ``self.call_id``
         """
-        def get_condition_id(condition_dict):
-            """
-            Constructs condition ID
-            :param condition_dict: a dictionary containing consition info like name, replicate_id, etc.
-            :returns: an ID used to set the call_id of this call.
-            """
-            
-            condition_id = "%s_%s" % (self._conditions['name'],self._conditions['replicate_id'])
-            return condition_id
             
         if isinstance(self._conditions,int) or isinstance(self._conditions,str):
             # this should mean that we are dealing with a "group" type call
             self.experiment_id = self._conditions
             self._conditions = self.yargs.groups[self.experiment_id]
-            condition_ids = [get_condition_id(x) for x in self._conditions]
+            condition_ids = [self.get_condition_id(x) for x in self._conditions]
             call_id = "%s_%s" % (self.prog_name,".".join(condition_ids))
             self.call_id = call_id
 
         elif isinstance(self._conditions,dict):
-            condition_id = get_condition_id(self._conditions)
+            condition_id = self.get_condition_id(self._conditions)
             call_id = "%s_%s" % (self.prog_name,condition_id)
             self.call_id = call_id
         else:
@@ -716,14 +717,14 @@ class CuffmergeCall(BaseCall):
         """
         Supports ``self.get_cufflinks_gtfs()``.
         """
-        cl_call_id = "cufflinks_%s" % (condition['name'])
+        cl_call_id = "cufflinks_%s" % (self.get_condition_id(condition))
         try:
             cl_call = self.yargs.call_records[cl_call_id]
             cl_out_dir = cl_call.out_dir
             gtf_path = "%s/transcripts.gtf" % (cl_out_dir.rstrip('/'))
         except (KeyError,AttributeError) as exp:
             msg = "WARNING: unable to find matching cufflinks call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
-                % (condition['name'])
+                % (self.get_condition_id(condition))
             self.log_msg(log_msg=msg)
 
             # try to guess correct cufflinks out directory
@@ -824,6 +825,24 @@ class CuffdiffCall(BaseCall):
         """
         Handles ``yaml_config.cuffdiff_options.positional_args.sample_bams: from_conditions``.
         """
+        def uniques(seq):
+            seen = set()
+            seen_add = seen.add
+            return [ x for x in seq if x not in seen and not seen_add(x)]
+        
+        def join_replicate_paths(top_level_conditions,paths):
+            # I KNOW this has crappy big O time but the list sizes here are small
+            joined_rep_paths = []
+            for tlc in top_level_conditions:
+                tlc_paths = []
+                for path in paths:
+                    if tlc in path:
+                        tlc_paths.append(path)
+                    else:
+                        pass
+                joined_rep_paths.append(','.join(tlc_paths))
+            return joined_replicate_paths
+        
         #: .. todo:: support replicate bams as: " samp1_r1.bam,samp1_r2.bam samp2_r1.bam,samp2_r2.bam "
         option = self.prog_yargs.positional_args.sample_bams
         if option == 'from_conditions':
@@ -831,7 +850,12 @@ class CuffdiffCall(BaseCall):
             for condition in self._conditions:
                 bam_path = self.get_bam_path(condition)
                 paths.append(bam_path)
-            return ' '.join(paths)
+                
+            # join bam paths that are bio-replicates with commas
+            top_level_conditions = ['_'.join(  path.split('/')[-2].split('_')[:-1]  ) for path in paths]
+            top_level_conditions = uniques(top_level_conditions)
+            joined_replicate_paths = join_replicate_paths(top_level_conditions,paths)
+            return ' '.join(joined_replicate_paths)
         else:
             return option
 
@@ -839,14 +863,14 @@ class CuffdiffCall(BaseCall):
         """
         Supports ``self.get_sample_bams()``.
         """
-        th_call_id = "tophat_%s" % (condition['name'])
+        th_call_id = "tophat_%s" % (self.get_condition_id(condition))
         try:
             th_call = self.yargs.call_records[th_call_id]
             th_out_dir = th_call.out_dir
             bam_path = "%s/accepted_hits.bam" % (th_out_dir.rstrip('/'))
         except (KeyError,AttributeError) as exp:
             msg = "WARNING: unable to find matching tophat call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
-                % (condition['name'])
+                % (self.get_condition_id(condition))
             self.log_msg(log_msg=msg)
 
             # try to guess correct tophat out directory
@@ -892,7 +916,7 @@ class CuffdiffCall(BaseCall):
         if option == 'from_conditions':
             labels = []
             for condition in self._conditions:
-                labels.append(condition['name'])
+                labels.append(self.get_condition_id(condition))
             return ','.join(labels)
         else:
             return option
