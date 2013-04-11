@@ -40,29 +40,13 @@ except ImportError:
 from blacktie.utils.misc import Bunch,bunchify
 from blacktie.utils.misc import email_notification
 from blacktie.utils.misc import get_time
+from blacktie.utils.misc import map_condition_groups
+
 from blacktie.utils.externals import runExternalApp
 from blacktie.utils.externals import mkdirp
+
 from blacktie.utils import errors
 from blacktie.utils.calls import *
-
-
-
-
-
-def map_condition_groups(yargs):
-    """
-    **GIVEN:**
-        * ``yargs`` = argument object generated from the yaml config file
-    **DOES:**
-        * creates a Bunch obj ``groups`` with key='group_id' from ``yargs``, value=list(condition_queue objects with 'group_id')
-    **RETURNS:**
-        * ``groups``
-    """
-    groups = defaultdict(list)
-    for condition in yargs.condition_queue:
-        groups[condition['group_id']].append(condition)
-    groups = Bunch(dict(groups))
-    return groups
 
 
 
@@ -209,10 +193,10 @@ def main():
 
     if args.prog in ['cuffmerge','all']:
         print "[Note] Starting cuffmerge step.\n"
-        for group in yargs.groups:
+        for experiment in yargs.groups:
             
             # Prep cuffmerge call
-            cuffmerge_call = CuffmergeCall(yargs,email_info,run_id,run_logs,conditions=group,mode=args.mode)
+            cuffmerge_call = CuffmergeCall(yargs,email_info,run_id,run_logs,conditions=experiment,mode=args.mode)
             cuffmerge_call.execute()
 
             # record the tophat_call object
@@ -224,10 +208,10 @@ def main():
         
     if args.prog in ['cuffdiff','all']:
         print "[Note] Starting cuffdiff step.\n"
-        for group in yargs.groups:
+        for experiment in yargs.groups:
             
             # Prep cuffmerge call
-            cuffdiff_call = CuffdiffCall(yargs,email_info,run_id,run_logs,conditions=group,mode=args.mode)
+            cuffdiff_call = CuffdiffCall(yargs,email_info,run_id,run_logs,conditions=experiment,mode=args.mode)
             cuffdiff_call.execute()
 
             # record the tophat_call object

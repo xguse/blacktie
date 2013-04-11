@@ -93,9 +93,9 @@ class BaseCall(object):
         """
         if isinstance(self._conditions,int) or isinstance(self._conditions,str):
             # this should mean that we are dealing with a "group" type call
-            self.group_id = self._conditions
-            self._conditions = self.yargs.groups[self.group_id]
-            condition_names = [x['name'] for x in self._conditions]
+            self.experiment_id = self._conditions
+            self._conditions = self.yargs.groups[self.experiment_id]
+            condition_names = ['_'.join([x['name'],str(x['replicate_id'])]) for x in self._conditions]
             call_id = "%s_%s" % (self.prog_name,".".join(condition_names))
             self.call_id = call_id
 
@@ -655,8 +655,8 @@ class CuffmergeCall(BaseCall):
             if len(gtf_path) == 1:
                 gtf_path = gtf_path.pop()
             else:
-                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in group %s do not agree on which "ref-gtf" to use: %s.' \
-                                                    % (self.group_id,gtf_path))
+                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-gtf" to use: %s.' \
+                                                    % (self.experiment_id,gtf_path))
             return gtf_path
         else:
             return option
@@ -672,8 +672,8 @@ class CuffmergeCall(BaseCall):
             if len(genome_path) == 1:
                 genome_path = genome_path.pop()
             else:
-                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in group %s do not agree on which "ref-sequence" to use: %s.' \
-                                                    % (self.group_id,genome_path))
+                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-sequence" to use: %s.' \
+                                                    % (self.experiment_id,genome_path))
             return genome_path
         else:
             return option
@@ -804,8 +804,8 @@ class CuffdiffCall(BaseCall):
             if len(genome_path) == 1:
                 genome_path = genome_path.pop()
             else:
-                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in group %s do not agree on which "ref-sequence" to use: %s.' \
-                                                    % (self.group_id,genome_path))
+                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-sequence" to use: %s.' \
+                                                    % (self.experiment_id,genome_path))
             return genome_path
         else:
             return option
@@ -866,8 +866,8 @@ class CuffdiffCall(BaseCall):
                 if len(mask_path) == 1:
                     mask_path = mask_path.pop()
                 else:
-                    raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in group %s do not agree on which "ref-sequence" to use: %s.' \
-                                                        % (self.group_id,mask_path))
+                    raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-sequence" to use: %s.' \
+                                                        % (self.experiment_id,mask_path))
                 return mask_path
             else:
                 return option
@@ -897,7 +897,7 @@ class CuffdiffCall(BaseCall):
             cm_out_dir = cm_call.out_dir
             gtf_path = "%s/merged.gtf" % (cm_out_dir.rstrip('/'))
         except (KeyError,AttributeError) as exp:
-            msg = "WARNING: unable to find matching cuffmerge call record in memory for group: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
+            msg = "WARNING: unable to find matching cuffmerge call record in memory for experiment: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
                 % (cm_call_id)
             self.log_msg(log_msg=msg)
 

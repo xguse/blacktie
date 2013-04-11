@@ -8,16 +8,16 @@
 # run_options is a dictionary that contains variables that will be needed for
 # many or all stages of the run
 run_options:
-  base_dir: /path/to/project/base_dir
-  run_id: False            #  name your run: if false; uses current date/time for uniqe run_id everytime
-  bowtie_indexes_dir: /path/to/bowtie2_indexes 
-  email_info:
-    sender: from_me@gmail.com           
-    to: to_you@email.com
-    li: /path/to/file/containing/base64_encoded/login_info      # base64_encoded pswrd for from_me@email.com
-  custom_smtp: 
-    host: smtp.gmail.com   # or what ever your email smtp server is
-    port: 587              # or which ever port your smtp server uses
+    base_dir: /path/to/project/base_dir
+    run_id: False            #  name your run: if false; uses current date/time for uniqe run_id everytime
+    bowtie_indexes_dir: /path/to/bowtie2_indexes 
+    email_info:
+        sender: from_me@gmail.com           
+        to: to_you@email.com
+        li: /path/to/file/containing/base64_encoded/login_info      # base64_encoded pswrd for from_me@email.com
+    custom_smtp: 
+        host: smtp.gmail.com   # or what ever your email smtp server is
+        port: 587              # or which ever port your smtp server uses
 
 
 
@@ -60,51 +60,51 @@ run_options:
 # They will be different for cufflinks, cuffmerge, cuffdiff so consult the
 # respective help text or manuals, but you should be fine if you just use what
 # I have set up in this file already.
- 
+
 tophat_options:
-  o: from_conditions
-  library-type: fr-unstranded
-  p: 6
-  r: 125
-  mate-std-dev: 25
-  G: from_conditions
-  no-coverage-search: True
-  positional_args:
-    bowtie2_index: from_conditions
-    left_reads: from_conditions
-    right_reads: from_conditions
-      
+    o: from_conditions
+    library-type: fr-unstranded
+    p: 6
+    r: 125
+    mate-std-dev: 25
+    G: from_conditions
+    no-coverage-search: True
+    positional_args:
+        bowtie2_index: from_conditions
+        left_reads: from_conditions
+        right_reads: from_conditions
+
 cufflinks_options:
-  o: from_conditions
-  p: 7
-  GTF-guide: from_conditions  # If you want to use annotation as *TRUTH* set this to False and set 'GTF' to 'from_conditions'
-  GTF: False                  # if an option set to false, it will be ommited from the command string 
-  3-overhang-tolerance: 5000
-  frag-bias-correct: from_conditions 
-  multi-read-correct: True
-  upper-quartile-norm: True
-  positional_args:
-    accepted_hits: from_conditions
+    o: from_conditions
+    p: 7
+    GTF-guide: from_conditions  # If you want to use annotation as *TRUTH* set this to False and set 'GTF' to 'from_conditions'
+    GTF: False                  # if an option set to false, it will be ommited from the command string 
+    3-overhang-tolerance: 5000
+    frag-bias-correct: from_conditions 
+    multi-read-correct: True
+    upper-quartile-norm: True
+    positional_args:
+        accepted_hits: from_conditions
 
 cuffmerge_options:
-  o: from_conditions # output directory
-  ref-gtf: from_conditions
-  p: 6
-  ref-sequence: from_conditions
-  positional_args:
-    assembly_list: from_conditions # file with path to cufflinks gtf files to be merged
+    o: from_conditions # output directory
+    ref-gtf: from_conditions
+    p: 6
+    ref-sequence: from_conditions
+    positional_args:
+        assembly_list: from_conditions # file with path to cufflinks gtf files to be merged
 
 cuffdiff_options:
-  o: from_conditions
-  labels: from_conditions
-  p: 6
-  time-series: True
-  upper-quartile-norm: True
-  frag-bias-correct: from_conditions
-  multi-read-correct: True
-  positional_args:
-    transcripts_gtf: from_conditions
-    sample_bams: from_conditions
+    o: from_conditions
+    labels: from_conditions
+    p: 6
+    time-series: True
+    upper-quartile-norm: True
+    frag-bias-correct: from_conditions
+    multi-read-correct: True
+    positional_args:
+        transcripts_gtf: from_conditions
+        sample_bams: from_conditions
 
 
 # `condition_queue`:
@@ -112,13 +112,12 @@ cuffdiff_options:
 # This is a list of info related to each sample/condition contained in your RNA-sequence
 # experiment(s)
 
-# `name`: the name of this condition and suffix of the `output_dir` for each 
-#         program.  Usually something like a time-point ID or treatment type.
-#         Should be as short as possible while still being a useful label. 
+# `name`: the name of this condition program. Usually something like a time-point
+#         ID or treatment type. Should be as short as possible while still being a useful label. 
 
-# `group_id`: this is how you group different experiments to be included in a
+# `experiment_id`: this is how you group different experiments to be included in a
 #             single cuffmerge/cuffdiff program call.  All conditions in a time
-#             series should share the same `group_id` and be placed in
+#             series should share the same `experiment_id` and be placed in
 #             `condition_queue` in the order that you want them to be sent to
 #             cuffdiff.
 
@@ -130,57 +129,75 @@ cuffdiff_options:
 #                 **NOTE** right mate file must be in same order as provided to `left_reads`
 
 condition_queue:
-  -
-    name: exp1_control
-    group_id: 0
-    left_reads:
-      - /path/to/exp1_control/techRep1.left_reads.fastq
-      - /path/to/exp1_control/techRep2.left_reads.fastq
-    right_reads:
-      - /path/to/exp1_control/techRep1.right_reads.fastq
-      - /path/to/exp1_control/techRep2.right_reads.fastq
-    genome_seq: /path/to/species/genome.fa
-    gtf_annotation: /path/to/species/annotation.gtf
-    bowtie2_index: species.bowtie2_index.basename
+    -
+        name: exp1_control
+        experiment_id: 0
+        replicate_id: 0
+        left_reads:
+            - /path/to/exp1_control/techRep1.left_reads.fastq
+            - /path/to/exp1_control/techRep2.left_reads.fastq
+        right_reads:
+            - /path/to/exp1_control/techRep1.right_reads.fastq
+            - /path/to/exp1_control/techRep2.right_reads.fastq
+        genome_seq: /path/to/species/genome.fa
+        gtf_annotation: /path/to/species/annotation.gtf
+        bowtie2_index: species.bowtie2_index.basename
 
-  -
-    name: exp1_treatment
-    group_id: 0
-    left_reads:
-      - /path/to/exp1_treatment/techRep1.left_reads.fastq
-      - /path/to/exp1_treatment/techRep2.left_reads.fastq
-    right_reads:
-      - /path/to/exp1_treatment/techRep1.right_reads.fastq
-      - /path/to/exp1_treatment/techRep2.right_reads.fastq
-    genome_seq: /path/to/species/genome.fa
-    gtf_annotation: /path/to/species/annotation.gtf
-    bowtie2_index: species.bowtie2_index.basename
+    -
+        name: exp1_control
+        experiment_id: 0
+        replicate_id: 1
+        left_reads:
+            - /path/to/exp1_control/techRep1.left_reads.fastq
+            - /path/to/exp1_control/techRep2.left_reads.fastq
+        right_reads:
+            - /path/to/exp1_control/techRep1.right_reads.fastq
+            - /path/to/exp1_control/techRep2.right_reads.fastq
+        genome_seq: /path/to/species/genome.fa
+        gtf_annotation: /path/to/species/annotation.gtf
+        bowtie2_index: species.bowtie2_index.basename
+        
+    -
+        name: exp1_treatment
+        experiment_id: 0
+        replicate_id: False
+        left_reads:
+            - /path/to/exp1_treatment/techRep1.left_reads.fastq
+            - /path/to/exp1_treatment/techRep2.left_reads.fastq
+        right_reads:
+            - /path/to/exp1_treatment/techRep1.right_reads.fastq
+            - /path/to/exp1_treatment/techRep2.right_reads.fastq
+        genome_seq: /path/to/species/genome.fa
+        gtf_annotation: /path/to/species/annotation.gtf
+        bowtie2_index: species.bowtie2_index.basename
 
-  -
-    name: exp2_control
-    group_id: 1
-    left_reads:
-      - /path/to/exp2_control/techRep1.left_reads.fastq
-      - /path/to/exp2_control/techRep2.left_reads.fastq
-    right_reads:
-      - /path/to/exp2_control/techRep1.right_reads.fastq
-      - /path/to/exp2_control/techRep2.right_reads.fastq
-    genome_seq: /path/to/species/genome.fa
-    gtf_annotation: /path/to/species/annotation.gtf
-    bowtie2_index: species.bowtie2_index.basename
+    -
+        name: exp2_control
+        experiment_id: 1
+        replicate_id: False
+        left_reads:
+            - /path/to/exp2_control/techRep1.left_reads.fastq
+            - /path/to/exp2_control/techRep2.left_reads.fastq
+        right_reads:
+            - /path/to/exp2_control/techRep1.right_reads.fastq
+            - /path/to/exp2_control/techRep2.right_reads.fastq
+        genome_seq: /path/to/species/genome.fa
+        gtf_annotation: /path/to/species/annotation.gtf
+        bowtie2_index: species.bowtie2_index.basename
 
-  -
-    name: exp2_treatment
-    group_id: 1
-    left_reads:
-      - /path/to/exp2_treatment/techRep1.left_reads.fastq
-      - /path/to/exp2_treatment/techRep2.left_reads.fastq
-    right_reads:
-      - /path/to/exp2_treatment/techRep1.right_reads.fastq
-      - /path/to/exp2_treatment/techRep2.right_reads.fastq
-    genome_seq: /path/to/species/genome.fa
-    gtf_annotation: /path/to/species/annotation.gtf
-    bowtie2_index: species.bowtie2_index.basename
-  
+    -
+        name: exp2_treatment
+        experiment_id: 1
+        replicate_id: False
+        left_reads:
+            - /path/to/exp2_treatment/techRep1.left_reads.fastq
+            - /path/to/exp2_treatment/techRep2.left_reads.fastq
+        right_reads:
+            - /path/to/exp2_treatment/techRep1.right_reads.fastq
+            - /path/to/exp2_treatment/techRep2.right_reads.fastq
+        genome_seq: /path/to/species/genome.fa
+        gtf_annotation: /path/to/species/annotation.gtf
+        bowtie2_index: species.bowtie2_index.basename
+
 
 ...

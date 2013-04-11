@@ -129,4 +129,15 @@ def get_time():
         
     
 
+def map_condition_groups(yargs):
+    """
+    creates a Bunch obj ``groups`` with key='experiment_id' from ``yargs``, value=list(condition_queue objects with 'experiment_id')
     
+    :param yargs: argument object generated from the yaml config file
+    :returns: ``groups``
+    """
+    groups = defaultdict(list)
+    for condition in yargs.condition_queue:
+        groups[condition['experiment_id']].append(condition)
+    groups = Bunch(dict(groups))
+    return groups
