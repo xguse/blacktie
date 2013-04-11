@@ -160,7 +160,7 @@ condition_queue:
     -
         name: exp1_treatment
         experiment_id: 0
-        replicate_id: False
+        replicate_id: 0
         left_reads:
             - /path/to/exp1_treatment/techRep1.left_reads.fastq
             - /path/to/exp1_treatment/techRep2.left_reads.fastq
@@ -174,7 +174,7 @@ condition_queue:
     -
         name: exp2_control
         experiment_id: 1
-        replicate_id: False
+        replicate_id: 0
         left_reads:
             - /path/to/exp2_control/techRep1.left_reads.fastq
             - /path/to/exp2_control/techRep2.left_reads.fastq
@@ -188,7 +188,7 @@ condition_queue:
     -
         name: exp2_treatment
         experiment_id: 1
-        replicate_id: False
+        replicate_id: 0
         left_reads:
             - /path/to/exp2_treatment/techRep1.left_reads.fastq
             - /path/to/exp2_treatment/techRep2.left_reads.fastq
