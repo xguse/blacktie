@@ -31,6 +31,7 @@ from mako.template import Template
 from blacktie.utils.misc import Bunch,bunchify
 from blacktie.utils.misc import email_notification
 from blacktie.utils.misc import get_time
+from blacktie.utils.misc import uniques
 from blacktie.utils.externals import runExternalApp,mkdirp
 from blacktie.utils import errors
 
@@ -94,7 +95,7 @@ class BaseCall(object):
         :returns: an ID used to construct the call_id of a call.
         """
         
-        condition_id = "%s_%s" % (self._conditions['name'],self._conditions['replicate_id'])
+        condition_id = "%s_%s" % (condition_dict['name'],condition_dict['replicate_id'])
         return condition_id
 
     def set_call_id(self):
@@ -115,7 +116,7 @@ class BaseCall(object):
             call_id = "%s_%s" % (self.prog_name,condition_id)
             self.call_id = call_id
         else:
-            raise
+            raise errors.SanityCheckError('type(self._conditions) should be either int, str, or dict. It is: %s' % (type(self._conditions)))
 
     def notify_start_of_call(self):
         """
@@ -564,14 +565,14 @@ class CufflinksCall(BaseCall):
         """
         Supports ``self.get_accepted_hits()``.
         """
-        th_call_id = "tophat_%s" % (self._conditions['name'])
+        th_call_id = "tophat_%s" % (self.get_condition_id(self._conditions))
         try:
             th_call = self.yargs.call_records[th_call_id]
             th_out_dir = th_call.out_dir
             bam_path = "%s/accepted_hits.bam" % (th_out_dir.rstrip('/'))
         except (KeyError,AttributeError) as exp:
             msg = "WARNING: unable to find matching tophat call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
-                % (self._conditions['name'])            
+                % (self.get_condition_id(self._conditions))            
             self.log_msg(log_msg=msg)
 
             # try to guess correct tophat out directory
@@ -825,10 +826,6 @@ class CuffdiffCall(BaseCall):
         """
         Handles ``yaml_config.cuffdiff_options.positional_args.sample_bams: from_conditions``.
         """
-        def uniques(seq):
-            seen = set()
-            seen_add = seen.add
-            return [ x for x in seq if x not in seen and not seen_add(x)]
         
         def join_replicate_paths(top_level_conditions,paths):
             # I KNOW this has crappy big O time but the list sizes here are small
@@ -841,7 +838,7 @@ class CuffdiffCall(BaseCall):
                     else:
                         pass
                 joined_rep_paths.append(','.join(tlc_paths))
-            return joined_replicate_paths
+            return joined_rep_paths
         
         #: .. todo:: support replicate bams as: " samp1_r1.bam,samp1_r2.bam samp2_r1.bam,samp2_r2.bam "
         option = self.prog_yargs.positional_args.sample_bams
@@ -916,7 +913,8 @@ class CuffdiffCall(BaseCall):
         if option == 'from_conditions':
             labels = []
             for condition in self._conditions:
-                labels.append(self.get_condition_id(condition))
+                labels.append(condition['name'])
+            labels = uniques(labels)
             return ','.join(labels)
         else:
             return option
