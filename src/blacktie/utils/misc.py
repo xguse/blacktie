@@ -26,6 +26,8 @@ import re
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
+from collections import defaultdict
+
 
 def get_version_number(path_to_setup):
     """
@@ -141,3 +143,8 @@ def map_condition_groups(yargs):
         groups[condition['experiment_id']].append(condition)
     groups = Bunch(dict(groups))
     return groups
+
+def uniques(seq):
+    seen = set()
+    seen_add = seen.add
+    return [ x for x in seq if x not in seen and not seen_add(x)]
