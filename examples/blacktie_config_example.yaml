@@ -106,6 +106,15 @@ cuffdiff_options:
     transcripts_gtf: from_conditions
     sample_bams: from_conditions
 
+# options for --mode qsub_script
+# If you are not using --mode qsub_script, then set all to 'None'
+qsub_options:
+  queues: 'queue1,queue3,queue5'
+  datahome: '/path/to/baseDirectory/on/cluster/'
+  core_range: 40-64 # how many cpus do you want
+  ld_library_path: ''  # leave this blank unless you know what it is and need it
+  template: /path/to/your/altered/version/of/qsub.template
+
 
 # `condition_queue`:
 # ------------------
