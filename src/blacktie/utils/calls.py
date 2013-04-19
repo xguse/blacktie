@@ -31,6 +31,7 @@ from mako.template import Template
 from blacktie.utils.misc import Bunch,bunchify
 from blacktie.utils.misc import email_notification
 from blacktie.utils.misc import get_time
+from blacktie.utils.misc import uniques
 from blacktie.utils.externals import runExternalApp,mkdirp
 from blacktie.utils import errors
 
@@ -87,24 +88,35 @@ class BaseCall(object):
         else:
             pass
 
+    def get_condition_id(self,condition_dict):
+        """
+        Constructs condition ID
+        :param condition_dict: a dictionary containing consition info like name, replicate_id, etc.
+        :returns: an ID used to construct the call_id of a call.
+        """
+        
+        condition_id = "%s_%s" % (condition_dict['name'],condition_dict['replicate_id'])
+        return condition_id
+
     def set_call_id(self):
         """
         builds and stores this call's call ID in ``self.call_id``
         """
+            
         if isinstance(self._conditions,int) or isinstance(self._conditions,str):
             # this should mean that we are dealing with a "group" type call
-            self.group_id = self._conditions
-            self._conditions = self.yargs.groups[self.group_id]
-            condition_names = [x['name'] for x in self._conditions]
-            call_id = "%s_%s" % (self.prog_name,".".join(condition_names))
+            self.experiment_id = self._conditions
+            self._conditions = self.yargs.groups[self.experiment_id]
+            condition_ids = [self.get_condition_id(x) for x in self._conditions]
+            call_id = "%s_%s" % (self.prog_name,".".join(condition_ids))
             self.call_id = call_id
 
         elif isinstance(self._conditions,dict):
-            condition_name = self._conditions['name']
-            call_id = "%s_%s" % (self.prog_name,condition_name)
+            condition_id = self.get_condition_id(self._conditions)
+            call_id = "%s_%s" % (self.prog_name,condition_id)
             self.call_id = call_id
         else:
-            raise
+            raise errors.SanityCheckError('type(self._conditions) should be either int, str, or dict. It is: %s' % (type(self._conditions)))
 
     def notify_start_of_call(self):
         """
@@ -553,14 +565,14 @@ class CufflinksCall(BaseCall):
         """
         Supports ``self.get_accepted_hits()``.
         """
-        th_call_id = "tophat_%s" % (self._conditions['name'])
+        th_call_id = "tophat_%s" % (self.get_condition_id(self._conditions))
         try:
             th_call = self.yargs.call_records[th_call_id]
             th_out_dir = th_call.out_dir
             bam_path = "%s/accepted_hits.bam" % (th_out_dir.rstrip('/'))
         except (KeyError,AttributeError) as exp:
             msg = "WARNING: unable to find matching tophat call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
-                % (self._conditions['name'])            
+                % (self.get_condition_id(self._conditions))            
             self.log_msg(log_msg=msg)
 
             # try to guess correct tophat out directory
@@ -655,8 +667,8 @@ class CuffmergeCall(BaseCall):
             if len(gtf_path) == 1:
                 gtf_path = gtf_path.pop()
             else:
-                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in group %s do not agree on which "ref-gtf" to use: %s.' \
-                                                    % (self.group_id,gtf_path))
+                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-gtf" to use: %s.' \
+                                                    % (self.experiment_id,gtf_path))
             return gtf_path
         else:
             return option
@@ -672,8 +684,8 @@ class CuffmergeCall(BaseCall):
             if len(genome_path) == 1:
                 genome_path = genome_path.pop()
             else:
-                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in group %s do not agree on which "ref-sequence" to use: %s.' \
-                                                    % (self.group_id,genome_path))
+                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-sequence" to use: %s.' \
+                                                    % (self.experiment_id,genome_path))
             return genome_path
         else:
             return option
@@ -706,14 +718,14 @@ class CuffmergeCall(BaseCall):
         """
         Supports ``self.get_cufflinks_gtfs()``.
         """
-        cl_call_id = "cufflinks_%s" % (condition['name'])
+        cl_call_id = "cufflinks_%s" % (self.get_condition_id(condition))
         try:
             cl_call = self.yargs.call_records[cl_call_id]
             cl_out_dir = cl_call.out_dir
             gtf_path = "%s/transcripts.gtf" % (cl_out_dir.rstrip('/'))
         except (KeyError,AttributeError) as exp:
             msg = "WARNING: unable to find matching cufflinks call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
-                % (condition['name'])
+                % (self.get_condition_id(condition))
             self.log_msg(log_msg=msg)
 
             # try to guess correct cufflinks out directory
@@ -804,8 +816,8 @@ class CuffdiffCall(BaseCall):
             if len(genome_path) == 1:
                 genome_path = genome_path.pop()
             else:
-                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in group %s do not agree on which "ref-sequence" to use: %s.' \
-                                                    % (self.group_id,genome_path))
+                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-sequence" to use: %s.' \
+                                                    % (self.experiment_id,genome_path))
             return genome_path
         else:
             return option
@@ -814,6 +826,20 @@ class CuffdiffCall(BaseCall):
         """
         Handles ``yaml_config.cuffdiff_options.positional_args.sample_bams: from_conditions``.
         """
+        
+        def join_replicate_paths(top_level_conditions,paths):
+            # I KNOW this has crappy big O time but the list sizes here are small
+            joined_rep_paths = []
+            for tlc in top_level_conditions:
+                tlc_paths = []
+                for path in paths:
+                    if tlc in path:
+                        tlc_paths.append(path)
+                    else:
+                        pass
+                joined_rep_paths.append(','.join(tlc_paths))
+            return joined_rep_paths
+        
         #: .. todo:: support replicate bams as: " samp1_r1.bam,samp1_r2.bam samp2_r1.bam,samp2_r2.bam "
         option = self.prog_yargs.positional_args.sample_bams
         if option == 'from_conditions':
@@ -821,7 +847,12 @@ class CuffdiffCall(BaseCall):
             for condition in self._conditions:
                 bam_path = self.get_bam_path(condition)
                 paths.append(bam_path)
-            return ' '.join(paths)
+                
+            # join bam paths that are bio-replicates with commas
+            top_level_conditions = ['_'.join(  path.split('/')[-2].split('_')[:-1]  ) for path in paths]
+            top_level_conditions = uniques(top_level_conditions)
+            joined_replicate_paths = join_replicate_paths(top_level_conditions,paths)
+            return ' '.join(joined_replicate_paths)
         else:
             return option
 
@@ -829,14 +860,14 @@ class CuffdiffCall(BaseCall):
         """
         Supports ``self.get_sample_bams()``.
         """
-        th_call_id = "tophat_%s" % (condition['name'])
+        th_call_id = "tophat_%s" % (self.get_condition_id(condition))
         try:
             th_call = self.yargs.call_records[th_call_id]
             th_out_dir = th_call.out_dir
             bam_path = "%s/accepted_hits.bam" % (th_out_dir.rstrip('/'))
         except (KeyError,AttributeError) as exp:
             msg = "WARNING: unable to find matching tophat call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
-                % (condition['name'])
+                % (self.get_condition_id(condition))
             self.log_msg(log_msg=msg)
 
             # try to guess correct tophat out directory
@@ -866,8 +897,8 @@ class CuffdiffCall(BaseCall):
                 if len(mask_path) == 1:
                     mask_path = mask_path.pop()
                 else:
-                    raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in group %s do not agree on which "ref-sequence" to use: %s.' \
-                                                        % (self.group_id,mask_path))
+                    raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-sequence" to use: %s.' \
+                                                        % (self.experiment_id,mask_path))
                 return mask_path
             else:
                 return option
@@ -883,6 +914,7 @@ class CuffdiffCall(BaseCall):
             labels = []
             for condition in self._conditions:
                 labels.append(condition['name'])
+            labels = uniques(labels)
             return ','.join(labels)
         else:
             return option
@@ -897,7 +929,7 @@ class CuffdiffCall(BaseCall):
             cm_out_dir = cm_call.out_dir
             gtf_path = "%s/merged.gtf" % (cm_out_dir.rstrip('/'))
         except (KeyError,AttributeError) as exp:
-            msg = "WARNING: unable to find matching cuffmerge call record in memory for group: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
+            msg = "WARNING: unable to find matching cuffmerge call record in memory for experiment: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
                 % (cm_call_id)
             self.log_msg(log_msg=msg)
 

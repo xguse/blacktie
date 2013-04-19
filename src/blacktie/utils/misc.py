@@ -26,6 +26,8 @@ import re
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
+from collections import defaultdict
+
 
 def get_version_number(path_to_setup):
     """
@@ -129,4 +131,20 @@ def get_time():
         
     
 
+def map_condition_groups(yargs):
+    """
+    creates a Bunch obj ``groups`` with key='experiment_id' from ``yargs``, value=list(condition_queue objects with 'experiment_id')
     
+    :param yargs: argument object generated from the yaml config file
+    :returns: ``groups``
+    """
+    groups = defaultdict(list)
+    for condition in yargs.condition_queue:
+        groups[condition['experiment_id']].append(condition)
+    groups = Bunch(dict(groups))
+    return groups
+
+def uniques(seq):
+    seen = set()
+    seen_add = seen.add
+    return [ x for x in seq if x not in seen and not seen_add(x)]

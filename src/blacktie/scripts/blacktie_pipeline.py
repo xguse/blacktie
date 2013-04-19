@@ -40,30 +40,13 @@ except ImportError:
 from blacktie.utils.misc import Bunch,bunchify
 from blacktie.utils.misc import email_notification
 from blacktie.utils.misc import get_time
+from blacktie.utils.misc import map_condition_groups
+
 from blacktie.utils.externals import runExternalApp
 from blacktie.utils.externals import mkdirp
+
 from blacktie.utils import errors
 from blacktie.utils.calls import *
-
-
-
-
-
-def map_condition_groups(yargs):
-    """
-    **GIVEN:**
-        * ``yargs`` = argument object generated from the yaml config file
-    **DOES:**
-        * creates a Bunch obj ``groups`` with key='group_id' from ``yargs``, value=list(condition_queue objects with 'group_id')
-    **RETURNS:**
-        * ``groups``
-    """
-    groups = defaultdict(list)
-    for condition in yargs.condition_queue:
-        groups[condition['group_id']].append(condition)
-    groups = Bunch(dict(groups))
-    return groups
-
 
 
 def main():
@@ -74,7 +57,7 @@ def main():
     desc = """This script reads options from a yaml formatted file and organizes the execution of tophat/cufflinks runs for multiple condition sets."""
 
     parser = argparse.ArgumentParser(description=desc)
-    
+
     parser.add_argument('--version', action='version', version='%(prog)s 0.1.1',
                         help="""Print version number.""")    
     parser.add_argument('config_file', type=str,
@@ -101,7 +84,7 @@ def main():
     if yargs.run_options.run_id:
         run_id = yargs.run_options.run_id
     else:
-        
+
         run_id = get_time()
 
     base_dir = yargs.run_options.base_dir.rstrip('/')
@@ -109,18 +92,18 @@ def main():
         run_logs  = '%s/.%s.logs' % (base_dir,run_id)
     else:
         run_logs  = '%s/%s.logs' % (base_dir,run_id)
-    
-    
+
+
     if not args.mode == 'dry_run':
         mkdirp(run_logs)
     else:
         pass
-    
-        
-    yaml_out = '%s/%s.yaml' % (run_logs,run_id)
-    
 
-    
+
+    yaml_out = '%s/%s.yaml' % (run_logs,run_id)
+
+
+
     # copy yaml config file with run_id as name for records
     if not args.mode == 'dry_run':
         shutil.copyfile(args.config_file,yaml_out)
@@ -156,7 +139,7 @@ def main():
         print "[Note] Starting cufflinks step.\n"
         try:
             if args.mode == 'dry_run':
-                raise errors.BlacktieError('dry run')
+                raise errors.BlacktieError("dry run")
             queue = pprocess.Queue(limit=yargs.cufflinks_options.p)
 
             def run_cufflinks_call(cufflinks_call):
@@ -190,7 +173,10 @@ def main():
                 yargs.call_records[call.call_id] = call
 
         except (NameError, errors.BlacktieError) as exc:
-            if (str(exc) == "name 'pprocess' is not defined") or (str(exc) == "dry run"):
+
+            if (str(exc) != "name 'pprocess' is not defined") and (str(exc) != "dry run"):
+                raise exc
+            else:
                 print "Running cufflinks in serial NOT parallel.\n"
                 # loop through the queued conditions and send reports for cufflinks    
                 for condition in yargs.condition_queue:   
@@ -200,39 +186,37 @@ def main():
 
                     # record the cufflinks_call object
                     yargs.call_records[cufflinks_call.call_id] = cufflinks_call
-            else:
-                raise exc            
     else:
         print "[Note] Skipping cufflinks step.\n"
-    
+
 
 
     if args.prog in ['cuffmerge','all']:
         print "[Note] Starting cuffmerge step.\n"
-        for group in yargs.groups:
+        for exp_id in yargs.groups:
             
             # Prep cuffmerge call
-            cuffmerge_call = CuffmergeCall(yargs,email_info,run_id,run_logs,conditions=group,mode=args.mode)
+            cuffmerge_call = CuffmergeCall(yargs,email_info,run_id,run_logs,conditions=exp_id,mode=args.mode)
             cuffmerge_call.execute()
 
             # record the tophat_call object
             yargs.call_records[cuffmerge_call.call_id] = cuffmerge_call
-            
+
     else:
         print "[Note] Skipping cuffmerge step.\n"
-    
-        
+
+
     if args.prog in ['cuffdiff','all']:
         print "[Note] Starting cuffdiff step.\n"
-        for group in yargs.groups:
-            
+        for exp_id in yargs.groups:
+
             # Prep cuffmerge call
-            cuffdiff_call = CuffdiffCall(yargs,email_info,run_id,run_logs,conditions=group,mode=args.mode)
+            cuffdiff_call = CuffdiffCall(yargs,email_info,run_id,run_logs,conditions=exp_id,mode=args.mode)
             cuffdiff_call.execute()
 
             # record the tophat_call object
             yargs.call_records[cuffdiff_call.call_id] = cuffdiff_call
-            
+
     else:
         print "[Note] Skipping cuffdiff step.\n"    
 
