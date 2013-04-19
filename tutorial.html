@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -8,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Getting started &mdash; Blacktie 0.1.1 documentation</title>
+    <title>Getting started &mdash; Blacktie 0.2.0rc1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
-        VERSION:     '0.1.1',
+        URL_ROOT:    './',
+        VERSION:     '0.2.0rc1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Blacktie 0.1.1 documentation" href="index.html" />
+    <link rel="top" title="Blacktie 0.2.0rc1 documentation" href="index.html" />
     <link rel="next" title="Blacktie Auto-Generated Code Documentation" href="code.html" />
     <link rel="prev" title="Installation" href="install.html" />
  
@@ -57,7 +55,7 @@
         <li class="right" >
           <a href="install.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Blacktie 0.1.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Blacktie 0.2.0rc1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -78,7 +76,8 @@
 <p>You should see the help text for blacktie and it should look something like this:</p>
 <div class="highlight-none"><div class="highlight"><pre>$ blacktie -h
 
-usage: blacktie [-h] [--prog {tophat,cufflinks,cuffmerge,cuffdiff,all}]
+usage: blacktie [-h] [--version]
+                [--prog {tophat,cufflinks,cuffmerge,cuffdiff,all}]
                 [--hide-logs] [--mode {analyze,dry_run,qsub_script}]
                 config_file
 
@@ -91,6 +90,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  --version             Print version number.
   --prog {tophat,cufflinks,cuffmerge,cuffdiff,all}
                         Which program do you want to run? (default: tophat)
   --hide-logs           Make your log directories hidden to keep a tidy
@@ -169,7 +169,10 @@ optional arguments:
 44
 45
 46
-47</pre></div></td><td class="code"><div class="highlight"><pre><span class="c">#!/bin/bash</span>
+47
+48
+49
+50</pre></div></td><td class="code"><div class="highlight"><pre><span class="c">#!/bin/bash</span>
 <span class="c">#$ -S /bin/bash                                             # Use a real BASH shell on the worker node</span>
 <span class="c">#$ -q ${queues}                                             # What queues do you want to submit to</span>
 <span class="c">#$ -M ${email_addy}                                         # Send email updates to this address</span>
@@ -185,6 +188,9 @@ optional arguments:
 
 <span class="c"># HPC clusters frequently use a module system to provide system wide access to </span>
 <span class="c"># certain programs.  The following makes sure that the tools needed are loaded</span>
+<span class="c"># for **MY** cluster. You will need alter this to make sure your cluster is set up</span>
+<span class="c"># based on its system.</span>
+
 module load bowtie2/2.0.2
 module load tophat/2.0.6
 module load cufflinks/2.0.2
@@ -416,7 +422,37 @@ rm -rf <span class="nv">$MYSCRATCH</span>
 183
 184
 185
-186</pre></div></td><td class="code"><div class="highlight"><pre><span class="c1"># The document starts after the &#39;---&#39;</span>
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216</pre></div></td><td class="code"><div class="highlight"><pre><span class="c1"># The document starts after the &#39;---&#39;</span>
 
 <span class="c1"># By the way: everything after a &#39;#&#39; on a line</span>
 <span class="c1"># will be ignored by the program and acts as a</span>
@@ -426,16 +462,16 @@ rm -rf <span class="nv">$MYSCRATCH</span>
 <span class="c1"># run_options is a dictionary that contains variables that will be needed for</span>
 <span class="c1"># many or all stages of the run</span>
 <span class="l-Scalar-Plain">run_options</span><span class="p-Indicator">:</span>
-  <span class="l-Scalar-Plain">base_dir</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/project/base_dir</span>
-  <span class="l-Scalar-Plain">run_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">False</span>            <span class="c1">#  name your run: if false; uses current date/time for uniqe run_id everytime</span>
-  <span class="l-Scalar-Plain">bowtie_indexes_dir</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/bowtie2_indexes</span> 
-  <span class="l-Scalar-Plain">email_info</span><span class="p-Indicator">:</span>
-    <span class="l-Scalar-Plain">sender</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_me@gmail.com</span>           
-    <span class="l-Scalar-Plain">to</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">to_you@email.com</span>
-    <span class="l-Scalar-Plain">li</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/file/containing/base64_encoded/login_info</span>      <span class="c1"># base64_encoded pswrd for from_me@email.com</span>
-  <span class="l-Scalar-Plain">custom_smtp</span><span class="p-Indicator">:</span> 
-    <span class="l-Scalar-Plain">host</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">smtp.gmail.com</span>   <span class="c1"># or what ever your email smtp server is</span>
-    <span class="l-Scalar-Plain">port</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">587</span>              <span class="c1"># or which ever port your smtp server uses</span>
+    <span class="l-Scalar-Plain">base_dir</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/project/base_dir</span>
+    <span class="l-Scalar-Plain">run_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">False</span>            <span class="c1">#  name your run: if false; uses current date/time for uniqe run_id everytime</span>
+    <span class="l-Scalar-Plain">bowtie_indexes_dir</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/bowtie2_indexes</span> 
+    <span class="l-Scalar-Plain">email_info</span><span class="p-Indicator">:</span>
+        <span class="l-Scalar-Plain">sender</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_me@gmail.com</span>           
+        <span class="l-Scalar-Plain">to</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">to_you@email.com</span>
+        <span class="l-Scalar-Plain">li</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/file/containing/base64_encoded/login_info</span>      <span class="c1"># base64_encoded pswrd for from_me@email.com</span>
+    <span class="l-Scalar-Plain">custom_smtp</span><span class="p-Indicator">:</span> 
+        <span class="l-Scalar-Plain">host</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">smtp.gmail.com</span>   <span class="c1"># or what ever your email smtp server is</span>
+        <span class="l-Scalar-Plain">port</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">587</span>              <span class="c1"># or which ever port your smtp server uses</span>
 
 
 
@@ -478,51 +514,60 @@ rm -rf <span class="nv">$MYSCRATCH</span>
 <span class="c1"># They will be different for cufflinks, cuffmerge, cuffdiff so consult the</span>
 <span class="c1"># respective help text or manuals, but you should be fine if you just use what</span>
 <span class="c1"># I have set up in this file already.</span>
- 
+
 <span class="l-Scalar-Plain">tophat_options</span><span class="p-Indicator">:</span>
-  <span class="l-Scalar-Plain">o</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
-  <span class="l-Scalar-Plain">library-type</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">fr-unstranded</span>
-  <span class="l-Scalar-Plain">p</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">6</span>
-  <span class="l-Scalar-Plain">r</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">125</span>
-  <span class="l-Scalar-Plain">mate-std-dev</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">25</span>
-  <span class="l-Scalar-Plain">G</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
-  <span class="l-Scalar-Plain">no-coverage-search</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
-  <span class="l-Scalar-Plain">positional_args</span><span class="p-Indicator">:</span>
-    <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
-    <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
-    <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
-      
+    <span class="l-Scalar-Plain">o</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+    <span class="l-Scalar-Plain">library-type</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">fr-unstranded</span>
+    <span class="l-Scalar-Plain">p</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">6</span>
+    <span class="l-Scalar-Plain">r</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">125</span>
+    <span class="l-Scalar-Plain">mate-std-dev</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">25</span>
+    <span class="l-Scalar-Plain">G</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+    <span class="l-Scalar-Plain">no-coverage-search</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
+    <span class="l-Scalar-Plain">positional_args</span><span class="p-Indicator">:</span>
+        <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+        <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+        <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+
 <span class="l-Scalar-Plain">cufflinks_options</span><span class="p-Indicator">:</span>
-  <span class="l-Scalar-Plain">o</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
-  <span class="l-Scalar-Plain">p</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">7</span>
-  <span class="l-Scalar-Plain">GTF-guide</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>  <span class="c1"># If you want to use annotation as *TRUTH* set this to False and set &#39;GTF&#39; to &#39;from_conditions&#39;</span>
-  <span class="l-Scalar-Plain">GTF</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">False</span>                  <span class="c1"># if an option set to false, it will be ommited from the command string </span>
-  <span class="l-Scalar-Plain">3-overhang-tolerance</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">5000</span>
-  <span class="l-Scalar-Plain">frag-bias-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span> 
-  <span class="l-Scalar-Plain">multi-read-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
-  <span class="l-Scalar-Plain">upper-quartile-norm</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
-  <span class="l-Scalar-Plain">positional_args</span><span class="p-Indicator">:</span>
-    <span class="l-Scalar-Plain">accepted_hits</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+    <span class="l-Scalar-Plain">o</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+    <span class="l-Scalar-Plain">p</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">7</span>
+    <span class="l-Scalar-Plain">GTF-guide</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>  <span class="c1"># If you want to use annotation as *TRUTH* set this to False and set &#39;GTF&#39; to &#39;from_conditions&#39;</span>
+    <span class="l-Scalar-Plain">GTF</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">False</span>                  <span class="c1"># if an option set to false, it will be ommited from the command string </span>
+    <span class="l-Scalar-Plain">3-overhang-tolerance</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">5000</span>
+    <span class="l-Scalar-Plain">frag-bias-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span> 
+    <span class="l-Scalar-Plain">multi-read-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
+    <span class="l-Scalar-Plain">upper-quartile-norm</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
+    <span class="l-Scalar-Plain">positional_args</span><span class="p-Indicator">:</span>
+        <span class="l-Scalar-Plain">accepted_hits</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
 
 <span class="l-Scalar-Plain">cuffmerge_options</span><span class="p-Indicator">:</span>
-  <span class="l-Scalar-Plain">o</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span> <span class="c1"># output directory</span>
-  <span class="l-Scalar-Plain">ref-gtf</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
-  <span class="l-Scalar-Plain">p</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">6</span>
-  <span class="l-Scalar-Plain">ref-sequence</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
-  <span class="l-Scalar-Plain">positional_args</span><span class="p-Indicator">:</span>
-    <span class="l-Scalar-Plain">assembly_list</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span> <span class="c1"># file with path to cufflinks gtf files to be merged</span>
+    <span class="l-Scalar-Plain">o</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span> <span class="c1"># output directory</span>
+    <span class="l-Scalar-Plain">ref-gtf</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+    <span class="l-Scalar-Plain">p</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">6</span>
+    <span class="l-Scalar-Plain">ref-sequence</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+    <span class="l-Scalar-Plain">positional_args</span><span class="p-Indicator">:</span>
+        <span class="l-Scalar-Plain">assembly_list</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span> <span class="c1"># file with path to cufflinks gtf files to be merged</span>
 
 <span class="l-Scalar-Plain">cuffdiff_options</span><span class="p-Indicator">:</span>
-  <span class="l-Scalar-Plain">o</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
-  <span class="l-Scalar-Plain">labels</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
-  <span class="l-Scalar-Plain">p</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">6</span>
-  <span class="l-Scalar-Plain">time-series</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
-  <span class="l-Scalar-Plain">upper-quartile-norm</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
-  <span class="l-Scalar-Plain">frag-bias-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
-  <span class="l-Scalar-Plain">multi-read-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
-  <span class="l-Scalar-Plain">positional_args</span><span class="p-Indicator">:</span>
-    <span class="l-Scalar-Plain">transcripts_gtf</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
-    <span class="l-Scalar-Plain">sample_bams</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+    <span class="l-Scalar-Plain">o</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+    <span class="l-Scalar-Plain">labels</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+    <span class="l-Scalar-Plain">p</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">6</span>
+    <span class="l-Scalar-Plain">time-series</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
+    <span class="l-Scalar-Plain">upper-quartile-norm</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
+    <span class="l-Scalar-Plain">frag-bias-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+    <span class="l-Scalar-Plain">multi-read-correct</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">True</span>
+    <span class="l-Scalar-Plain">positional_args</span><span class="p-Indicator">:</span>
+        <span class="l-Scalar-Plain">transcripts_gtf</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+        <span class="l-Scalar-Plain">sample_bams</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">from_conditions</span>
+
+<span class="c1"># options for --mode qsub_script</span>
+<span class="c1"># If you are not using --mode qsub_script, then set all to &#39;None&#39;</span>
+<span class="l-Scalar-Plain">qsub_options</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">queues</span><span class="p-Indicator">:</span> <span class="s">&#39;queue1,queue3,queue5&#39;</span>
+  <span class="l-Scalar-Plain">datahome</span><span class="p-Indicator">:</span> <span class="s">&#39;/path/to/baseDirectory/on/cluster/&#39;</span>
+  <span class="l-Scalar-Plain">core_range</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">40-64</span> <span class="c1"># how many cpus do you want</span>
+  <span class="l-Scalar-Plain">ld_library_path</span><span class="p-Indicator">:</span> <span class="s">&#39;&#39;</span>  <span class="c1"># leave this blank unless you know what it is and need it</span>
+  <span class="l-Scalar-Plain">template</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/your/altered/version/of/qsub.template</span>
 
 
 <span class="c1"># `condition_queue`:</span>
@@ -530,15 +575,18 @@ rm -rf <span class="nv">$MYSCRATCH</span>
 <span class="c1"># This is a list of info related to each sample/condition contained in your RNA-sequence</span>
 <span class="c1"># experiment(s)</span>
 
-<span class="c1"># `name`: the name of this condition and suffix of the `output_dir` for each </span>
-<span class="c1">#         program.  Usually something like a time-point ID or treatment type.</span>
-<span class="c1">#         Should be as short as possible while still being a useful label. </span>
+<span class="c1"># `name`: the name of this condition program. Usually something like a time-point</span>
+<span class="c1">#         ID or treatment type. Should be as short as possible while still being a useful label. </span>
 
-<span class="c1"># `group_id`: this is how you group different experiments to be included in a</span>
+<span class="c1"># `experiment_id`: this is how you group different experiments to be included in a</span>
 <span class="c1">#             single cuffmerge/cuffdiff program call.  All conditions in a time</span>
-<span class="c1">#             series should share the same `group_id` and be placed in</span>
+<span class="c1">#             series should share the same `experiment_id` and be placed in</span>
 <span class="c1">#             `condition_queue` in the order that you want them to be sent to</span>
 <span class="c1">#             cuffdiff.</span>
+
+<span class="c1"># `replicate_id`: this is how you group data for biological replicates of a single</span>
+<span class="c1">#             experimental condition experiments to be included in a cuffdiff program</span>
+<span class="c1">#             call.  Each replicate of a condition should have a unique `experiment_id`.</span>
 
 <span class="c1"># `left_reads`: a list of the paths to fastq files containing left reads for</span>
 <span class="c1">#               each condition. </span>
@@ -548,58 +596,76 @@ rm -rf <span class="nv">$MYSCRATCH</span>
 <span class="c1">#                 **NOTE** right mate file must be in same order as provided to `left_reads`</span>
 
 <span class="l-Scalar-Plain">condition_queue</span><span class="p-Indicator">:</span>
-  <span class="p-Indicator">-</span>
-    <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">exp1_control</span>
-    <span class="l-Scalar-Plain">group_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0</span>
-    <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_control/techRep1.left_reads.fastq</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_control/techRep2.left_reads.fastq</span>
-    <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_control/techRep1.right_reads.fastq</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_control/techRep2.right_reads.fastq</span>
-    <span class="l-Scalar-Plain">genome_seq</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/genome.fa</span>
-    <span class="l-Scalar-Plain">gtf_annotation</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/annotation.gtf</span>
-    <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">species.bowtie2_index.basename</span>
+    <span class="p-Indicator">-</span>
+        <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">exp1_control</span>
+        <span class="l-Scalar-Plain">experiment_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0</span>
+        <span class="l-Scalar-Plain">replicate_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0</span>
+        <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_control/techRep1.left_reads.fastq</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_control/techRep2.left_reads.fastq</span>
+        <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_control/techRep1.right_reads.fastq</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_control/techRep2.right_reads.fastq</span>
+        <span class="l-Scalar-Plain">genome_seq</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/genome.fa</span>
+        <span class="l-Scalar-Plain">gtf_annotation</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/annotation.gtf</span>
+        <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">species.bowtie2_index.basename</span>
 
-  <span class="p-Indicator">-</span>
-    <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">exp1_treatment</span>
-    <span class="l-Scalar-Plain">group_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0</span>
-    <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_treatment/techRep1.left_reads.fastq</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_treatment/techRep2.left_reads.fastq</span>
-    <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_treatment/techRep1.right_reads.fastq</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_treatment/techRep2.right_reads.fastq</span>
-    <span class="l-Scalar-Plain">genome_seq</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/genome.fa</span>
-    <span class="l-Scalar-Plain">gtf_annotation</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/annotation.gtf</span>
-    <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">species.bowtie2_index.basename</span>
+    <span class="p-Indicator">-</span>
+        <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">exp1_control</span>
+        <span class="l-Scalar-Plain">experiment_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0</span>
+        <span class="l-Scalar-Plain">replicate_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">1</span>
+        <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_control/techRep1.left_reads.fastq</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_control/techRep2.left_reads.fastq</span>
+        <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_control/techRep1.right_reads.fastq</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_control/techRep2.right_reads.fastq</span>
+        <span class="l-Scalar-Plain">genome_seq</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/genome.fa</span>
+        <span class="l-Scalar-Plain">gtf_annotation</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/annotation.gtf</span>
+        <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">species.bowtie2_index.basename</span>
+        
+    <span class="p-Indicator">-</span>
+        <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">exp1_treatment</span>
+        <span class="l-Scalar-Plain">experiment_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0</span>
+        <span class="l-Scalar-Plain">replicate_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0</span>
+        <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_treatment/techRep1.left_reads.fastq</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_treatment/techRep2.left_reads.fastq</span>
+        <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_treatment/techRep1.right_reads.fastq</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp1_treatment/techRep2.right_reads.fastq</span>
+        <span class="l-Scalar-Plain">genome_seq</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/genome.fa</span>
+        <span class="l-Scalar-Plain">gtf_annotation</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/annotation.gtf</span>
+        <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">species.bowtie2_index.basename</span>
 
-  <span class="p-Indicator">-</span>
-    <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">exp2_control</span>
-    <span class="l-Scalar-Plain">group_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">1</span>
-    <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_control/techRep1.left_reads.fastq</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_control/techRep2.left_reads.fastq</span>
-    <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_control/techRep1.right_reads.fastq</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_control/techRep2.right_reads.fastq</span>
-    <span class="l-Scalar-Plain">genome_seq</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/genome.fa</span>
-    <span class="l-Scalar-Plain">gtf_annotation</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/annotation.gtf</span>
-    <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">species.bowtie2_index.basename</span>
+    <span class="p-Indicator">-</span>
+        <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">exp2_control</span>
+        <span class="l-Scalar-Plain">experiment_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">1</span>
+        <span class="l-Scalar-Plain">replicate_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0</span>
+        <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_control/techRep1.left_reads.fastq</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_control/techRep2.left_reads.fastq</span>
+        <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_control/techRep1.right_reads.fastq</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_control/techRep2.right_reads.fastq</span>
+        <span class="l-Scalar-Plain">genome_seq</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/genome.fa</span>
+        <span class="l-Scalar-Plain">gtf_annotation</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/annotation.gtf</span>
+        <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">species.bowtie2_index.basename</span>
 
-  <span class="p-Indicator">-</span>
-    <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">exp2_treatment</span>
-    <span class="l-Scalar-Plain">group_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">1</span>
-    <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_treatment/techRep1.left_reads.fastq</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_treatment/techRep2.left_reads.fastq</span>
-    <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_treatment/techRep1.right_reads.fastq</span>
-      <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_treatment/techRep2.right_reads.fastq</span>
-    <span class="l-Scalar-Plain">genome_seq</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/genome.fa</span>
-    <span class="l-Scalar-Plain">gtf_annotation</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/annotation.gtf</span>
-    <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">species.bowtie2_index.basename</span>
-  
+    <span class="p-Indicator">-</span>
+        <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">exp2_treatment</span>
+        <span class="l-Scalar-Plain">experiment_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">1</span>
+        <span class="l-Scalar-Plain">replicate_id</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">0</span>
+        <span class="l-Scalar-Plain">left_reads</span><span class="p-Indicator">:</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_treatment/techRep1.left_reads.fastq</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_treatment/techRep2.left_reads.fastq</span>
+        <span class="l-Scalar-Plain">right_reads</span><span class="p-Indicator">:</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_treatment/techRep1.right_reads.fastq</span>
+            <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">/path/to/exp2_treatment/techRep2.right_reads.fastq</span>
+        <span class="l-Scalar-Plain">genome_seq</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/genome.fa</span>
+        <span class="l-Scalar-Plain">gtf_annotation</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">/path/to/species/annotation.gtf</span>
+        <span class="l-Scalar-Plain">bowtie2_index</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">species.bowtie2_index.basename</span>
+
 
 <span class="nn">...</span>
 </pre></div>
@@ -715,12 +781,12 @@ optional arguments:
         <li class="right" >
           <a href="install.html" title="Installation"
              >previous</a> |</li>
-        <li><a href="index.html">Blacktie 0.1.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Blacktie 0.2.0rc1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2013, Augustine Dunn.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>

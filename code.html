@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -8,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Blacktie Auto-Generated Code Documentation &mdash; Blacktie 0.1.1 documentation</title>
+    <title>Blacktie Auto-Generated Code Documentation &mdash; Blacktie 0.2.0rc1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
-        VERSION:     '0.1.1',
+        URL_ROOT:    './',
+        VERSION:     '0.2.0rc1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Blacktie 0.1.1 documentation" href="index.html" />
+    <link rel="top" title="Blacktie 0.2.0rc1 documentation" href="index.html" />
     <link rel="prev" title="Getting started" href="tutorial.html" />
  
 <script>
@@ -53,7 +51,7 @@
         <li class="right" >
           <a href="tutorial.html" title="Getting started"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Blacktie 0.1.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Blacktie 0.2.0rc1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -137,6 +135,14 @@ using options provided under the &#8220;qsub_options&#8221; sub-tree in the yaml
 <dt id="blacktie.utils.calls.BaseCall.execute">
 <tt class="descname">execute</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/blacktie/utils/calls.html#BaseCall.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#blacktie.utils.calls.BaseCall.execute" title="Permalink to this definition">¶</a></dt>
 <dd><p>calls correct program, records results, and manages errors</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="blacktie.utils.calls.BaseCall.get_condition_id">
+<tt class="descname">get_condition_id</tt><big>(</big><em>condition_dict</em><big>)</big><a class="reference internal" href="_modules/blacktie/utils/calls.html#BaseCall.get_condition_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#blacktie.utils.calls.BaseCall.get_condition_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs condition ID
+:param condition_dict: a dictionary containing consition info like name, replicate_id, etc.
+:returns: an ID used to construct the call_id of a call.</p>
 </dd></dl>
 
 <dl class="method">
@@ -649,6 +655,22 @@ based on option names in the yaml file for this phase</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="blacktie.utils.misc.map_condition_groups">
+<tt class="descclassname">blacktie.utils.misc.</tt><tt class="descname">map_condition_groups</tt><big>(</big><em>yargs</em><big>)</big><a class="reference internal" href="_modules/blacktie/utils/misc.html#map_condition_groups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#blacktie.utils.misc.map_condition_groups" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Bunch obj <tt class="docutils literal"><span class="pre">groups</span></tt> with key=&#8217;experiment_id&#8217; from <tt class="docutils literal"><span class="pre">yargs</span></tt>, value=list(condition_queue objects with &#8216;experiment_id&#8217;)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>yargs</strong> &#8211; argument object generated from the yaml config file</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">groups</span></tt></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="blacktie.utils.misc.whoami">
 <tt class="descclassname">blacktie.utils.misc.</tt><tt class="descname">whoami</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/blacktie/utils/misc.html#whoami"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#blacktie.utils.misc.whoami" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the name of the currently active function.</p>
@@ -711,12 +733,12 @@ based on option names in the yaml file for this phase</p>
         <li class="right" >
           <a href="tutorial.html" title="Getting started"
              >previous</a> |</li>
-        <li><a href="index.html">Blacktie 0.1.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Blacktie 0.2.0rc1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2013, Augustine Dunn.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>

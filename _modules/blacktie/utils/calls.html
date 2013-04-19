@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -8,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>blacktie.utils.calls &mdash; Blacktie 0.1.1 documentation</title>
+    <title>blacktie.utils.calls &mdash; Blacktie 0.2.0rc1 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -16,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.1.1',
+        VERSION:     '0.2.0rc1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +23,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <link rel="top" title="Blacktie 0.1.1 documentation" href="../../../index.html" />
+    <link rel="top" title="Blacktie 0.2.0rc1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" />
  
 <script>
@@ -50,7 +48,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Blacktie 0.1.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Blacktie 0.2.0rc1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
@@ -94,6 +92,7 @@
 <span class="kn">from</span> <span class="nn">blacktie.utils.misc</span> <span class="kn">import</span> <span class="n">Bunch</span><span class="p">,</span><span class="n">bunchify</span>
 <span class="kn">from</span> <span class="nn">blacktie.utils.misc</span> <span class="kn">import</span> <span class="n">email_notification</span>
 <span class="kn">from</span> <span class="nn">blacktie.utils.misc</span> <span class="kn">import</span> <span class="n">get_time</span>
+<span class="kn">from</span> <span class="nn">blacktie.utils.misc</span> <span class="kn">import</span> <span class="n">uniques</span>
 <span class="kn">from</span> <span class="nn">blacktie.utils.externals</span> <span class="kn">import</span> <span class="n">runExternalApp</span><span class="p">,</span><span class="n">mkdirp</span>
 <span class="kn">from</span> <span class="nn">blacktie.utils</span> <span class="kn">import</span> <span class="n">errors</span>
 
@@ -150,24 +149,35 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">pass</span>
 </div>
+<div class="viewcode-block" id="BaseCall.get_condition_id"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.get_condition_id">[docs]</a>    <span class="k">def</span> <span class="nf">get_condition_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">condition_dict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructs condition ID</span>
+<span class="sd">        :param condition_dict: a dictionary containing consition info like name, replicate_id, etc.</span>
+<span class="sd">        :returns: an ID used to construct the call_id of a call.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">condition_id</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">condition_dict</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">],</span><span class="n">condition_dict</span><span class="p">[</span><span class="s">&#39;replicate_id&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">condition_id</span>
+</div>
 <div class="viewcode-block" id="BaseCall.set_call_id"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.set_call_id">[docs]</a>    <span class="k">def</span> <span class="nf">set_call_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        builds and stores this call&#39;s call ID in ``self.call_id``</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+            
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">,</span><span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
             <span class="c"># this should mean that we are dealing with a &quot;group&quot; type call</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">group_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">group_id</span><span class="p">]</span>
-            <span class="n">condition_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">]</span>
-            <span class="n">call_id</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prog_name</span><span class="p">,</span><span class="s">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">condition_names</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">experiment_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">experiment_id</span><span class="p">]</span>
+            <span class="n">condition_ids</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">]</span>
+            <span class="n">call_id</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prog_name</span><span class="p">,</span><span class="s">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">condition_ids</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">call_id</span> <span class="o">=</span> <span class="n">call_id</span>
 
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">,</span><span class="nb">dict</span><span class="p">):</span>
-            <span class="n">condition_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span>
-            <span class="n">call_id</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prog_name</span><span class="p">,</span><span class="n">condition_name</span><span class="p">)</span>
+            <span class="n">condition_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">)</span>
+            <span class="n">call_id</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prog_name</span><span class="p">,</span><span class="n">condition_id</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">call_id</span> <span class="o">=</span> <span class="n">call_id</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">SanityCheckError</span><span class="p">(</span><span class="s">&#39;type(self._conditions) should be either int, str, or dict. It is: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">)))</span>
 </div>
 <div class="viewcode-block" id="BaseCall.notify_start_of_call"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.notify_start_of_call">[docs]</a>    <span class="k">def</span> <span class="nf">notify_start_of_call</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -616,14 +626,14 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Supports ``self.get_accepted_hits()``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">th_call_id</span> <span class="o">=</span> <span class="s">&quot;tophat_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">])</span>
+        <span class="n">th_call_id</span> <span class="o">=</span> <span class="s">&quot;tophat_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">))</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">th_call</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">call_records</span><span class="p">[</span><span class="n">th_call_id</span><span class="p">]</span>
             <span class="n">th_out_dir</span> <span class="o">=</span> <span class="n">th_call</span><span class="o">.</span><span class="n">out_dir</span>
             <span class="n">bam_path</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/accepted_hits.bam&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">th_out_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">))</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span><span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exp</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;WARNING: unable to find matching tophat call record in memory for condition: </span><span class="si">%s</span><span class="se">\n</span><span class="s">Attempting to find corresponding cufflinks outfile in your base_dir.&quot;</span> \
-                <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">])</span>            
+                <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">))</span>            
             <span class="bp">self</span><span class="o">.</span><span class="n">log_msg</span><span class="p">(</span><span class="n">log_msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
 
             <span class="c"># try to guess correct tophat out directory</span>
@@ -718,8 +728,8 @@
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gtf_path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">gtf_path</span> <span class="o">=</span> <span class="n">gtf_path</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidFileFormatError</span><span class="p">(</span><span class="s">&#39;CHECK YAML CONFIG FILE: Conditions in group </span><span class="si">%s</span><span class="s"> do not agree on which &quot;ref-gtf&quot; to use: </span><span class="si">%s</span><span class="s">.&#39;</span> \
-                                                    <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_id</span><span class="p">,</span><span class="n">gtf_path</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidFileFormatError</span><span class="p">(</span><span class="s">&#39;CHECK YAML CONFIG FILE: Conditions in experiment </span><span class="si">%s</span><span class="s"> do not agree on which &quot;ref-gtf&quot; to use: </span><span class="si">%s</span><span class="s">.&#39;</span> \
+                                                    <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiment_id</span><span class="p">,</span><span class="n">gtf_path</span><span class="p">))</span>
             <span class="k">return</span> <span class="n">gtf_path</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">option</span>
@@ -735,8 +745,8 @@
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">genome_path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">genome_path</span> <span class="o">=</span> <span class="n">genome_path</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidFileFormatError</span><span class="p">(</span><span class="s">&#39;CHECK YAML CONFIG FILE: Conditions in group </span><span class="si">%s</span><span class="s"> do not agree on which &quot;ref-sequence&quot; to use: </span><span class="si">%s</span><span class="s">.&#39;</span> \
-                                                    <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_id</span><span class="p">,</span><span class="n">genome_path</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidFileFormatError</span><span class="p">(</span><span class="s">&#39;CHECK YAML CONFIG FILE: Conditions in experiment </span><span class="si">%s</span><span class="s"> do not agree on which &quot;ref-sequence&quot; to use: </span><span class="si">%s</span><span class="s">.&#39;</span> \
+                                                    <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiment_id</span><span class="p">,</span><span class="n">genome_path</span><span class="p">))</span>
             <span class="k">return</span> <span class="n">genome_path</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">option</span>
@@ -769,14 +779,14 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Supports ``self.get_cufflinks_gtfs()``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">cl_call_id</span> <span class="o">=</span> <span class="s">&quot;cufflinks_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">condition</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">])</span>
+        <span class="n">cl_call_id</span> <span class="o">=</span> <span class="s">&quot;cufflinks_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="n">condition</span><span class="p">))</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">cl_call</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">call_records</span><span class="p">[</span><span class="n">cl_call_id</span><span class="p">]</span>
             <span class="n">cl_out_dir</span> <span class="o">=</span> <span class="n">cl_call</span><span class="o">.</span><span class="n">out_dir</span>
             <span class="n">gtf_path</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/transcripts.gtf&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">cl_out_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">))</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span><span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exp</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;WARNING: unable to find matching cufflinks call record in memory for condition: </span><span class="si">%s</span><span class="se">\n</span><span class="s">Attempting to find corresponding cufflinks outfile in your base_dir.&quot;</span> \
-                <span class="o">%</span> <span class="p">(</span><span class="n">condition</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">])</span>
+                <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="n">condition</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">log_msg</span><span class="p">(</span><span class="n">log_msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
 
             <span class="c"># try to guess correct cufflinks out directory</span>
@@ -867,8 +877,8 @@
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">genome_path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">genome_path</span> <span class="o">=</span> <span class="n">genome_path</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidFileFormatError</span><span class="p">(</span><span class="s">&#39;CHECK YAML CONFIG FILE: Conditions in group </span><span class="si">%s</span><span class="s"> do not agree on which &quot;ref-sequence&quot; to use: </span><span class="si">%s</span><span class="s">.&#39;</span> \
-                                                    <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_id</span><span class="p">,</span><span class="n">genome_path</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidFileFormatError</span><span class="p">(</span><span class="s">&#39;CHECK YAML CONFIG FILE: Conditions in experiment </span><span class="si">%s</span><span class="s"> do not agree on which &quot;ref-sequence&quot; to use: </span><span class="si">%s</span><span class="s">.&#39;</span> \
+                                                    <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiment_id</span><span class="p">,</span><span class="n">genome_path</span><span class="p">))</span>
             <span class="k">return</span> <span class="n">genome_path</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">option</span>
@@ -877,6 +887,20 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Handles ``yaml_config.cuffdiff_options.positional_args.sample_bams: from_conditions``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="k">def</span> <span class="nf">join_replicate_paths</span><span class="p">(</span><span class="n">top_level_conditions</span><span class="p">,</span><span class="n">paths</span><span class="p">):</span>
+            <span class="c"># I KNOW this has crappy big O time but the list sizes here are small</span>
+            <span class="n">joined_rep_paths</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">tlc</span> <span class="ow">in</span> <span class="n">top_level_conditions</span><span class="p">:</span>
+                <span class="n">tlc_paths</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">tlc</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+                        <span class="n">tlc_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">pass</span>
+                <span class="n">joined_rep_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tlc_paths</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">joined_rep_paths</span>
+        
         <span class="c">#: .. todo:: support replicate bams as: &quot; samp1_r1.bam,samp1_r2.bam samp2_r1.bam,samp2_r2.bam &quot;</span>
         <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="o">.</span><span class="n">positional_args</span><span class="o">.</span><span class="n">sample_bams</span>
         <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
@@ -884,7 +908,12 @@
             <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">:</span>
                 <span class="n">bam_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bam_path</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>
                 <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bam_path</span><span class="p">)</span>
-            <span class="k">return</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span>
+                
+            <span class="c"># join bam paths that are bio-replicates with commas</span>
+            <span class="n">top_level_conditions</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>  <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">]</span>
+            <span class="n">top_level_conditions</span> <span class="o">=</span> <span class="n">uniques</span><span class="p">(</span><span class="n">top_level_conditions</span><span class="p">)</span>
+            <span class="n">joined_replicate_paths</span> <span class="o">=</span> <span class="n">join_replicate_paths</span><span class="p">(</span><span class="n">top_level_conditions</span><span class="p">,</span><span class="n">paths</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">joined_replicate_paths</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">option</span>
 </div>
@@ -892,14 +921,14 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Supports ``self.get_sample_bams()``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">th_call_id</span> <span class="o">=</span> <span class="s">&quot;tophat_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">condition</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">])</span>
+        <span class="n">th_call_id</span> <span class="o">=</span> <span class="s">&quot;tophat_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="n">condition</span><span class="p">))</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">th_call</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">call_records</span><span class="p">[</span><span class="n">th_call_id</span><span class="p">]</span>
             <span class="n">th_out_dir</span> <span class="o">=</span> <span class="n">th_call</span><span class="o">.</span><span class="n">out_dir</span>
             <span class="n">bam_path</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/accepted_hits.bam&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">th_out_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">))</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span><span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exp</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;WARNING: unable to find matching tophat call record in memory for condition: </span><span class="si">%s</span><span class="se">\n</span><span class="s">Attempting to find corresponding cufflinks outfile in your base_dir.&quot;</span> \
-                <span class="o">%</span> <span class="p">(</span><span class="n">condition</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">])</span>
+                <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="n">condition</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">log_msg</span><span class="p">(</span><span class="n">log_msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
 
             <span class="c"># try to guess correct tophat out directory</span>
@@ -929,8 +958,8 @@
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mask_path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                     <span class="n">mask_path</span> <span class="o">=</span> <span class="n">mask_path</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidFileFormatError</span><span class="p">(</span><span class="s">&#39;CHECK YAML CONFIG FILE: Conditions in group </span><span class="si">%s</span><span class="s"> do not agree on which &quot;ref-sequence&quot; to use: </span><span class="si">%s</span><span class="s">.&#39;</span> \
-                                                        <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_id</span><span class="p">,</span><span class="n">mask_path</span><span class="p">))</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidFileFormatError</span><span class="p">(</span><span class="s">&#39;CHECK YAML CONFIG FILE: Conditions in experiment </span><span class="si">%s</span><span class="s"> do not agree on which &quot;ref-sequence&quot; to use: </span><span class="si">%s</span><span class="s">.&#39;</span> \
+                                                        <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiment_id</span><span class="p">,</span><span class="n">mask_path</span><span class="p">))</span>
                 <span class="k">return</span> <span class="n">mask_path</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">option</span>
@@ -946,6 +975,7 @@
             <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">:</span>
                 <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">condition</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">])</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">uniques</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
             <span class="k">return</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">option</span>
@@ -960,7 +990,7 @@
             <span class="n">cm_out_dir</span> <span class="o">=</span> <span class="n">cm_call</span><span class="o">.</span><span class="n">out_dir</span>
             <span class="n">gtf_path</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/merged.gtf&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">cm_out_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">))</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span><span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exp</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;WARNING: unable to find matching cuffmerge call record in memory for group: </span><span class="si">%s</span><span class="se">\n</span><span class="s">Attempting to find corresponding cufflinks outfile in your base_dir.&quot;</span> \
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;WARNING: unable to find matching cuffmerge call record in memory for experiment: </span><span class="si">%s</span><span class="se">\n</span><span class="s">Attempting to find corresponding cufflinks outfile in your base_dir.&quot;</span> \
                 <span class="o">%</span> <span class="p">(</span><span class="n">cm_call_id</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">log_msg</span><span class="p">(</span><span class="n">log_msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
 
@@ -1010,13 +1040,13 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">Blacktie 0.1.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">Blacktie 0.2.0rc1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2013, Augustine Dunn.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>
