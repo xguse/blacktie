@@ -6,12 +6,26 @@
 News
 ====
 
+0.2.0rc1
+--------
+
+*Release date: 2013-04-19*
+
+* git tag: 'v0.2.0rc1'
+* Added support for handling biological replicates in cuffdiff runs.
+* Major changes to yaml config:
+    * condition_queue[index].group_id --> condition_queue[index].experiment_id
+    * addition of condition_queue[index].replicate_id to track replicate data
+    * condition_queue[index].name now represents description of an 'experiemental condition' and will be shared by replicates.
+
+
 0.1.1
 -----
 
-*Release date: UNRELEASED*
+*Release date: 2013-03-21*
 
-* Example news entry for the in-development version
+* git commit SHA digest: 9d7c02d5e7f4ec8970bb2291c3eb6ff8f4dbe542
+* git tag: 'v0.1.1'
 
 
 0.1_dev
