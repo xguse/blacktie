@@ -21,8 +21,13 @@ import sys, os
 
 # -- AD added ------------------------------------------------------------------
 
+
 autodoc_member_order = 'group-wise'
 autodoc_default_flags = ['members', 'private-members', 'attribute']
+
+
+googleanalytics_id = 'UA-39589366-1'
+
 
 def skip(app, what, name, obj, skip, options):
     if name == "__init__":
@@ -41,7 +46,7 @@ def setup(app):
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.coverage', 'sphinx.ext.pngmath', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.coverage', 'sphinx.ext.pngmath', 'sphinx.ext.viewcode'] #,'sphinxcontrib.googleanalytics']
 todo_include_todos = True
 
 # Add any paths that contain templates here, relative to this directory.

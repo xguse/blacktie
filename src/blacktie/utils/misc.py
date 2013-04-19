@@ -16,15 +16,36 @@ misc.py
 ####################
 Code facilitating random aspects of this package.
 """
-
+import os
 import sys
 import inspect
 import smtplib
 import base64
 import time
+import re
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
+from collections import defaultdict
+
+
+def get_version_number(path_to_setup):
+    """
+    Provides access to current version info contained in setup.py
+    """
+    
+    setup_path = path_to_setup
+    with open(setup_path, 'rb') as f:
+        match = re.search(
+            '\s*[\'"]?version[\'"]?\s*[=:]\s*[\'"]?([^\'",]+)[\'"]?',
+            f.read().decode('utf-8'), re.I)
+
+    if match:
+        version_string = match.group(1)
+        return version_string
+
+    else:
+        print("No version definition found in ", setup_path)
 
 
 class Bunch(dict):
@@ -110,4 +131,20 @@ def get_time():
         
     
 
+def map_condition_groups(yargs):
+    """
+    creates a Bunch obj ``groups`` with key='experiment_id' from ``yargs``, value=list(condition_queue objects with 'experiment_id')
     
+    :param yargs: argument object generated from the yaml config file
+    :returns: ``groups``
+    """
+    groups = defaultdict(list)
+    for condition in yargs.condition_queue:
+        groups[condition['experiment_id']].append(condition)
+    groups = Bunch(dict(groups))
+    return groups
+
+def uniques(seq):
+    seen = set()
+    seen_add = seen.add
+    return [ x for x in seq if x not in seen and not seen_add(x)]

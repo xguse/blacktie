@@ -14,6 +14,9 @@ LD_LIBRARY_PATH="${ld_library_path}$${}{LD_LIBRARY_PATH}"   # Make sure worker's
 
 # HPC clusters frequently use a module system to provide system wide access to 
 # certain programs.  The following makes sure that the tools needed are loaded
+# for **MY** cluster. You will need alter this to make sure your cluster is set up
+# based on its system.
+
 module load bowtie2/2.0.2
 module load tophat/2.0.6
 module load cufflinks/2.0.2
