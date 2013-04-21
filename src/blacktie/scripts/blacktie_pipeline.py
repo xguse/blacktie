@@ -121,7 +121,7 @@ def main():
     else:
         email_info = Bunch({'email_from' : False,
                             'email_to' : False,
-                            'email_li' : False})
+                            'email_li' : ''})
 
     yargs.prgbar_regex = re.compile('>.+Processing.+\[.+\].+%\w*$')
     yargs.groups = map_condition_groups(yargs)
