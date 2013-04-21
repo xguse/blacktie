@@ -130,6 +130,10 @@ qsub_options:
 #             `condition_queue` in the order that you want them to be sent to
 #             cuffdiff.
 
+# `replicate_id`: this is how you group data for biological replicates of a single
+#             experimental condition experiments to be included in a cuffdiff program
+#             call.  Each replicate of a condition should have a unique `experiment_id`.
+
 # `left_reads`: a list of the paths to fastq files containing left reads for
 #               each condition. 
 

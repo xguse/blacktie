@@ -12,7 +12,8 @@ You should see the help text for blacktie and it should look something like this
   
   $ blacktie -h
   
-  usage: blacktie [-h] [--prog {tophat,cufflinks,cuffmerge,cuffdiff,all}]
+  usage: blacktie [-h] [--version]
+		  [--prog {tophat,cufflinks,cuffmerge,cuffdiff,all}]
 		  [--hide-logs] [--mode {analyze,dry_run,qsub_script}]
 		  config_file
 
@@ -25,6 +26,7 @@ You should see the help text for blacktie and it should look something like this
 
   optional arguments:
     -h, --help            show this help message and exit
+    --version             Print version number.
     --prog {tophat,cufflinks,cuffmerge,cuffdiff,all}
 			  Which program do you want to run? (default: tophat)
     --hide-logs           Make your log directories hidden to keep a tidy
