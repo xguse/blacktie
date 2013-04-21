@@ -68,6 +68,8 @@ def main():
                         help="""Which program do you want to run? (default: %(default)s)""")
     parser.add_argument('--hide-logs', action='store_true', default=False,
                         help="""Make your log directories hidden to keep a tidy 'looking' base directory. (default: %(default)s)""")
+    parser.add_argument('--no-email', action='store_true', default=False,
+                        help="""Don't send email notifications. (default: %(default)s)""")
     parser.add_argument('--mode', type=str, choices=['analyze','dry_run','qsub_script'], default='analyze',
                         help="""1) 'analyze': run the analysis pipeline. 2) 'dry_run': walk through all steps that
                         would be run and print out the command lines; however, do not send the commands to the
@@ -112,9 +114,14 @@ def main():
     else:
         pass
 
-    email_info = Bunch({'email_from' : yargs.run_options.email_info.sender,
-                        'email_to' : yargs.run_options.email_info.to,
-                        'email_li' : open(yargs.run_options.email_info.li,'rU').readline().rstrip('\n')})
+    if not args.no_email:
+        email_info = Bunch({'email_from' : yargs.run_options.email_info.sender,
+                            'email_to' : yargs.run_options.email_info.to,
+                            'email_li' : open(yargs.run_options.email_info.li,'rU').readline().rstrip('\n')})
+    else:
+        email_info = Bunch({'email_from' : False,
+                            'email_to' : False,
+                            'email_li' : ''})
 
     yargs.prgbar_regex = re.compile('>.+Processing.+\[.+\].+%\w*$')
     yargs.groups = map_condition_groups(yargs)
