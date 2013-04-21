@@ -88,38 +88,39 @@ def email_notification(sender,to,subject,txt,pw,server_info):
     
     .. todo:: **DONE** make ``email_notification()`` adjustable for other email servers
     """
+    if sender:
+        msg = MIMEMultipart()
+        msg['From'] = sender
+        msg['To'] = to
+        msg['Subject'] = subject
+        msg.attach(MIMEText(txt))
     
-    msg = MIMEMultipart()
-    msg['From'] = sender
-    msg['To'] = to
-    msg['Subject'] = subject
-    msg.attach(MIMEText(txt))
-
-    host = server_info['host']
-    port = server_info['port']
-    server = smtplib.SMTP(host, port)
+        host = server_info['host']
+        port = server_info['port']
+        server = smtplib.SMTP(host, port)
+        
+        try:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(sender,pw)
+            server.sendmail(sender,to,msg.as_string())
+            server.close()
+        except (smtplib.SMTPAuthenticationError,
+                smtplib.SMTPConnectError,
+                smtplib.SMTPDataError,
+                smtplib.SMTPException,
+                smtplib.SMTPHeloError,
+                smtplib.SMTPRecipientsRefused,
+                smtplib.SMTPResponseException,
+                smtplib.SMTPSenderRefused,
+                smtplib.SMTPServerDisconnected) as e:
+            
+            sys.stderr.write("Warning: %s was caught while trying to send your mail.\nSubject:%s\n" % (e.__class__.__name__,subject))
     
-    try:
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
-        server.login(sender,pw)
-        server.sendmail(sender,to,msg.as_string())
-        server.close()
-    except (smtplib.SMTPAuthenticationError,
-            smtplib.SMTPConnectError,
-            smtplib.SMTPDataError,
-            smtplib.SMTPException,
-            smtplib.SMTPHeloError,
-            smtplib.SMTPRecipientsRefused,
-            smtplib.SMTPResponseException,
-            smtplib.SMTPSenderRefused,
-            smtplib.SMTPServerDisconnected) as e:
-        
-        sys.stderr.write("Warning: %s was caught while trying to send your mail.\nSubject:%s\n" % (e.__class__.__name__,subject))
-
-        server.rset()
-        
+            server.rset()
+    else:
+        pass
         
     
 def get_time():
