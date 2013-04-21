@@ -21,6 +21,9 @@ import sys
 import base64
 
 
+import blacktie
+
+
 def main():
     """
     The main loop.  Lets ROCK!
@@ -35,7 +38,7 @@ def main():
 
     parser = argparse.ArgumentParser(description=desc)
 
-    parser.add_argument('--version', action='version', version='%(prog)s 0.1.1',
+    parser.add_argument('--version', action='version', version='%(prog)s ' + blacktie.__version__,
                         help="""Print version number.""")
     parser.add_argument('input_file', type=str,
                         help="""Path to a file where you have placed your password for the email
