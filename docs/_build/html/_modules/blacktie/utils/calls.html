@@ -1,0 +1,1052 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>blacktie.utils.calls &mdash; Blacktie 0.2.0rc1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.2.0rc1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="Blacktie 0.2.0rc1 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-39589366-2', 'github.io');
+  ga('send', 'pageview');
+
+</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Blacktie 0.2.0rc1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for blacktie.utils.calls</h1><div class="highlight"><pre>
+<span class="c">#*****************************************************************************</span>
+<span class="c">#  calls.py (part of the blacktie package)</span>
+<span class="c">#</span>
+<span class="c">#  (c) 2013 - Augustine Dunn</span>
+<span class="c">#  James Laboratory</span>
+<span class="c">#  Department of Biochemistry and Molecular Biology</span>
+<span class="c">#  University of California Irvine</span>
+<span class="c">#  wadunn83@gmail.com</span>
+<span class="c">#</span>
+<span class="c">#  Licenced under the GNU General Public License 3.0 license.</span>
+<span class="c">#******************************************************************************</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">####################</span>
+<span class="sd">calls.py</span>
+<span class="sd">####################</span>
+<span class="sd">Code defining classes to represent and excute pipeline program calls.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+
+<span class="kn">from</span> <span class="nn">mako.template</span> <span class="kn">import</span> <span class="n">Template</span>
+
+<span class="kn">from</span> <span class="nn">blacktie.utils.misc</span> <span class="kn">import</span> <span class="n">Bunch</span><span class="p">,</span><span class="n">bunchify</span>
+<span class="kn">from</span> <span class="nn">blacktie.utils.misc</span> <span class="kn">import</span> <span class="n">email_notification</span>
+<span class="kn">from</span> <span class="nn">blacktie.utils.misc</span> <span class="kn">import</span> <span class="n">get_time</span>
+<span class="kn">from</span> <span class="nn">blacktie.utils.misc</span> <span class="kn">import</span> <span class="n">uniques</span>
+<span class="kn">from</span> <span class="nn">blacktie.utils.externals</span> <span class="kn">import</span> <span class="n">runExternalApp</span><span class="p">,</span><span class="n">mkdirp</span>
+<span class="kn">from</span> <span class="nn">blacktie.utils</span> <span class="kn">import</span> <span class="n">errors</span>
+
+
+<div class="viewcode-block" id="BaseCall"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall">[docs]</a><span class="k">class</span> <span class="nc">BaseCall</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Defines common methods for all program call types.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="BaseCall.__init__"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">yargs</span><span class="p">,</span><span class="n">email_info</span><span class="p">,</span><span class="n">run_id</span><span class="p">,</span><span class="n">run_logs</span><span class="p">,</span><span class="n">conditions</span><span class="p">,</span><span class="n">mode</span><span class="o">=</span><span class="s">&#39;analyze&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        initializes a ``BaseCall`` object</span>
+<span class="sd">        </span>
+<span class="sd">        :param yargs: argument tree generated by parsing the yaml config file</span>
+<span class="sd">        :param email_info: Bunch() object containing keys: ``email_from``, ``email_to``, ``email_li``</span>
+<span class="sd">        :param run_id: id for the whole set of calls</span>
+<span class="sd">        :param run_logs: the directory where log file should be put</span>
+<span class="sd">        :param conditions: one or a list of condition-dictionaries from ``yargs.condition_queue``</span>
+<span class="sd">        :param mode: choices = [&#39;analyze&#39;,&#39;dry_run&#39;,&#39;qsub_script&#39;]</span>
+
+<span class="sd">        :returns: an initialized ``BaseCall`` object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hostname</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span> <span class="o">=</span> <span class="n">yargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">email_info</span> <span class="o">=</span> <span class="n">email_info</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_id</span> <span class="o">=</span> <span class="n">run_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_dir</span> <span class="o">=</span> <span class="n">run_logs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prgbar_regex</span> <span class="o">=</span> <span class="n">yargs</span><span class="o">.</span><span class="n">prgbar_regex</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span> <span class="o">=</span> <span class="n">conditions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span> <span class="o">=</span> <span class="bp">None</span> <span class="c"># over-ride in child __init__</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arg_str</span> <span class="o">=</span> <span class="bp">None</span> <span class="c"># over-ride in child __init__</span>
+
+
+
+</div>
+<div class="viewcode-block" id="BaseCall._flag_out_dir"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall._flag_out_dir">[docs]</a>    <span class="k">def</span> <span class="nf">_flag_out_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        renames out directory, prepending &#39;FAILED&#39; flag: ``mv tophat_Aa0 FAILED.tophat_Aa0``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">orig_path_tokens</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">new_path</span> <span class="o">=</span> <span class="s">&quot;/</span><span class="si">%s</span><span class="s">/FAILED.</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">orig_path_tokens</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">orig_path_tokens</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span><span class="p">),</span><span class="n">new_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span> <span class="o">=</span> <span class="n">new_path</span>
+</div>
+<div class="viewcode-block" id="BaseCall.init_log_file"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.init_log_file">[docs]</a>    <span class="k">def</span> <span class="nf">init_log_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        creates empty log file for this call and stores its path in ``self.log_file``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;analyze&#39;</span><span class="p">:</span>
+            <span class="n">log_file</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">.log&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">),</span><span class="bp">self</span><span class="o">.</span><span class="n">call_id</span><span class="p">)</span>
+            <span class="n">log_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_file</span><span class="p">,</span><span class="s">&#39;w&#39;</span><span class="p">)</span>
+            <span class="n">log_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">log_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BaseCall.get_condition_id"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.get_condition_id">[docs]</a>    <span class="k">def</span> <span class="nf">get_condition_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">condition_dict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructs condition ID</span>
+<span class="sd">        :param condition_dict: a dictionary containing consition info like name, replicate_id, etc.</span>
+<span class="sd">        :returns: an ID used to construct the call_id of a call.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">condition_id</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">condition_dict</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">],</span><span class="n">condition_dict</span><span class="p">[</span><span class="s">&#39;replicate_id&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">condition_id</span>
+</div>
+<div class="viewcode-block" id="BaseCall.set_call_id"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.set_call_id">[docs]</a>    <span class="k">def</span> <span class="nf">set_call_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        builds and stores this call&#39;s call ID in ``self.call_id``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+            
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">,</span><span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+            <span class="c"># this should mean that we are dealing with a &quot;group&quot; type call</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">experiment_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">experiment_id</span><span class="p">]</span>
+            <span class="n">condition_ids</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">]</span>
+            <span class="n">call_id</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prog_name</span><span class="p">,</span><span class="s">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">condition_ids</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">call_id</span> <span class="o">=</span> <span class="n">call_id</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">,</span><span class="nb">dict</span><span class="p">):</span>
+            <span class="n">condition_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">)</span>
+            <span class="n">call_id</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prog_name</span><span class="p">,</span><span class="n">condition_id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">call_id</span> <span class="o">=</span> <span class="n">call_id</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">SanityCheckError</span><span class="p">(</span><span class="s">&#39;type(self._conditions) should be either int, str, or dict. It is: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">)))</span>
+</div>
+<div class="viewcode-block" id="BaseCall.notify_start_of_call"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.notify_start_of_call">[docs]</a>    <span class="k">def</span> <span class="nf">notify_start_of_call</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        sends notification email informing user that ``self.call_id`` has been initiated</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">email_info</span>
+        
+        <span class="n">report_time</span> <span class="o">=</span> <span class="n">get_time</span><span class="p">()</span>
+        <span class="n">email_sub</span><span class="o">=</span><span class="s">&quot;[SITREP from </span><span class="si">%s</span><span class="s">] Run </span><span class="si">%s</span><span class="s"> - Starting </span><span class="si">%s</span><span class="s"> at </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hostname</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">run_id</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">call_id</span><span class="p">,</span><span class="n">report_time</span><span class="p">)</span>
+        <span class="n">email_body</span><span class="o">=</span><span class="s">&quot;</span><span class="si">%s</span><span class="se">\n\n</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">email_sub</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cmd_string</span><span class="p">)</span>
+        <span class="n">server_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">run_options</span><span class="o">.</span><span class="n">custom_smtp</span>
+        <span class="n">email_notification</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">email_from</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">email_to</span><span class="p">,</span> <span class="n">email_sub</span><span class="p">,</span> <span class="n">email_body</span><span class="p">,</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">email_li</span><span class="p">),</span> <span class="n">server_info</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="BaseCall.notify_end_of_call"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.notify_end_of_call">[docs]</a>    <span class="k">def</span> <span class="nf">notify_end_of_call</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        sends notification email informing user that ``self.call_id`` has exited</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">email_info</span>
+
+        <span class="n">report_time</span> <span class="o">=</span> <span class="n">get_time</span><span class="p">()</span>
+        <span class="n">email_sub</span><span class="o">=</span><span class="s">&quot;[SITREP from </span><span class="si">%s</span><span class="s">] Run </span><span class="si">%s</span><span class="s"> - Exited </span><span class="si">%s</span><span class="s"> at </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hostname</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">run_id</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">call_id</span><span class="p">,</span><span class="n">report_time</span><span class="p">)</span>
+
+        <span class="c">#    repeat subject in body</span>
+        <span class="n">email_body</span><span class="o">=</span><span class="n">email_sub</span>
+        
+        <span class="n">email_body</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n\n</span><span class="s"> ==&gt; stderr &lt;==</span><span class="se">\n\n</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stderr_msg</span><span class="p">)</span>
+        <span class="n">server_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">run_options</span><span class="o">.</span><span class="n">custom_smtp</span>
+        <span class="n">email_notification</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">email_from</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">email_to</span><span class="p">,</span> <span class="n">email_sub</span><span class="p">,</span> <span class="n">email_body</span><span class="p">,</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">email_li</span><span class="p">),</span> <span class="n">server_info</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="BaseCall.build_out_dir_path"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.build_out_dir_path">[docs]</a>    <span class="k">def</span> <span class="nf">build_out_dir_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        builds correct ``out_dir`` path based on state of ``self``</span>
+<span class="sd">        </span>
+<span class="sd">        :returns: ``out_dir``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">base_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">run_options</span><span class="o">.</span><span class="n">base_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">base_dir</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">call_id</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="BaseCall.init_opt_dict"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.init_opt_dict">[docs]</a>    <span class="k">def</span> <span class="nf">init_opt_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        builds a dict with non-job-specific values set and job-specific values set to False</span>
+<span class="sd">        based on option names in the yaml file for this phase</span>
+<span class="sd">        </span>
+<span class="sd">        :returns: partially populated ``opt_dict``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">opt_dict</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">opt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">opt_dict</span><span class="p">[</span><span class="n">opt</span><span class="p">]</span>
+        <span class="n">opt_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">opt_dict</span><span class="p">)</span> <span class="c"># from now on I want missing keys to raise error</span>
+
+        <span class="c"># Populate opt_dict with non-job-specific options encoded in yaml file</span>
+        <span class="c"># Ignore positional args for now</span>
+        <span class="n">no_positional_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">no_positional_args</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s">&#39;positional_args&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">opt</span> <span class="ow">in</span> <span class="n">no_positional_args</span><span class="p">:</span>
+            <span class="n">opt_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="p">[</span><span class="n">opt</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">opt_val</span> <span class="o">!=</span> <span class="s">&quot;from_conditions&quot;</span><span class="p">:</span>
+                <span class="n">opt_dict</span><span class="p">[</span><span class="n">opt</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt_val</span>
+        <span class="k">return</span> <span class="n">opt_dict</span>
+</div>
+<div class="viewcode-block" id="BaseCall.construct_options_list"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.construct_options_list">[docs]</a>    <span class="k">def</span> <span class="nf">construct_options_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        converts ``opt_dict`` into list encoding proper options to send to the current program: saves to ``self``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">options_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">opt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="n">opt</span><span class="p">]</span> <span class="ow">is</span> <span class="bp">False</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">opt</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">options_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;-</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">opt</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">options_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;--</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">opt</span><span class="p">))</span>
+
+            <span class="n">opt_val_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="n">opt</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">opt_val_str</span> <span class="o">!=</span> <span class="s">&#39;True&#39;</span><span class="p">:</span>
+                <span class="n">options_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">opt_val_str</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">options_list</span> <span class="o">=</span> <span class="n">options_list</span>
+</div>
+<div class="viewcode-block" id="BaseCall.purge_progress_bars"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.purge_progress_bars">[docs]</a>    <span class="k">def</span> <span class="nf">purge_progress_bars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stderr_str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        removes the dynamic progress bars included in some output in case user did not turn them off</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">stderr_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+        <span class="n">no_bar</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prgbar_regex</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span> <span class="c"># prgbar regex compiled outside scope to avoid re-complilation overhead</span>
+                <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">no_bar</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">no_bar</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="BaseCall.log_msg"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.log_msg">[docs]</a>    <span class="k">def</span> <span class="nf">log_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">log_msg</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        * opens ``self.log_file``</span>
+<span class="sd">        * writes ``log_msg``</span>
+<span class="sd">        * closes ``self.log_file``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;analyze&#39;</span><span class="p">:</span>
+            <span class="n">log</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="p">,</span><span class="s">&#39;a&#39;</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">log_msg</span><span class="p">))</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="BaseCall.log_start"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.log_start">[docs]</a>    <span class="k">def</span> <span class="nf">log_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        records start of call in ``self.log_file``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;analyze&#39;</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;[start </span><span class="si">%s</span><span class="s">]</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">call_id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_msg</span><span class="p">(</span><span class="n">log_msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+        </div>
+<div class="viewcode-block" id="BaseCall.log_end"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.log_end">[docs]</a>    <span class="k">def</span> <span class="nf">log_end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        records command string used, program output, and the end of call in ``self.log_file``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;analyze&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stderr_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">purge_progress_bars</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stderr_msg</span><span class="p">)</span>
+            <span class="n">err_msg</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="se">\n\n</span><span class="si">%s</span><span class="se">\n</span><span class="s">[end </span><span class="si">%s</span><span class="s">]&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cmd_string</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">stderr_msg</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">call_id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_msg</span><span class="p">(</span><span class="n">log_msg</span><span class="o">=</span><span class="n">err_msg</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="BaseCall.build_qsub"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.build_qsub">[docs]</a>    <span class="k">def</span> <span class="nf">build_qsub</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Builds and writes this CallObject&#39;s qsub script to current working directory</span>
+<span class="sd">        using options provided under the &quot;qsub_options&quot; sub-tree in the yaml config file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nicknames</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;tophat&#39;</span><span class="p">:</span><span class="s">&#39;th&#39;</span><span class="p">,</span>
+                     <span class="s">&#39;cufflinks&#39;</span><span class="p">:</span><span class="s">&#39;cl&#39;</span><span class="p">,</span>
+                     <span class="s">&#39;cuffmerge&#39;</span><span class="p">:</span><span class="s">&#39;cm&#39;</span><span class="p">,</span>
+                     <span class="s">&#39;cuffdiff&#39;</span><span class="p">:</span><span class="s">&#39;cd&#39;</span><span class="p">,}</span>
+        
+        <span class="n">qsub_options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">qsub_options</span>
+        
+        <span class="c"># set keyword args for template</span>
+        <span class="n">kw</span> <span class="o">=</span> <span class="n">Bunch</span><span class="p">()</span>
+        <span class="n">kw</span><span class="o">.</span><span class="n">queues</span> <span class="o">=</span> <span class="n">qsub_options</span><span class="o">.</span><span class="n">queues</span>
+        <span class="n">kw</span><span class="o">.</span><span class="n">datahome</span> <span class="o">=</span> <span class="n">qsub_options</span><span class="o">.</span><span class="n">datahome</span>
+        <span class="n">kw</span><span class="o">.</span><span class="n">core_range</span> <span class="o">=</span> <span class="n">qsub_options</span><span class="o">.</span><span class="n">core_range</span>
+        <span class="n">kw</span><span class="o">.</span><span class="n">email_addy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">email_info</span><span class="o">.</span><span class="n">email_to</span>
+        <span class="n">kw</span><span class="o">.</span><span class="n">call_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">call_id</span>
+        <span class="n">job_name</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nicknames</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">prog_name</span><span class="p">],</span> <span class="s">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">call_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]))</span>
+        <span class="n">kw</span><span class="o">.</span><span class="n">job_name</span> <span class="o">=</span> <span class="n">job_name</span>
+        <span class="n">kw</span><span class="o">.</span><span class="n">out_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span>
+        <span class="n">kw</span><span class="o">.</span><span class="n">ld_library_path</span> <span class="o">=</span> <span class="n">qsub_options</span><span class="o">.</span><span class="n">ld_library_path</span>
+        
+        <span class="c"># need to make sure we use the number of cores that the SGE gave us</span>
+        <span class="n">kw</span><span class="o">.</span><span class="n">cmd_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cmd_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;-p </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;p&#39;</span><span class="p">]),</span><span class="s">&#39;-p $CORES&#39;</span><span class="p">)</span>
+        
+        <span class="n">qsub_template</span> <span class="o">=</span> <span class="n">Template</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">qsub_options</span><span class="o">.</span><span class="n">template</span><span class="p">)</span>
+        <span class="n">out_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.qsub.sh&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">call_id</span><span class="p">),</span><span class="s">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">qsub_string</span> <span class="o">=</span> <span class="n">qsub_template</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="n">out_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">qsub_string</span><span class="p">)</span>
+        <span class="n">out_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        
+        </div>
+<div class="viewcode-block" id="BaseCall.execute"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.BaseCall.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        calls correct program, records results, and manages errors</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">cmd_string</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prog_name</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_str</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;analyze&#39;</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">notify_start_of_call</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log_start</span><span class="p">()</span>
+    
+                <span class="bp">self</span><span class="o">.</span><span class="n">stdout_msg</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">stderr_msg</span> <span class="o">=</span> <span class="n">runExternalApp</span><span class="p">(</span><span class="n">progName</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">prog_name</span><span class="p">,</span><span class="n">argStr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_str</span><span class="p">)</span>
+    
+                <span class="bp">self</span><span class="o">.</span><span class="n">log_end</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">notify_end_of_call</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="n">email_body</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+                <span class="n">email_body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">purge_progress_bars</span><span class="p">(</span><span class="n">email_body</span><span class="p">)</span>
+                <span class="n">e</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">email_info</span>
+                <span class="n">server_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">run_options</span><span class="o">.</span><span class="n">custom_smtp</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">stdout_msg</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">Error in call.  Check error log.</span><span class="se">\n</span><span class="s">&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stderr_msg</span> <span class="o">=</span> <span class="n">email_body</span>
+    
+                <span class="bp">self</span><span class="o">.</span><span class="n">log_end</span><span class="p">()</span>
+    
+                <span class="bp">self</span><span class="o">.</span><span class="n">_flag_out_dir</span><span class="p">()</span>
+    
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span><span class="n">errors</span><span class="o">.</span><span class="n">SystemCallError</span><span class="p">):</span>
+                    <span class="n">email_sub</span><span class="o">=</span><span class="s">&quot;[SITREP from </span><span class="si">%s</span><span class="s">] Run </span><span class="si">%s</span><span class="s"> experienced SystemCallError in call </span><span class="si">%s</span><span class="s">. MOVING ON.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hostname</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">run_id</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">call_id</span><span class="p">)</span>
+                    <span class="n">email_notification</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">email_from</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">email_to</span><span class="p">,</span> <span class="n">email_sub</span><span class="p">,</span> <span class="n">email_body</span><span class="p">,</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">email_li</span><span class="p">),</span><span class="n">server_info</span><span class="p">)</span>                
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span><span class="ne">KeyboardInterrupt</span><span class="p">):</span>
+                    <span class="n">email_sub</span><span class="o">=</span><span class="s">&quot;[SITREP from </span><span class="si">%s</span><span class="s">] Run </span><span class="si">%s</span><span class="s"> experienced KeyboardInterrupt in call </span><span class="si">%s</span><span class="s">. MOVING ON.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hostname</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">run_id</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">call_id</span><span class="p">)</span>
+                    <span class="n">email_notification</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">email_from</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">email_to</span><span class="p">,</span> <span class="n">email_sub</span><span class="p">,</span> <span class="n">email_body</span><span class="p">,</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">email_li</span><span class="p">),</span><span class="n">server_info</span><span class="p">)</span> 
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">email_sub</span><span class="o">=</span><span class="s">&quot;[SITREP from </span><span class="si">%s</span><span class="s">] Run </span><span class="si">%s</span><span class="s"> experienced unhandled exception in call </span><span class="si">%s</span><span class="s">. EXITING.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hostname</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">run_id</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">call_id</span><span class="p">)</span>
+                    <span class="n">email_notification</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">email_from</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">email_to</span><span class="p">,</span> <span class="n">email_sub</span><span class="p">,</span> <span class="n">email_body</span><span class="p">,</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">email_li</span><span class="p">),</span><span class="n">server_info</span><span class="p">)</span>
+                    <span class="k">raise</span>
+        
+        <span class="c"># DRY RUN</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;dry_run&#39;</span><span class="p">:</span>
+            <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">cmd_string</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+        
+        <span class="c"># QSUB SCRIPT</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;qsub_script&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">build_qsub</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">BlacktieError</span><span class="p">()</span>
+
+
+</div></div>
+<div class="viewcode-block" id="TophatCall"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.TophatCall">[docs]</a><span class="k">class</span> <span class="nc">TophatCall</span><span class="p">(</span><span class="n">BaseCall</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Manage a single call to tophat and store associated run data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TophatCall.__init__"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.TophatCall.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">yargs</span><span class="p">,</span><span class="n">email_info</span><span class="p">,</span><span class="n">run_id</span><span class="p">,</span><span class="n">run_logs</span><span class="p">,</span><span class="n">conditions</span><span class="p">,</span><span class="n">mode</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        initializes the ``TophatCall`` object</span>
+<span class="sd">        </span>
+<span class="sd">        :param yargs: argument tree generated by parsing the yaml config file</span>
+<span class="sd">        :param email_info: Bunch() object containing keys: ``email_from``, ``email_to``, ``email_li``</span>
+<span class="sd">        :param run_id: id for the whole set of calls</span>
+<span class="sd">        :param run_logs: the directory where log file should be put</span>
+<span class="sd">        :param conditions: one or a list of condition-dictionaries from ``yargs.condition_queue``</span>
+<span class="sd">        :param mode: choices = [&#39;analyze&#39;,&#39;dry_run&#39;,&#39;qsub_script&#39;]</span>
+<span class="sd">        </span>
+<span class="sd">        :returns: an initialized ``TophatCall`` object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prog_name</span> <span class="o">=</span> <span class="s">&#39;tophat&#39;</span>
+
+        <span class="n">BaseCall</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">yargs</span><span class="p">,</span><span class="n">email_info</span><span class="p">,</span><span class="n">run_id</span><span class="p">,</span><span class="n">run_logs</span><span class="p">,</span><span class="n">conditions</span><span class="p">,</span><span class="n">mode</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">tophat_options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_call_id</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_log_file</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_out_dir</span><span class="p">()</span>
+
+        <span class="c"># set up options for program call</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_opt_dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;o&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;G&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_gtf_anno</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">construct_options_list</span><span class="p">()</span>
+
+        <span class="c"># now the positional args</span>
+        <span class="n">bowtie_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bt_idx</span><span class="p">()</span>
+        <span class="n">left_reads</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lt_reads</span><span class="p">()</span>
+        <span class="n">right_reads</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_rt_reads</span><span class="p">()</span>
+
+        <span class="c"># combine and save arg_str</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options_list</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">bowtie_index</span><span class="p">,</span><span class="n">left_reads</span><span class="p">,</span><span class="n">right_reads</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arg_str</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options_list</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="TophatCall.get_out_dir"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.TophatCall.get_out_dir">[docs]</a>    <span class="k">def</span> <span class="nf">get_out_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.tophat_options.o: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="o">.</span><span class="n">o</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_out_dir_path</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+</div>
+<div class="viewcode-block" id="TophatCall.get_gtf_anno"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.TophatCall.get_gtf_anno">[docs]</a>    <span class="k">def</span> <span class="nf">get_gtf_anno</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.tophat_options.G: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="o">.</span><span class="n">G</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="n">gtf_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">[</span><span class="s">&#39;gtf_annotation&#39;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">gtf_path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+</div>
+<div class="viewcode-block" id="TophatCall.get_bt_idx"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.TophatCall.get_bt_idx">[docs]</a>    <span class="k">def</span> <span class="nf">get_bt_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.tophat_options.positional_args.bowtie2_index: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="o">.</span><span class="n">positional_args</span><span class="o">.</span><span class="n">bowtie2_index</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="n">bt_idx_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">run_options</span><span class="o">.</span><span class="n">bowtie_indexes_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+            <span class="n">bt_idx_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">[</span><span class="s">&#39;bowtie2_index&#39;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">bt_idx_dir</span><span class="p">,</span><span class="n">bt_idx_name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+</div>
+<div class="viewcode-block" id="TophatCall.get_lt_reads"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.TophatCall.get_lt_reads">[docs]</a>    <span class="k">def</span> <span class="nf">get_lt_reads</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.tophat_options.positional_args.left_reads: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="o">.</span><span class="n">positional_args</span><span class="o">.</span><span class="n">left_reads</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="n">lt_reads</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">[</span><span class="s">&#39;left_reads&#39;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lt_reads</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+</div>
+<div class="viewcode-block" id="TophatCall.get_rt_reads"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.TophatCall.get_rt_reads">[docs]</a>    <span class="k">def</span> <span class="nf">get_rt_reads</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.tophat_options.positional_args.right_reads: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="o">.</span><span class="n">positional_args</span><span class="o">.</span><span class="n">right_reads</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="n">rt_reads</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">[</span><span class="s">&#39;right_reads&#39;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rt_reads</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+
+</div></div>
+<div class="viewcode-block" id="CufflinksCall"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CufflinksCall">[docs]</a><span class="k">class</span> <span class="nc">CufflinksCall</span><span class="p">(</span><span class="n">BaseCall</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Manage a single call to cufflinks and store associated run data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CufflinksCall.__init__"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CufflinksCall.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">yargs</span><span class="p">,</span><span class="n">email_info</span><span class="p">,</span><span class="n">run_id</span><span class="p">,</span><span class="n">run_logs</span><span class="p">,</span><span class="n">conditions</span><span class="p">,</span><span class="n">mode</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        initializes the ``CufflinksCall`` object</span>
+<span class="sd">        </span>
+<span class="sd">        :param yargs: argument tree generated by parsing the yaml config file</span>
+<span class="sd">        :param email_info: Bunch() object containing keys: ``email_from``, ``email_to``, ``email_li``</span>
+<span class="sd">        :param run_id: id for the whole set of calls</span>
+<span class="sd">        :param run_logs: the directory where log file should be put</span>
+<span class="sd">        :param conditions: one or a list of condition-dictionaries from ``yargs.condition_queue``</span>
+<span class="sd">        :param mode: choices = [&#39;analyze&#39;,&#39;dry_run&#39;,&#39;qsub_script&#39;]</span>
+
+<span class="sd">        :returns: an initialized ``CufflinksCall`` object</span>
+<span class="sd">        </span>
+<span class="sd">        .. todo:: **DONE** add support for --GTF in addition to currently supported --GTF-guide</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prog_name</span> <span class="o">=</span> <span class="s">&#39;cufflinks&#39;</span>
+
+        <span class="n">BaseCall</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">yargs</span><span class="p">,</span><span class="n">email_info</span><span class="p">,</span><span class="n">run_id</span><span class="p">,</span><span class="n">run_logs</span><span class="p">,</span><span class="n">conditions</span><span class="p">,</span><span class="n">mode</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">cufflinks_options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_call_id</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_log_file</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_out_dir</span><span class="p">()</span>
+
+
+        <span class="c"># set up options for program call</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_opt_dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verify_options</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;o&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;GTF-guide&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_gtf_anno_guide</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;GTF&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_gtf_anno</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;frag-bias-correct&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_genome</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;mask-file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_mask_file</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">construct_options_list</span><span class="p">()</span>
+
+        <span class="c"># now the positional args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accepted_hits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_accepted_hits</span><span class="p">()</span> 
+
+        <span class="c"># combine and save arg_str</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options_list</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">accepted_hits</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arg_str</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options_list</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="CufflinksCall.verify_options"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CufflinksCall.verify_options">[docs]</a>    <span class="k">def</span> <span class="nf">verify_options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Makes sure that conflicting options were not imported from yaml config file.</span>
+<span class="sd">        </span>
+<span class="sd">        .. todo:: **DONE** GTF and GTF-guide should not be used together but both can be ommited</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span>
+        
+        <span class="c"># GTF and GTF-guide should not be used together but both can be ommited</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">gtf</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;GTF&#39;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="n">gtf</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">options</span><span class="p">[</span><span class="s">&#39;GTF&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gtf</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">gtf_guide</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;GTF-guide&#39;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="n">gtf_guide</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">options</span><span class="p">[</span><span class="s">&#39;GTF-guide&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gtf_guide</span>
+            
+        <span class="k">if</span> <span class="n">gtf</span> <span class="ow">and</span> <span class="n">gtf_guide</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">SanityCheckError</span><span class="p">(</span><span class="s">&#39;&quot;GTF&quot; and &quot;GTF-guide&quot; option were non-False.  Please only set one or the other.&#39;</span><span class="p">)</span>
+            
+        </div>
+<div class="viewcode-block" id="CufflinksCall.get_out_dir"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CufflinksCall.get_out_dir">[docs]</a>    <span class="k">def</span> <span class="nf">get_out_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cufflinks_options.o: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="o">.</span><span class="n">o</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_out_dir_path</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+</div>
+<div class="viewcode-block" id="CufflinksCall.get_gtf_anno_guide"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CufflinksCall.get_gtf_anno_guide">[docs]</a>    <span class="k">def</span> <span class="nf">get_gtf_anno_guide</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cufflinks_options.GTF-guide: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="p">[</span><span class="s">&#39;GTF-guide&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="n">gtf_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">[</span><span class="s">&#39;gtf_annotation&#39;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">gtf_path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+</div>
+<div class="viewcode-block" id="CufflinksCall.get_gtf_anno"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CufflinksCall.get_gtf_anno">[docs]</a>    <span class="k">def</span> <span class="nf">get_gtf_anno</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cufflinks_options.GTF: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="p">[</span><span class="s">&#39;GTF&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="n">gtf_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">[</span><span class="s">&#39;gtf_annotation&#39;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">gtf_path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+
+</div>
+<div class="viewcode-block" id="CufflinksCall.get_genome"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CufflinksCall.get_genome">[docs]</a>    <span class="k">def</span> <span class="nf">get_genome</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cufflinks_options.frag-bias-correct: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="p">[</span><span class="s">&#39;frag-bias-correct&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="n">genome_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">[</span><span class="s">&#39;genome_seq&#39;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">genome_path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+</div>
+<div class="viewcode-block" id="CufflinksCall.get_accepted_hits"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CufflinksCall.get_accepted_hits">[docs]</a>    <span class="k">def</span> <span class="nf">get_accepted_hits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cufflinks_options.positional_args.accepted_hits: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="o">.</span><span class="n">positional_args</span><span class="o">.</span><span class="n">accepted_hits</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="n">bam_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bam_path</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">bam_path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+</div>
+<div class="viewcode-block" id="CufflinksCall.get_bam_path"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CufflinksCall.get_bam_path">[docs]</a>    <span class="k">def</span> <span class="nf">get_bam_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Supports ``self.get_accepted_hits()``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">th_call_id</span> <span class="o">=</span> <span class="s">&quot;tophat_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">th_call</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">call_records</span><span class="p">[</span><span class="n">th_call_id</span><span class="p">]</span>
+            <span class="n">th_out_dir</span> <span class="o">=</span> <span class="n">th_call</span><span class="o">.</span><span class="n">out_dir</span>
+            <span class="n">bam_path</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/accepted_hits.bam&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">th_out_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span><span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exp</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;WARNING: unable to find matching tophat call record in memory for condition: </span><span class="si">%s</span><span class="se">\n</span><span class="s">Attempting to find corresponding cufflinks outfile in your base_dir.&quot;</span> \
+                <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">))</span>            
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_msg</span><span class="p">(</span><span class="n">log_msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+
+            <span class="c"># try to guess correct tophat out directory</span>
+            <span class="n">base_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">run_options</span><span class="o">.</span><span class="n">base_dir</span>
+            <span class="n">bam_path</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">/accepted_hits.bam&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">base_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">),</span><span class="n">th_call_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">bam_path</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;analyze&#39;</span><span class="p">:</span>
+                    <span class="c">#: ``.. todo:: build framework to handle this non-fatally``</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MissingArgumentError</span><span class="p">(</span><span class="s">&quot;I could not find an appropriate accepted_hits.bam file. Failed to find: </span><span class="si">%s</span><span class="s">&quot;</span> \
+                                                      <span class="o">%</span> <span class="p">(</span><span class="n">bam_path</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">bam_path</span> 
+        <span class="k">return</span> <span class="n">bam_path</span>
+</div>
+<div class="viewcode-block" id="CufflinksCall.get_mask_file"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CufflinksCall.get_mask_file">[docs]</a>    <span class="k">def</span> <span class="nf">get_mask_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cufflinks_options.mask-file: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="p">[</span><span class="s">&#39;mask-file&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+                <span class="n">mask_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">[</span><span class="s">&#39;mask_file&#39;</span><span class="p">]</span>
+                <span class="k">return</span> <span class="n">mask_path</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">option</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        </div></div>
+<div class="viewcode-block" id="CuffmergeCall"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffmergeCall">[docs]</a><span class="k">class</span> <span class="nc">CuffmergeCall</span><span class="p">(</span><span class="n">BaseCall</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Manage a single call to cuffmerge and store associated run data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CuffmergeCall.__init__"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffmergeCall.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">yargs</span><span class="p">,</span><span class="n">email_info</span><span class="p">,</span><span class="n">run_id</span><span class="p">,</span><span class="n">run_logs</span><span class="p">,</span><span class="n">conditions</span><span class="p">,</span><span class="n">mode</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        initializes the ``CuffmergeCall`` object</span>
+<span class="sd">        </span>
+<span class="sd">        :param yargs: argument tree generated by parsing the yaml config file</span>
+<span class="sd">        :param email_info: Bunch() object containing keys: ``email_from``, ``email_to``, ``email_li``</span>
+<span class="sd">        :param run_id: id for the whole set of calls</span>
+<span class="sd">        :param run_logs: the directory where log file should be put</span>
+<span class="sd">        :param conditions: one or a list of condition-dictionaries from ``yargs.condition_queue``</span>
+<span class="sd">        :param mode: choices = [&#39;analyze&#39;,&#39;dry_run&#39;,&#39;qsub_script&#39;]</span>
+<span class="sd">            </span>
+<span class="sd">        :returns: an initialized ``CuffmergeCall`` object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prog_name</span> <span class="o">=</span> <span class="s">&#39;cuffmerge&#39;</span>
+
+        <span class="n">BaseCall</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">yargs</span><span class="p">,</span><span class="n">email_info</span><span class="p">,</span><span class="n">run_id</span><span class="p">,</span><span class="n">run_logs</span><span class="p">,</span><span class="n">conditions</span><span class="p">,</span><span class="n">mode</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">cuffmerge_options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_call_id</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_log_file</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_out_dir</span><span class="p">()</span>
+
+
+        <span class="c"># set up options for program call</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_opt_dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;o&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;ref-gtf&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_gtf_anno</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;ref-sequence&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_genome</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">construct_options_list</span><span class="p">()</span>
+
+        <span class="c"># now the positional args</span>
+        <span class="n">assembly_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cufflinks_gtfs</span><span class="p">()</span>
+
+        <span class="c"># combine and save arg_str</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options_list</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">assembly_list</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arg_str</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options_list</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="CuffmergeCall.get_out_dir"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffmergeCall.get_out_dir">[docs]</a>    <span class="k">def</span> <span class="nf">get_out_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cuffmerge_options.o: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="o">.</span><span class="n">o</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_out_dir_path</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+</div>
+<div class="viewcode-block" id="CuffmergeCall.get_gtf_anno"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffmergeCall.get_gtf_anno">[docs]</a>    <span class="k">def</span> <span class="nf">get_gtf_anno</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cuffmerge_options.ref-gtf: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="p">[</span><span class="s">&#39;ref-gtf&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="c"># Make sure all conditions agree on anno.gtf</span>
+            <span class="n">gtf_path</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">c</span><span class="p">[</span><span class="s">&#39;gtf_annotation&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gtf_path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">gtf_path</span> <span class="o">=</span> <span class="n">gtf_path</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidFileFormatError</span><span class="p">(</span><span class="s">&#39;CHECK YAML CONFIG FILE: Conditions in experiment </span><span class="si">%s</span><span class="s"> do not agree on which &quot;ref-gtf&quot; to use: </span><span class="si">%s</span><span class="s">.&#39;</span> \
+                                                    <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiment_id</span><span class="p">,</span><span class="n">gtf_path</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">gtf_path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+</div>
+<div class="viewcode-block" id="CuffmergeCall.get_genome"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffmergeCall.get_genome">[docs]</a>    <span class="k">def</span> <span class="nf">get_genome</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cuffmerge_options.ref-sequence: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="p">[</span><span class="s">&#39;ref-sequence&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="c"># Make sure all conditions agree on their genome seq</span>
+            <span class="n">genome_path</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">c</span><span class="p">[</span><span class="s">&#39;genome_seq&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">genome_path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">genome_path</span> <span class="o">=</span> <span class="n">genome_path</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidFileFormatError</span><span class="p">(</span><span class="s">&#39;CHECK YAML CONFIG FILE: Conditions in experiment </span><span class="si">%s</span><span class="s"> do not agree on which &quot;ref-sequence&quot; to use: </span><span class="si">%s</span><span class="s">.&#39;</span> \
+                                                    <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiment_id</span><span class="p">,</span><span class="n">genome_path</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">genome_path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+</div>
+<div class="viewcode-block" id="CuffmergeCall.get_cufflinks_gtfs"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffmergeCall.get_cufflinks_gtfs">[docs]</a>    <span class="k">def</span> <span class="nf">get_cufflinks_gtfs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cuffmerge_options.positional_args.assembly_list: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="o">.</span><span class="n">positional_args</span><span class="o">.</span><span class="n">assembly_list</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="n">paths</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">:</span>
+                <span class="n">gtf_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cuffGTF_path</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>
+                <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gtf_path</span><span class="p">)</span>
+            <span class="n">mkdirp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span><span class="p">)</span>
+            <span class="n">assembly_list_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">/assembly_list.txt&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)),</span><span class="s">&#39;w&#39;</span><span class="p">)</span>
+            <span class="n">assembly_list_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">paths</span><span class="p">))</span>
+            <span class="n">assembly_list_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;dry_run&#39;</span><span class="p">:</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">pass</span>
+            
+            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">assembly_list_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+</div>
+<div class="viewcode-block" id="CuffmergeCall.get_cuffGTF_path"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffmergeCall.get_cuffGTF_path">[docs]</a>    <span class="k">def</span> <span class="nf">get_cuffGTF_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">condition</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Supports ``self.get_cufflinks_gtfs()``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cl_call_id</span> <span class="o">=</span> <span class="s">&quot;cufflinks_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="n">condition</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cl_call</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">call_records</span><span class="p">[</span><span class="n">cl_call_id</span><span class="p">]</span>
+            <span class="n">cl_out_dir</span> <span class="o">=</span> <span class="n">cl_call</span><span class="o">.</span><span class="n">out_dir</span>
+            <span class="n">gtf_path</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/transcripts.gtf&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">cl_out_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span><span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exp</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;WARNING: unable to find matching cufflinks call record in memory for condition: </span><span class="si">%s</span><span class="se">\n</span><span class="s">Attempting to find corresponding cufflinks outfile in your base_dir.&quot;</span> \
+                <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="n">condition</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_msg</span><span class="p">(</span><span class="n">log_msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+
+            <span class="c"># try to guess correct cufflinks out directory</span>
+            <span class="n">base_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">run_options</span><span class="o">.</span><span class="n">base_dir</span>
+            <span class="n">gtf_path</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">/transcripts.gtf&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">base_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">),</span><span class="n">cl_call_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">gtf_path</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;analyze&#39;</span><span class="p">:</span>
+                    <span class="c">#: .. todo:: build framework to handle this non-fatally</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MissingArgumentError</span><span class="p">(</span><span class="s">&quot;I could not find an appropriate transcripts.gtf file. Failed to find: </span><span class="si">%s</span><span class="s">&quot;</span> \
+                                                      <span class="o">%</span> <span class="p">(</span><span class="n">gtf_path</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">gtf_path</span>
+        <span class="k">return</span> <span class="n">gtf_path</span>
+    
+    </div></div>
+<div class="viewcode-block" id="CuffdiffCall"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffdiffCall">[docs]</a><span class="k">class</span> <span class="nc">CuffdiffCall</span><span class="p">(</span><span class="n">BaseCall</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Manage a single call to cuffdiff and store associated run data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CuffdiffCall.__init__"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffdiffCall.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">yargs</span><span class="p">,</span><span class="n">email_info</span><span class="p">,</span><span class="n">run_id</span><span class="p">,</span><span class="n">run_logs</span><span class="p">,</span><span class="n">conditions</span><span class="p">,</span><span class="n">mode</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        initializes the ``CuffdiffCall`` object</span>
+<span class="sd">        </span>
+<span class="sd">        :param yargs: argument tree generated by parsing the yaml config file</span>
+<span class="sd">        :param email_info: Bunch() object containing keys: ``email_from``, ``email_to``, ``email_li``</span>
+<span class="sd">        :param run_id: id for the whole set of calls</span>
+<span class="sd">        :param run_logs: the directory where log file should be put</span>
+<span class="sd">        :param conditions: one or a list of condition-dictionaries from ``yargs.condition_queue``</span>
+<span class="sd">        :param mode: choices = [&#39;analyze&#39;,&#39;dry_run&#39;,&#39;qsub_script&#39;]</span>
+
+<span class="sd">        :returns: an initialized ``CuffdiffCall`` object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prog_name</span> <span class="o">=</span> <span class="s">&#39;cuffdiff&#39;</span>
+
+        <span class="n">BaseCall</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">yargs</span><span class="p">,</span><span class="n">email_info</span><span class="p">,</span><span class="n">run_id</span><span class="p">,</span><span class="n">run_logs</span><span class="p">,</span><span class="n">conditions</span><span class="p">,</span><span class="n">mode</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">cuffdiff_options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_call_id</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_log_file</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_out_dir</span><span class="p">()</span>
+
+
+        <span class="c"># set up options for program call</span>
+        <span class="c">##cuffdiff_options:</span>
+          <span class="c">##o: from_conditions</span>
+          <span class="c">##labels: from_conditions</span>
+          <span class="c">##frag-bias-correct: from_conditions</span>
+          <span class="c">##positional_args:</span>
+            <span class="c">##transcripts_gtf: from_conditions</span>
+            <span class="c">##sample_bams: from_conditions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_opt_dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;o&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_labels</span><span class="p">()</span>           
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;mask-file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_mask_file</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opt_dict</span><span class="p">[</span><span class="s">&#39;frag-bias-correct&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_genome</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">construct_options_list</span><span class="p">()</span>
+
+        <span class="c"># now the positional args</span>
+        <span class="n">transcripts_gtf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cuffmerge_gtf</span><span class="p">()</span>  
+        <span class="n">sample_bams</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sample_bams</span><span class="p">()</span>
+
+        <span class="c"># combine and save arg_str</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options_list</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">transcripts_gtf</span><span class="p">,</span><span class="n">sample_bams</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arg_str</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options_list</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="CuffdiffCall.get_out_dir"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffdiffCall.get_out_dir">[docs]</a>    <span class="k">def</span> <span class="nf">get_out_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cuffdiff_options.o: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="o">.</span><span class="n">o</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_out_dir_path</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+</div>
+<div class="viewcode-block" id="CuffdiffCall.get_genome"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffdiffCall.get_genome">[docs]</a>    <span class="k">def</span> <span class="nf">get_genome</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cuffdiff_options.frag-bias-correct: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="p">[</span><span class="s">&#39;frag-bias-correct&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="c"># Make sure all conditions agree on their genome seq</span>
+            <span class="n">genome_path</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">c</span><span class="p">[</span><span class="s">&#39;genome_seq&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">genome_path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">genome_path</span> <span class="o">=</span> <span class="n">genome_path</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidFileFormatError</span><span class="p">(</span><span class="s">&#39;CHECK YAML CONFIG FILE: Conditions in experiment </span><span class="si">%s</span><span class="s"> do not agree on which &quot;ref-sequence&quot; to use: </span><span class="si">%s</span><span class="s">.&#39;</span> \
+                                                    <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiment_id</span><span class="p">,</span><span class="n">genome_path</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">genome_path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+</div>
+<div class="viewcode-block" id="CuffdiffCall.get_sample_bams"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffdiffCall.get_sample_bams">[docs]</a>    <span class="k">def</span> <span class="nf">get_sample_bams</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cuffdiff_options.positional_args.sample_bams: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="k">def</span> <span class="nf">join_replicate_paths</span><span class="p">(</span><span class="n">top_level_conditions</span><span class="p">,</span><span class="n">paths</span><span class="p">):</span>
+            <span class="c"># I KNOW this has crappy big O time but the list sizes here are small</span>
+            <span class="n">joined_rep_paths</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">tlc</span> <span class="ow">in</span> <span class="n">top_level_conditions</span><span class="p">:</span>
+                <span class="n">tlc_paths</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">tlc</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+                        <span class="n">tlc_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">pass</span>
+                <span class="n">joined_rep_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tlc_paths</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">joined_rep_paths</span>
+        
+        <span class="c">#: .. todo:: support replicate bams as: &quot; samp1_r1.bam,samp1_r2.bam samp2_r1.bam,samp2_r2.bam &quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="o">.</span><span class="n">positional_args</span><span class="o">.</span><span class="n">sample_bams</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="n">paths</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">:</span>
+                <span class="n">bam_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bam_path</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>
+                <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bam_path</span><span class="p">)</span>
+                
+            <span class="c"># join bam paths that are bio-replicates with commas</span>
+            <span class="n">top_level_conditions</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>  <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">]</span>
+            <span class="n">top_level_conditions</span> <span class="o">=</span> <span class="n">uniques</span><span class="p">(</span><span class="n">top_level_conditions</span><span class="p">)</span>
+            <span class="n">joined_replicate_paths</span> <span class="o">=</span> <span class="n">join_replicate_paths</span><span class="p">(</span><span class="n">top_level_conditions</span><span class="p">,</span><span class="n">paths</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">joined_replicate_paths</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+</div>
+<div class="viewcode-block" id="CuffdiffCall.get_bam_path"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffdiffCall.get_bam_path">[docs]</a>    <span class="k">def</span> <span class="nf">get_bam_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">condition</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Supports ``self.get_sample_bams()``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">th_call_id</span> <span class="o">=</span> <span class="s">&quot;tophat_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="n">condition</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">th_call</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">call_records</span><span class="p">[</span><span class="n">th_call_id</span><span class="p">]</span>
+            <span class="n">th_out_dir</span> <span class="o">=</span> <span class="n">th_call</span><span class="o">.</span><span class="n">out_dir</span>
+            <span class="n">bam_path</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/accepted_hits.bam&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">th_out_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span><span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exp</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;WARNING: unable to find matching tophat call record in memory for condition: </span><span class="si">%s</span><span class="se">\n</span><span class="s">Attempting to find corresponding cufflinks outfile in your base_dir.&quot;</span> \
+                <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_condition_id</span><span class="p">(</span><span class="n">condition</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_msg</span><span class="p">(</span><span class="n">log_msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+
+            <span class="c"># try to guess correct tophat out directory</span>
+            <span class="n">base_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">run_options</span><span class="o">.</span><span class="n">base_dir</span>
+            <span class="n">bam_path</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">/accepted_hits.bam&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">base_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">),</span><span class="n">th_call_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">bam_path</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;analyze&#39;</span><span class="p">:</span>
+                    <span class="c">#: .. todo:: build framework to handle this non-fatally</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MissingArgumentError</span><span class="p">(</span><span class="s">&quot;I could not find an appropriate accepted_hits.bam file. Failed to find: </span><span class="si">%s</span><span class="s">&quot;</span> \
+                                                      <span class="o">%</span> <span class="p">(</span><span class="n">bam_path</span><span class="p">))</span>
+                
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">bam_path</span>
+        <span class="k">return</span> <span class="n">bam_path</span>
+    </div>
+<div class="viewcode-block" id="CuffdiffCall.get_mask_file"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffdiffCall.get_mask_file">[docs]</a>    <span class="k">def</span> <span class="nf">get_mask_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cuffdiff_options.mask-file: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="p">[</span><span class="s">&#39;mask-file&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+                <span class="c"># Make sure all conditions agree on their mask-file</span>
+                <span class="n">mask_path</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">c</span><span class="p">[</span><span class="s">&#39;mask_file&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">])</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mask_path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">mask_path</span> <span class="o">=</span> <span class="n">mask_path</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidFileFormatError</span><span class="p">(</span><span class="s">&#39;CHECK YAML CONFIG FILE: Conditions in experiment </span><span class="si">%s</span><span class="s"> do not agree on which &quot;ref-sequence&quot; to use: </span><span class="si">%s</span><span class="s">.&#39;</span> \
+                                                        <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiment_id</span><span class="p">,</span><span class="n">mask_path</span><span class="p">))</span>
+                <span class="k">return</span> <span class="n">mask_path</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">option</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        </div>
+<div class="viewcode-block" id="CuffdiffCall.get_labels"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffdiffCall.get_labels">[docs]</a>    <span class="k">def</span> <span class="nf">get_labels</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cuffdiff_options.labels: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prog_yargs</span><span class="p">[</span><span class="s">&#39;labels&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">:</span>
+                <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">condition</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">])</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">uniques</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">option</span>
+        </div>
+<div class="viewcode-block" id="CuffdiffCall.get_cuffmerge_gtf"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffdiffCall.get_cuffmerge_gtf">[docs]</a>    <span class="k">def</span> <span class="nf">get_cuffmerge_gtf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles ``yaml_config.cuffdiff_options.positional_args.transcripts_gtf: from_conditions``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cm_call_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">call_id</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;cuffdiff&#39;</span><span class="p">,</span><span class="s">&#39;cuffmerge&#39;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cm_call</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">call_records</span><span class="p">[</span><span class="n">cm_call_id</span><span class="p">]</span>
+            <span class="n">cm_out_dir</span> <span class="o">=</span> <span class="n">cm_call</span><span class="o">.</span><span class="n">out_dir</span>
+            <span class="n">gtf_path</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/merged.gtf&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">cm_out_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span><span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exp</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;WARNING: unable to find matching cuffmerge call record in memory for experiment: </span><span class="si">%s</span><span class="se">\n</span><span class="s">Attempting to find corresponding cufflinks outfile in your base_dir.&quot;</span> \
+                <span class="o">%</span> <span class="p">(</span><span class="n">cm_call_id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_msg</span><span class="p">(</span><span class="n">log_msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+
+            <span class="c"># try to guess correct cuffmerge out directory</span>
+            <span class="n">base_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yargs</span><span class="o">.</span><span class="n">run_options</span><span class="o">.</span><span class="n">base_dir</span>
+            <span class="n">gtf_path</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">/merged.gtf&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">base_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">),</span><span class="n">cm_call_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">gtf_path</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;analyze&#39;</span><span class="p">:</span>
+                    <span class="c">#: .. todo:: build framework to handle this non-fatally</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MissingArgumentError</span><span class="p">(</span><span class="s">&quot;I could not find an appropriate merged.gtf file. Failed to find: </span><span class="si">%s</span><span class="s">&quot;</span> \
+                                                      <span class="o">%</span> <span class="p">(</span><span class="n">gtf_path</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">gtf_path</span>
+        <span class="k">return</span> <span class="n">gtf_path</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Blacktie 0.2.0rc1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Augustine Dunn.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>
