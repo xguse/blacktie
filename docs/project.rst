@@ -25,11 +25,11 @@ Current Features
 * ability to generate SGE qsub-able scripts instead of running the system calls itself
 * ** and more! **
 
-Future Features
-----------------
-* email updates from arbitrary smtp servers
-* preliminary cummeRbund analysis and visualization
-* ** more soon... **
+
+cummeRbund analysis and visualization
+--------------------------------------
+
+
 
 
 ToDo List
