@@ -26,12 +26,21 @@ readCufflinks
 '''
 import os
 import sys
+import argparse
 
-import rpy2
+try:
+    from rpy2.robjects import r
+except ImportError as ie:
+    raise errors.BlacktieError('Unable to import required module: "rpy2".  Try installing it with "[sudo] pip install rpy2".')
+except RuntimeError as rte:
+    raise errors.BlacktieError('Importing required module "rpy2" failed because no R application could be found on your system. Try again after instaling R.')
+
 
 import blacktie
+from blacktie.utils import errors
 from blacktie.utils.misc import Bunch
-
+from blacktie.utils.externals import mkdirp
+from blacktie.utils.externals import runExternalApp
 
 def print_my_plots(r, rplots, prefix='', file_type='pdf'):
     """
@@ -39,18 +48,27 @@ def print_my_plots(r, rplots, prefix='', file_type='pdf'):
     
     :param r:       pointer to the R instance
     :param rplots:  the ``Bunch`` object where we stored our plots
-    :param prefix:  a base path to add to our saved plots
+    :param prefix:  a base directory to add to our saved plots into
     :param file_type:  the type of output file to use, choices: ['pdf','jpeg','png','ps']
     """
     prefix = prefix.rstrip('/')
+    
+    mkdirp(prefix)
     
     for plot_id in rplots:
         file_path = "%s/%s.%s" % (prefix,plot_id,file_type)
         r.ggsave(filename=file_path,plot=rplots[plot_id])
         
+def run_cummeRbund_install():
+    """
+    provides R install of cummeRbund and provides user with all R output and prompts.
+    """
+    r.source("http://bioconductor.org/biocLite.R")
+    r.biocLite('cummeRbund')
+    
 
     
-def main(cuffdiff_dir,cummerbund_db,gtf_path,genome,prefix,file_type):
+def main():
     """
     The main loop.  Lets ROCK!
     """
@@ -70,7 +88,7 @@ def main(cuffdiff_dir,cummerbund_db,gtf_path,genome,prefix,file_type):
     parser.add_argument('--genome', type=str, default='NULL',
                         help="""String indicating which genome build the .gtf annotations are for (e.g. 'hg19' or 'mm9').""")
     parser.add_argument('--prefix', type=str, 
-                        help="""A base path to add to our saved plots.""")
+                        help="""A base directory to add to our saved plots into.""")
     parser.add_argument('--file-type', type=str, choices=['pdf','jpeg','png','ps'], default='pdf',
                         help="""The type of output file to use when saving our plots. (default: %(default)s)""")
     
@@ -81,13 +99,41 @@ def main(cuffdiff_dir,cummerbund_db,gtf_path,genome,prefix,file_type):
 
     args = parser.parse_args()    
     
-    
 
-    # store R instance for easy access to the workspace
-    r = rpy2.robjects.r
-    
+
+        
     # import cummeRbund library
-    r.library('cummeRbund')
+    try:
+        r.library('cummeRbund')
+    
+    except RRuntimeError as exc:
+        if "there is no package called" in str(exc):
+            
+            print 'It looks like you have not installed "cummeRbund" yet.\nWould you like me to try to install it for you now?\n'
+            print '(This will require an active internet connection)'
+            
+            while 1:
+                install_cmrbnd = raw_input('y/n: ')
+                if install_cmrbnd == ('y'):
+                    print '\nOK, I am going to hand you off to the R install process. Answer any prompts it asks you, and I will see you on the other side.\n\n'
+                    raw_input('Press "Enter" when ready...')
+                    
+                    run_cummeRbund_install()
+                    
+                    print '\nGreat.  Now lets try this again, and hopefully we will be good to go!\n\nSee you soon!'
+                    exit(0)
+                    
+                elif install_cmrbnd == 'n':
+                    print '\nThis script requires that cummeRbund be installed. Please install it manually and try again.\n\nGoodbye.'
+                    exit(0)
+                    
+                else:
+                    print "Please type only 'y' or 'n'."
+        else:
+            raise exc
+    
+    # read in the cuffdiff data
+    cuff = r.readCufflinks(dir=args.cuffdiff_dir, gtfFile=args.gtf_path, genome=args.genome)
     
     # Find out if we have replicates
     genes_rep_fpkm = r.repFpkm(r.genes(cuff))
@@ -98,11 +144,9 @@ def main(cuffdiff_dir,cummerbund_db,gtf_path,genome,prefix,file_type):
     else:
         we_have_replicates = False
     
-    # Store My Plots
+    # Store my plots here
     rplots = Bunch()
     
-    # read in the cuffdiff data
-    cuff = r.readCufflinks(dir=args.cuffdiff_dir, gtfFile=args.gtf_path, genome=args.genome)
     
     # dispersion plot
     rplots.dispersionPlot = r.dispersionPlot(r.genes(cuff))
@@ -119,22 +163,28 @@ def main(cuffdiff_dir,cummerbund_db,gtf_path,genome,prefix,file_type):
     
     if we_have_replicates:
         rplots.csDensity_reps = r.csDensity(r.genes(cuff),replicates='T')
-        
+    else:
+        pass
+    
     # Box Plots
-    rplots.csBoxplots = r.csBoxplots(r.genes(cuff))    
+    rplots.csBoxplot = r.csBoxplot(r.genes(cuff))    
     
     if we_have_replicates:
-        rplots.csBoxplots_reps = r.csBoxplots(r.genes(cuff),replicates='T')
+        rplots.csBoxplot_reps = r.csBoxplot(r.genes(cuff),replicates='T')
+    else:
+        pass
     
     # Scatter Matrix
     rplots.csScatterMatrix = r.csScatterMatrix(r.genes(cuff))
     
     
-    # Dendrograms
-    rplots.csDendro = r.csDendro(r.genes(cuff))    
     
-    if we_have_replicates:
-        rplots.csDendro_reps = r.csDendro(r.genes(cuff),replicates='T')
+    # TODO: csDendro does not use ggplot2 it seems so ggsave() does not work. When issue is fixed, uncomment this.
+##    # Dendrograms
+##    rplots.csDendro = r.csDendro(r.genes(cuff))    
+##    
+##    if we_have_replicates:
+##        rplots.csDendro_reps = r.csDendro(r.genes(cuff),replicates='T')
         
     # Volcano Matrix
     rplots.csVolcanoMatrix = r.csVolcanoMatrix(r.genes(cuff))
@@ -145,7 +195,7 @@ def main(cuffdiff_dir,cummerbund_db,gtf_path,genome,prefix,file_type):
     
     # get significant genes
     mySigGeneIds = r.getSig(cuff,alpha=0.05,level='genes')
-    mySigGenes = r.getGenes(mySigGeneIds)
+    mySigGenes = r.getGenes(cuff,mySigGeneIds)
     print "Significant Genes: %s" % (len(mySigGeneIds))
     
     # Preliminary Clustering
@@ -153,4 +203,7 @@ def main(cuffdiff_dir,cummerbund_db,gtf_path,genome,prefix,file_type):
     rplots.csClusterPlot = r.csClusterPlot(ic)
     
     # print the plots
-    print_my_plots(r, rplots, prefix='', file_type='pdf')
+    print_my_plots(r, rplots, prefix=args.prefix, file_type=args.file_type)
+    
+if __name__ == "__main__":
+    main()
