@@ -1,0 +1,50 @@
+#!/bin/bash
+#$ -S /bin/bash                                             # Use a real BASH shell on the worker node
+#$ -q ${queues}                                             # What queues do you want to submit to
+#$ -M ${email_addy}                                         # Send email updates to this address
+#$ -m beas                                                  # When to send an email update
+#$ -e /data/users/dunnw/logs/${call_id}.e                   # Write standard error to this file
+#$ -o /data/users/dunnw/logs/${call_id}.o                   # Write standard out to this file
+#$ -N ${job_name}                                           # Name my job this
+#$ -R y                                                     # Reserve cores for me until there are the number I asked for
+#$ -pe openmp ${core_range}                                 # Use openmp for multiprocessor use and give me core_range cores
+
+LD_LIBRARY_PATH="${ld_library_path}$${}{LD_LIBRARY_PATH}"   # Make sure worker's LD_LIBRARY_PATH contains ld_library_path
+
+
+# HPC clusters frequently use a module system to provide system wide access to 
+# certain programs.  The following makes sure that the tools needed are loaded
+# for **MY** cluster. You will need alter this to make sure your cluster is set up
+# based on its system.
+
+module load bowtie2/2.0.2
+module load tophat/2.0.6
+module load cufflinks/2.0.2
+module load samtools/0.1.18
+
+
+# basic staging stuff
+DATAHOME="${datahome}"
+MYSCRATCH="/scratch/$${}{USER}"
+
+
+mkdir -p $MYSCRATCH
+cd $MYSCRATCH
+
+
+# Remind me what will be done
+echo ''
+echo "${cmd_str}"
+echo ''
+
+# Run my job
+${cmd_str}
+
+
+# Pack up results and send it home to log-in node
+tar -zcvf ${call_id}.tar.gz ${out_dir}
+cp ${call_id}.tar.gz $${}{DATAHOME}/
+
+# Back into the shadows
+cd $HOME
+rm -rf $MYSCRATCH

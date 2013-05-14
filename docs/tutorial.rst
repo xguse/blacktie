@@ -59,7 +59,7 @@ The --modes option
 
 Further, if you are working on a compute cluster running something like a "Sun Grid Engine" (`SGE <http://en.wikipedia.org/wiki/Oracle_Grid_Engine>`_) to which you must `submit jobs <https://wikis.utexas.edu/display/CCBB/sge-tutorial>`_ using ``qsub``, it may not be a good idea to submit a job running all of ``blacktie`` as a single ``qsub`` job.  For this it can be helpful to have ``blacktie`` write all of your ``qsub`` scripts for you based on a template. Each bash script represents a single program call to the tophat/cufflinks suite.
 
-.. Note:: A starter template for SGE submission can be found here: ``blacktie/examples/qsub.template``.  You will want to become familiar with how `Mako <http://www.makotemplates.org/>`_ processes templates if you plan to customize this much.
+.. Note:: A starter template for SGE submission can be found here: :download:`blacktie/examples/qsub.template <../examples/qsub.template>`.  You will want to become familiar with how `Mako <http://www.makotemplates.org/>`_ processes templates if you plan to customize this much.
 
 Here is what the starter template looks like:
 
@@ -76,7 +76,7 @@ The configuration file is a `YAML-based <http://en.wikipedia.org/wiki/YAML>`_ do
 
 Here is a dummy example of a config file:
 
-.. Note:: A copy of this file can be found here: ``blacktie/examples/blacktie_config_example.yaml``
+.. Note:: A copy of this file can be found here: :download:`blacktie/examples/blacktie_config_example.yaml <../examples/blacktie_config_example.yaml>`
 
 
 .. literalinclude:: ../examples/blacktie_config_example.yaml

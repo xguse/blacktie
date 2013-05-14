@@ -122,7 +122,7 @@ optional arguments:
 <p>Further, if you are working on a compute cluster running something like a &#8220;Sun Grid Engine&#8221; (<a class="reference external" href="http://en.wikipedia.org/wiki/Oracle_Grid_Engine">SGE</a>) to which you must <a class="reference external" href="https://wikis.utexas.edu/display/CCBB/sge-tutorial">submit jobs</a> using <tt class="docutils literal"><span class="pre">qsub</span></tt>, it may not be a good idea to submit a job running all of <tt class="docutils literal"><span class="pre">blacktie</span></tt> as a single <tt class="docutils literal"><span class="pre">qsub</span></tt> job.  For this it can be helpful to have <tt class="docutils literal"><span class="pre">blacktie</span></tt> write all of your <tt class="docutils literal"><span class="pre">qsub</span></tt> scripts for you based on a template. Each bash script represents a single program call to the tophat/cufflinks suite.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">A starter template for SGE submission can be found here: <tt class="docutils literal"><span class="pre">blacktie/examples/qsub.template</span></tt>.  You will want to become familiar with how <a class="reference external" href="http://www.makotemplates.org/">Mako</a> processes templates if you plan to customize this much.</p>
+<p class="last">A starter template for SGE submission can be found here: <a class="reference download internal" href="_downloads/qsub.template"><tt class="xref download docutils literal"><span class="pre">blacktie/examples/qsub.template</span></tt></a>.  You will want to become familiar with how <a class="reference external" href="http://www.makotemplates.org/">Mako</a> processes templates if you plan to customize this much.</p>
 </div>
 <p>Here is what the starter template looks like:</p>
 <div class="highlight-bash"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
@@ -237,7 +237,7 @@ rm -rf <span class="nv">$MYSCRATCH</span>
 <p>Here is a dummy example of a config file:</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">A copy of this file can be found here: <tt class="docutils literal"><span class="pre">blacktie/examples/blacktie_config_example.yaml</span></tt></p>
+<p class="last">A copy of this file can be found here: <a class="reference download internal" href="_downloads/blacktie_config_example.yaml"><tt class="xref download docutils literal"><span class="pre">blacktie/examples/blacktie_config_example.yaml</span></tt></a></p>
 </div>
 <div class="highlight-yaml"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>  1
   2
