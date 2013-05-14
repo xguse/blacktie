@@ -6,7 +6,7 @@ Blacktie Auto-Generated Code Documentation
 
 
 
-    
+
 .. automodule:: blacktie.utils.errors
 
 

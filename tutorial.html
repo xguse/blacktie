@@ -74,35 +74,37 @@
 <div class="highlight-python"><pre>$ blacktie</pre>
 </div>
 <p>You should see the help text for blacktie and it should look something like this:</p>
-<div class="highlight-none"><div class="highlight"><pre>$ blacktie -h
+<div class="highlight-none"><div class="highlight"><pre>$ blacktie
 
 usage: blacktie [-h] [--version]
-                [--prog {tophat,cufflinks,cuffmerge,cuffdiff,all}]
-                [--hide-logs] [--mode {analyze,dry_run,qsub_script}]
-                config_file
+    [--prog {tophat,cufflinks,cuffmerge,cuffdiff,all}]
+    [--hide-logs] [--no-email]
+    [--mode {analyze,dry_run,qsub_script}]
+    config_file
 
 This script reads options from a yaml formatted file and organizes the
 execution of tophat/cufflinks runs for multiple condition sets.
 
 positional arguments:
-  config_file           Path to a yaml formatted config file containing setup
-                        options for the runs.
+    config_file           Path to a yaml formatted config file containing setup
+        options for the runs.
 
 optional arguments:
-  -h, --help            show this help message and exit
-  --version             Print version number.
-  --prog {tophat,cufflinks,cuffmerge,cuffdiff,all}
-                        Which program do you want to run? (default: tophat)
-  --hide-logs           Make your log directories hidden to keep a tidy
-                        &#39;looking&#39; base directory. (default: False)
-  --mode {analyze,dry_run,qsub_script}
-                        1) &#39;analyze&#39;: run the analysis pipeline. 2) &#39;dry_run&#39;:
-                        walk through all steps that would be run and print out
-                        the command lines; however, do not send the commands
-                        to the system to be run. 3) &#39;qsub_script&#39;: generate
-                        bash scripts suitable to be sent to a compute
-                        cluster&#39;s SGE through the qsub command. (default:
-                        analyze)
+    -h, --help            show this help message and exit
+    --version             Print version number.
+    --prog {tophat,cufflinks,cuffmerge,cuffdiff,all}
+        Which program do you want to run? (default: tophat)
+    --hide-logs           Make your log directories hidden to keep a tidy
+        &#39;looking&#39; base directory. (default: False)
+    --no-email            Don&#39;t send email notifications. (default: False)
+    --mode {analyze,dry_run,qsub_script}
+        1) &#39;analyze&#39;: run the analysis pipeline. 2) &#39;dry_run&#39;:
+        walk through all steps that would be run and print out
+        the command lines; however, do not send the commands
+        to the system to be run. 3) &#39;qsub_script&#39;: generate
+        bash scripts suitable to be sent to a compute
+        cluster&#39;s SGE through the qsub command. (default:
+        analyze)
 </pre></div>
 </div>
 <p>If this worked, great! Let&#8217;s move on to what all that means.</p>
@@ -677,13 +679,11 @@ rm -rf <span class="nv">$MYSCRATCH</span>
 </div>
 <div class="section" id="using-e-mail-notifications">
 <h2>Using e-mail notifications<a class="headerlink" href="#using-e-mail-notifications" title="Permalink to this headline">¶</a></h2>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">New in vX.X: any smtp server should now be usable if you code the host and port into the yaml config file.  <em>Any</em> email can be used as the recipient.</p>
+<div class="versionchanged">
+<p><span>Changed in version v0.2.0rc1: </span>any smtp server should now be usable if you code the host and port into the yaml config file.  <em>Any</em> email can be used as the recipient.</p>
 </div>
-<div class="admonition-todo admonition" id="index-1">
-<p class="first admonition-title">Todo</p>
-<p class="last">change vX.X to actual version number about email server</p>
+<div class="versionadded">
+<p><span>New in version v0.2.0rc1: </span>added <tt class="docutils literal"><span class="pre">--no-email</span></tt> option.</p>
 </div>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
@@ -704,12 +704,12 @@ it out. ALWAYS use good password practices and never use the same password for
 multiple important accounts!
 
 positional arguments:
-  input_file  Path to a file where you have placed your password for the email
-              you want blacktie to use as the &quot;sender&quot; in its notification
-              emails.
+    input_file  Path to a file where you have placed your password for the email
+        you want blacktie to use as the &quot;sender&quot; in its notification
+        emails.
 
 optional arguments:
-  -h, --help  show this help message and exit
+    -h, --help  show this help message and exit
 </pre></div>
 </div>
 </div>

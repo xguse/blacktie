@@ -4,41 +4,44 @@ Getting started
 
 To test whether your installation was successful, open a new terminal session and type the following command. ::
 
-  $ blacktie
+    $ blacktie
 
 You should see the help text for blacktie and it should look something like this:
 
 .. code-block:: none
-  
-  $ blacktie -h
-  
-  usage: blacktie [-h] [--version]
-		  [--prog {tophat,cufflinks,cuffmerge,cuffdiff,all}]
-		  [--hide-logs] [--mode {analyze,dry_run,qsub_script}]
-		  config_file
 
-  This script reads options from a yaml formatted file and organizes the
-  execution of tophat/cufflinks runs for multiple condition sets.
+    $ blacktie 
 
-  positional arguments:
-    config_file           Path to a yaml formatted config file containing setup
-			  options for the runs.
+    usage: blacktie [-h] [--version]
+        [--prog {tophat,cufflinks,cuffmerge,cuffdiff,all}]
+        [--hide-logs] [--no-email]
+        [--mode {analyze,dry_run,qsub_script}]
+        config_file
 
-  optional arguments:
-    -h, --help            show this help message and exit
-    --version             Print version number.
-    --prog {tophat,cufflinks,cuffmerge,cuffdiff,all}
-			  Which program do you want to run? (default: tophat)
-    --hide-logs           Make your log directories hidden to keep a tidy
-			  'looking' base directory. (default: False)
-    --mode {analyze,dry_run,qsub_script}
-			  1) 'analyze': run the analysis pipeline. 2) 'dry_run':
-			  walk through all steps that would be run and print out
-			  the command lines; however, do not send the commands
-			  to the system to be run. 3) 'qsub_script': generate
-			  bash scripts suitable to be sent to a compute
-			  cluster's SGE through the qsub command. (default:
-			  analyze)
+    This script reads options from a yaml formatted file and organizes the
+    execution of tophat/cufflinks runs for multiple condition sets.
+
+    positional arguments:
+        config_file           Path to a yaml formatted config file containing setup
+            options for the runs.
+
+    optional arguments:
+        -h, --help            show this help message and exit
+        --version             Print version number.
+        --prog {tophat,cufflinks,cuffmerge,cuffdiff,all}
+            Which program do you want to run? (default: tophat)
+        --hide-logs           Make your log directories hidden to keep a tidy
+            'looking' base directory. (default: False)
+        --no-email            Don't send email notifications. (default: False)
+        --mode {analyze,dry_run,qsub_script}
+            1) 'analyze': run the analysis pipeline. 2) 'dry_run':
+            walk through all steps that would be run and print out
+            the command lines; however, do not send the commands
+            to the system to be run. 3) 'qsub_script': generate
+            bash scripts suitable to be sent to a compute
+            cluster's SGE through the qsub command. (default:
+            analyze)
+
 
 If this worked, great! Let's move on to what all that means.
 
@@ -61,9 +64,9 @@ Further, if you are working on a compute cluster running something like a "Sun G
 Here is what the starter template looks like:
 
 .. literalinclude:: ../examples/qsub.template
-   :language: bash
-   :linenos:
-  
+    :language: bash
+    :linenos:
+
 
 The configuration file
 ----------------------
@@ -77,16 +80,18 @@ Here is a dummy example of a config file:
 
 
 .. literalinclude:: ../examples/blacktie_config_example.yaml
-   :language: yaml
-   :linenos:
+    :language: yaml
+    :linenos:
 
 .. todo:: Add the slots for custom email server options.
 
 Using e-mail notifications
 --------------------------
-.. Note:: New in vX.X: any smtp server should now be usable if you code the host and port into the yaml config file.  *Any* email can be used as the recipient. 
+.. versionchanged:: v0.2.0rc1
+    any smtp server should now be usable if you code the host and port into the yaml config file.  *Any* email can be used as the recipient. 
 
-.. todo:: change vX.X to actual version number about email server
+.. versionadded:: v0.2.0rc1
+    added ``--no-email`` option. 
 
 .. warning:: gmail's 2-step authentication will NOT work.  Sorry.  I will look into how to deal with that eventually.
 
@@ -96,25 +101,25 @@ The help text for ``blacktie-encode`` is:
 
 .. code-block:: none
 
-  $ blacktie-encode -h
-  
-  usage: blacktie-encode [-h] input_file
+    $ blacktie-encode -h
 
-  This script takes a path to a file where you have placed your password for the
-  email you want blacktie to use as the "sender" in its notification emails. It
-  will replace the file with one containing your password once it has encoded it
-  out of human readable plain-text into seemingly meaningless text. **THIS IS
-  NOT FOOLPROOF:** If someone knows exactly what to look for they might figure
-  it out. ALWAYS use good password practices and never use the same password for
-  multiple important accounts!
+    usage: blacktie-encode [-h] input_file
 
-  positional arguments:
-    input_file  Path to a file where you have placed your password for the email
-		you want blacktie to use as the "sender" in its notification
-		emails.
+    This script takes a path to a file where you have placed your password for the
+    email you want blacktie to use as the "sender" in its notification emails. It
+    will replace the file with one containing your password once it has encoded it
+    out of human readable plain-text into seemingly meaningless text. **THIS IS
+    NOT FOOLPROOF:** If someone knows exactly what to look for they might figure
+    it out. ALWAYS use good password practices and never use the same password for
+    multiple important accounts!
 
-  optional arguments:
-    -h, --help  show this help message and exit
+    positional arguments:
+        input_file  Path to a file where you have placed your password for the email
+            you want blacktie to use as the "sender" in its notification
+            emails.
+
+    optional arguments:
+        -h, --help  show this help message and exit
 
 
 
