@@ -64,10 +64,12 @@ def main():
                         help="""Print version number.""")    
     parser.add_argument('config_file', type=str,
                         help="""Path to a yaml formatted config file containing setup options for the runs.""")
-    parser.add_argument('--prog', type=str, choices=['tophat','cufflinks','cuffmerge','cuffdiff','all'], default='tophat',
+    parser.add_argument('--prog', type=str, choices=['tophat','cufflinks','cuffmerge','cuffdiff','cummerbund','all'], default='tophat',
                         help="""Which program do you want to run? (default: %(default)s)""")
     parser.add_argument('--hide-logs', action='store_true', default=False,
                         help="""Make your log directories hidden to keep a tidy 'looking' base directory. (default: %(default)s)""")
+    parser.add_argument('--no-email', action='store_true', default=False,
+                        help="""Don't send email notifications. (default: %(default)s)""")
     parser.add_argument('--mode', type=str, choices=['analyze','dry_run','qsub_script'], default='analyze',
                         help="""1) 'analyze': run the analysis pipeline. 2) 'dry_run': walk through all steps that
                         would be run and print out the command lines; however, do not send the commands to the
@@ -112,9 +114,14 @@ def main():
     else:
         pass
 
-    email_info = Bunch({'email_from' : yargs.run_options.email_info.sender,
-                        'email_to' : yargs.run_options.email_info.to,
-                        'email_li' : open(yargs.run_options.email_info.li,'rU').readline().rstrip('\n')})
+    if not args.no_email:
+        email_info = Bunch({'email_from' : yargs.run_options.email_info.sender,
+                            'email_to' : yargs.run_options.email_info.to,
+                            'email_li' : open(yargs.run_options.email_info.li,'rU').readline().rstrip('\n')})
+    else:
+        email_info = Bunch({'email_from' : False,
+                            'email_to' : False,
+                            'email_li' : ''})
 
     yargs.prgbar_regex = re.compile('>.+Processing.+\[.+\].+%\w*$')
     yargs.groups = map_condition_groups(yargs)
@@ -201,7 +208,7 @@ def main():
             cuffmerge_call = CuffmergeCall(yargs,email_info,run_id,run_logs,conditions=exp_id,mode=args.mode)
             cuffmerge_call.execute()
 
-            # record the tophat_call object
+            # record the cuffmerge_call object
             yargs.call_records[cuffmerge_call.call_id] = cuffmerge_call
 
     else:
@@ -216,13 +223,31 @@ def main():
             cuffdiff_call = CuffdiffCall(yargs,email_info,run_id,run_logs,conditions=exp_id,mode=args.mode)
             cuffdiff_call.execute()
 
-            # record the tophat_call object
+            # record the cuffdiff_call object
             yargs.call_records[cuffdiff_call.call_id] = cuffdiff_call
 
     else:
         print "[Note] Skipping cuffdiff step.\n"    
 
 
+        if args.prog in ['cummerbund','all']:
+            
+            # test to make sure R and cummeRbund libs exist
+            from blacktie.scripts import cummerbund
+            cummerbund.import_cummeRbund_library()
+            
+            print "[Note] Starting cummerbund step.\n"
+            for exp_id in yargs.groups:
+    
+                # Prep cummerbund call
+                cummerbund_call = CummerbundCall(yargs,email_info,run_id,run_logs,conditions=exp_id,mode=args.mode)
+                cummerbund_call.execute()
+    
+                # record the cummerbund_call object
+                yargs.call_records[cummerbund_call.call_id] = cummerbund_call
+    
+        else:
+            print "[Note] Skipping cummerbund step.\n"
 
 
 if __name__ == "__main__":
