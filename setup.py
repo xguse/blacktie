@@ -33,6 +33,8 @@ setup(name='blacktie',
     install_requires=install_requires,
     entry_points={
         'console_scripts':
-            ['blacktie=blacktie:main','blacktie-encode=blacktie.scripts.encode_mail_li_file:main']
+            ['blacktie=blacktie:main',
+             'blacktie-encode=blacktie.scripts.encode_mail_li_file:main',
+             'blacktie-cummerbund=blacktie.scripts.cummerbund:main']
     }
 )
