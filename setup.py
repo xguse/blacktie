@@ -8,7 +8,7 @@ NEWS = open(os.path.join(here, 'NEWS.txt')).read()
 
 version = '0.2.1'
 
-install_requires = [ 'PyYAML', 'Mako',
+install_requires = [ 'PyYAML', 'Mako', 'rpy2',
     # List your project dependencies here.
     # For more details, see:
     # http://packages.python.org/distribute/setuptools.html#declaring-dependencies

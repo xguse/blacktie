@@ -23,6 +23,8 @@ Some of Blacktie’s features include:
 - intelligently continue with the analysis if a single run fails
 - run multiple, complex tophat/cufflinks experiments at once using a single command
 - generates SGE qsub-able scripts for use with a computing cluster
+- checks for R installation
+- checks for cummeRbund library and walks user through installation if its not installed yet
 - automatic preliminary CummeRbund Quality Control, Basic Differential Expression, and Basic Pattern Discovery plots using CummeRbund
 
 Dedicated bioinformatics personnel can be few and far between.  Blacktie aims to bring automated, reproducible RNA-seq with built-in record keeping to more labs so that your valuable data does not fester on your servers, and you can publish sooner.
@@ -32,6 +34,8 @@ Getting the code
 The code is available from the `Python Package Index <https://pypi.python.org/pypi>`_
 or from its homepage:  https://github.com/xguse/blacktie
 
+Visit :doc:`install` for more detailed instructions on getting and building the package.
+
 
 Issue tracking
 --------------
@@ -39,11 +43,5 @@ If you find issues, bugs, or have feature requests, please go here to submit the
 
 
 
-
-
-ToDo List
-----------
-
-.. todolist::
 
 
