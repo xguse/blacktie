@@ -6,6 +6,20 @@
 News
 ====
 
+0.2.1
+---------
+*Release date: 2013-05-15*
+
+* git tag: 'v0.2.1'
+* added new script named blacktie-cummerbund to run cummeRbund
+* added new class in calls.py CummerbundCall to use blacktie-cummerbund script to add cummeRbund plots to blacktie script
+* checks for R and rpy2 installations
+* if cummeRbund R library not found, it walks you through installing it
+* ``src/blacktie/utils/calls.py``: - fixed _flag_out_dir() so that if the outdir has not been created yet it gracefully moves on
+* ``examples/blacktie_config_example.yaml``: - added cummerbund_options
+* ``requirements.txt``: - added rpy2
+* updated docs
+
 0.2.0rc1
 --------
 
