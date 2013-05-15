@@ -30,6 +30,7 @@ import argparse
 
 try:
     from rpy2.robjects import r
+    from rpy2.rinterface import RRuntimeError
 except ImportError as ie:
     raise errors.BlacktieError('Unable to import required module: "rpy2".  Try installing it with "[sudo] pip install rpy2".')
 except RuntimeError as rte:
@@ -42,21 +43,21 @@ from blacktie.utils.misc import Bunch
 from blacktie.utils.externals import mkdirp
 from blacktie.utils.externals import runExternalApp
 
-def print_my_plots(r, rplots, prefix='', file_type='pdf'):
+def print_my_plots(r, rplots, out='', file_type='pdf'):
     """
     saves our plots to files named with the plotting method used.
     
     :param r:       pointer to the R instance
     :param rplots:  the ``Bunch`` object where we stored our plots
-    :param prefix:  a base directory to add to our saved plots into
+    :param out:  a base directory to add to our saved plots into
     :param file_type:  the type of output file to use, choices: ['pdf','jpeg','png','ps']
     """
-    prefix = prefix.rstrip('/')
+    out = out.rstrip('/')
     
-    mkdirp(prefix)
+    mkdirp(out)
     
     for plot_id in rplots:
-        file_path = "%s/%s.%s" % (prefix,plot_id,file_type)
+        file_path = "%s/%s.%s" % (out,plot_id,file_type)
         r.ggsave(filename=file_path,plot=rplots[plot_id])
         
 def run_cummeRbund_install():
@@ -67,49 +68,17 @@ def run_cummeRbund_install():
     r.biocLite('cummeRbund')
     
 
-    
-def main():
+def import_cummeRbund_library():
     """
-    The main loop.  Lets ROCK!
+    imports cummeRbund library [r.library('cummeRbund')] or asks to install it otherwise.
     """
-
-    desc = """This script reads the files in a cuffdiff output directory into cummeRbund, generates some standard preliminary plots, and saves the output."""
-
-    parser = argparse.ArgumentParser(description=desc)
-
-    parser.add_argument('--version', action='version', version='%(prog)s ' + blacktie.__version__,
-                        help="""Print version number.""")    
-    parser.add_argument('--cuffdiff-dir', type=str,
-                        help="""Path to a cuffdiff output directory.""")
-    #parser.add_argument('--cummerbund-db', type=str,
-                        #help="""Path to a pre-built cummeRbund 'cuffData.db'. (this is rarely specified directly; usually --cuffdiff-dir works fine)""")
-    parser.add_argument('--gtf-path', type=str, default='NULL',
-                        help="""Path to gtf file used in cuffdiff analysis. This will provide transcript model information.""")
-    parser.add_argument('--genome', type=str, default='NULL',
-                        help="""String indicating which genome build the .gtf annotations are for (e.g. 'hg19' or 'mm9').""")
-    parser.add_argument('--prefix', type=str, 
-                        help="""A base directory to add to our saved plots into.""")
-    parser.add_argument('--file-type', type=str, choices=['pdf','jpeg','png','ps'], default='pdf',
-                        help="""The type of output file to use when saving our plots. (default: %(default)s)""")
-    
-
-    if len(sys.argv) == 1:
-        parser.print_help()
-        exit(0)
-
-    args = parser.parse_args()    
-    
-
-
-        
-    # import cummeRbund library
     try:
         r.library('cummeRbund')
     
     except RRuntimeError as exc:
         if "there is no package called" in str(exc):
             
-            print 'It looks like you have not installed "cummeRbund" yet.\nWould you like me to try to install it for you now?\n'
+            print '\n\nIt looks like you have not installed "cummeRbund" yet.\nWould you like me to try to install it for you now?\n'
             print '(This will require an active internet connection)'
             
             while 1:
@@ -131,6 +100,43 @@ def main():
                     print "Please type only 'y' or 'n'."
         else:
             raise exc
+    
+    
+def main():
+    """
+    The main loop.  Lets ROCK!
+    """
+
+    desc = """This script reads the files in a cuffdiff output directory into cummeRbund, generates some standard preliminary plots, and saves the output."""
+
+    parser = argparse.ArgumentParser(description=desc)
+
+    parser.add_argument('--version', action='version', version='%(prog)s ' + blacktie.__version__,
+                        help="""Print version number.""")    
+    parser.add_argument('--cuffdiff-dir', type=str,
+                        help="""Path to a cuffdiff output directory.""")
+    #parser.add_argument('--cummerbund-db', type=str,
+                        #help="""Path to a pre-built cummeRbund 'cuffData.db'. (this is rarely specified directly; usually --cuffdiff-dir works fine)""")
+    parser.add_argument('--gtf-path', type=str, default='NULL',
+                        help="""Path to gtf file used in cuffdiff analysis. This will provide transcript model information.""")
+    parser.add_argument('--genome', type=str, default='NULL',
+                        help="""String indicating which genome build the .gtf annotations are for (e.g. 'hg19' or 'mm9').""")
+    parser.add_argument('--out', type=str, 
+                        help="""A base directory to add to our saved plots into.""")
+    parser.add_argument('--file-type', type=str, choices=['pdf','jpeg','png','ps'], default='pdf',
+                        help="""The type of output file to use when saving our plots. (default: %(default)s)""")
+    
+
+    if len(sys.argv) == 1:
+        parser.print_help()
+        exit(0)
+
+    args = parser.parse_args()    
+    
+
+    # import the cummeRbund libray to the R workspace
+    import_cummeRbund_library()
+        
     
     # read in the cuffdiff data
     cuff = r.readCufflinks(dir=args.cuffdiff_dir, gtfFile=args.gtf_path, genome=args.genome)
@@ -203,7 +209,7 @@ def main():
     rplots.csClusterPlot = r.csClusterPlot(ic)
     
     # print the plots
-    print_my_plots(r, rplots, prefix=args.prefix, file_type=args.file_type)
+    print_my_plots(r, rplots, out=args.out, file_type=args.file_type)
     
 if __name__ == "__main__":
     main()
