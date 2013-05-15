@@ -61,11 +61,12 @@ def runExternalApp(progName,argStr):
     """
     
     # Ensure program is callable.
-    if not whereis(progName):
+    progPath = whereis(progName)
+    if not progPath:
         raise SystemCallError(None,'"%s" command not found in your PATH environmental variable.' % (progName))
     
     # Construct shell command
-    cmdStr = "%s %s" % (progName,argStr)
+    cmdStr = "%s %s" % (progPath,argStr)
     
     # Set up process obj
     process = subprocess.Popen(cmdStr,
