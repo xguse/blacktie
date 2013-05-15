@@ -106,6 +106,14 @@ cuffdiff_options:
         transcripts_gtf: from_conditions
         sample_bams: from_conditions
 
+
+cummerbund_options:
+    cuffdiff-dir: from_conditions
+    gtf-path: from_conditions
+    out: from_conditions
+    file-type: pdf
+
+
 # options for --mode qsub_script
 # If you are not using --mode qsub_script, then set all to 'None'
 qsub_options:
