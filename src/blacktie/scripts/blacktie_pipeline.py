@@ -230,24 +230,24 @@ def main():
         print "[Note] Skipping cuffdiff step.\n"    
 
 
-        if args.prog in ['cummerbund','all']:
-            
-            # test to make sure R and cummeRbund libs exist
-            from blacktie.scripts import cummerbund
-            cummerbund.import_cummeRbund_library()
-            
-            print "[Note] Starting cummerbund step.\n"
-            for exp_id in yargs.groups:
-    
-                # Prep cummerbund call
-                cummerbund_call = CummerbundCall(yargs,email_info,run_id,run_logs,conditions=exp_id,mode=args.mode)
-                cummerbund_call.execute()
-    
-                # record the cummerbund_call object
-                yargs.call_records[cummerbund_call.call_id] = cummerbund_call
-    
-        else:
-            print "[Note] Skipping cummerbund step.\n"
+    if args.prog in ['cummerbund','all']:
+        
+        # test to make sure R and cummeRbund libs exist
+        from blacktie.scripts import cummerbund
+        cummerbund.import_cummeRbund_library()
+        
+        print "[Note] Starting cummerbund step.\n"
+        for exp_id in yargs.groups:
+
+            # Prep cummerbund call
+            cummerbund_call = CummerbundCall(yargs,email_info,run_id,run_logs,conditions=exp_id,mode=args.mode)
+            cummerbund_call.execute()
+
+            # record the cummerbund_call object
+            yargs.call_records[cummerbund_call.call_id] = cummerbund_call
+
+    else:
+        print "[Note] Skipping cummerbund step.\n"
 
 
 if __name__ == "__main__":
