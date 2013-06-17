@@ -28,35 +28,55 @@ Issue tracking
 If you find issues, bugs, or have feature requests, please go here to submit them: https://github.com/xguse/blacktie/issues
 
 
+Blacktie Poster
+------------------------
+
+
+.. raw:: html
+	
+	<iframe src="http://wl.figshare.com/articles/714149/embed?show_title=1" width="568" height="200" frameborder="0"></iframe>
+
+
+To credit the use of blacktie please cite the poster below using the DOI link provided.
+
+	*Introducing Blacktie: a simpler way to do RNA-seq using Tophat/Cufflinks/CummeRbund*. Augustine Dunn. figshare.
+	http://dx.doi.org/10.6084/m9.figshare.714149
+
+
+
 Usage
 -----
 ::
+	usage: blacktie [-h] [--version]
+	                [--prog {tophat,cufflinks,cuffmerge,cuffdiff,cummerbund,all}]
+	                [--hide-logs] [--no-email]
+	                [--mode {analyze,dry_run,qsub_script}]
+	                config_file
 
-  usage: blacktie [-h] [--prog {tophat,cufflinks,cuffmerge,cuffdiff,all}]
-		  [--hide-logs] [--mode {analyze,dry_run,qsub_script}]
-		  config_file
+	This script reads options from a yaml formatted file and organizes the
+	execution of tophat/cufflinks runs for multiple condition sets.
 
-  This script reads options from a yaml formatted file and organizes the
-  execution of tophat/cufflinks runs for multiple condition sets.
+	positional arguments:
+	  config_file           Path to a yaml formatted config file containing setup
+	                        options for the runs.
 
-  positional arguments:
-    config_file           Path to a yaml formatted config file containing setup
-			  options for the runs.
+	optional arguments:
+	  -h, --help            show this help message and exit
+	  --version             Print version number.
+	  --prog {tophat,cufflinks,cuffmerge,cuffdiff,cummerbund,all}
+	                        Which program do you want to run? (default: tophat)
+	  --hide-logs           Make your log directories hidden to keep a tidy
+	                        'looking' base directory. (default: False)
+	  --no-email            Don't send email notifications. (default: False)
+	  --mode {analyze,dry_run,qsub_script}
+	                        1) 'analyze': run the analysis pipeline. 2) 'dry_run':
+	                        walk through all steps that would be run and print out
+	                        the command lines; however, do not send the commands
+	                        to the system to be run. 3) 'qsub_script': generate
+	                        bash scripts suitable to be sent to a compute
+	                        cluster's SGE through the qsub command. (default:
+	                        analyze)	
 
-  optional arguments:
-    -h, --help            show this help message and exit
-    --prog {tophat,cufflinks,cuffmerge,cuffdiff,all}
-			  Which program do you want to run? (default: tophat)
-    --hide-logs           Make your log directories hidden to keep a tidy
-			  'looking' base directory. (default: False)
-    --mode {analyze,dry_run,qsub_script}
-			  1) 'analyze': run the analysis pipeline. 2) 'dry_run':
-			  walk through all steps that would be run and print out
-			  the command lines; however, do not send the commands
-			  to the system to be run. 3) 'qsub_script': generate
-			  bash scripts suitable to be sent to a compute
-			  cluster's SGE through the qsub command. (default:
-			  analyze)
 
 
 ::
