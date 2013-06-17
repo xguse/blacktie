@@ -46,7 +46,8 @@ To credit the use of blacktie please cite the poster below using the DOI link pr
 
 Usage
 -----
-::
+.. code-block:: none
+
 	usage: blacktie [-h] [--version]
 	                [--prog {tophat,cufflinks,cuffmerge,cuffdiff,cummerbund,all}]
 	                [--hide-logs] [--no-email]
@@ -79,7 +80,6 @@ Usage
 
 
 
-::
 
 
 Credits
