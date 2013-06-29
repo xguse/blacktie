@@ -33,11 +33,10 @@ Blacktie Poster
 
 
 .. raw:: html
-	
 	<iframe src="http://wl.figshare.com/articles/714149/embed?show_title=1" width="568" height="200" frameborder="0"></iframe>
 
 
-To credit the use of blacktie please cite the poster below using the DOI link provided.
+To credit the use of blacktie please cite the poster using the DOI link provided.
 
 	*Introducing Blacktie: a simpler way to do RNA-seq using Tophat/Cufflinks/CummeRbund*. Augustine Dunn. figshare.
 	http://dx.doi.org/10.6084/m9.figshare.714149
