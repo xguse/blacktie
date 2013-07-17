@@ -191,12 +191,10 @@ def main():
 
         except (NameError, errors.BlacktieError) as exc:
 
-            if (str(exc) != "name 'pprocess' is not defined") and (str(exc) != "dry run"):
-                raise exc
-            elif str(exc) == 'no poll':
+            if ("'pprocess' is not defined" in str(exc)) or (str(exc) == "dry run") or (str(exc) == 'no poll'):
                 pass
             else:
-                pass
+                raise
             
             print "Running cufflinks in serial NOT parallel.\n"
             # loop through the queued conditions and send reports for cufflinks    
