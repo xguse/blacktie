@@ -149,7 +149,15 @@ def main():
         try:
             if args.mode == 'dry_run':
                 raise errors.BlacktieError("dry run")
-            queue = pprocess.Queue(limit=yargs.cufflinks_options.p)
+            
+            #TODO: on mac pprocess raised AttributeError "module" has no attrb "poll" or some crap
+            try:
+                queue = pprocess.Queue(limit=yargs.cufflinks_options.p)
+            except AttributeError as exc:
+                if 'poll' in str(exc):
+                    raise(errors.BlacktieError('no poll'))
+                else:
+                    raise
 
             def run_cufflinks_call(cufflinks_call):
                 """
@@ -185,16 +193,20 @@ def main():
 
             if (str(exc) != "name 'pprocess' is not defined") and (str(exc) != "dry run"):
                 raise exc
+            elif str(exc) == 'no poll':
+                pass
             else:
-                print "Running cufflinks in serial NOT parallel.\n"
-                # loop through the queued conditions and send reports for cufflinks    
-                for condition in yargs.condition_queue:   
-                    # Prep cufflinks_call
-                    cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_logs,conditions=condition,mode=args.mode)
-                    cufflinks_call.execute()
+                pass
+            
+            print "Running cufflinks in serial NOT parallel.\n"
+            # loop through the queued conditions and send reports for cufflinks    
+            for condition in yargs.condition_queue:   
+                # Prep cufflinks_call
+                cufflinks_call = CufflinksCall(yargs,email_info,run_id,run_logs,conditions=condition,mode=args.mode)
+                cufflinks_call.execute()
 
-                    # record the cufflinks_call object
-                    yargs.call_records[cufflinks_call.call_id] = cufflinks_call
+                # record the cufflinks_call object
+                yargs.call_records[cufflinks_call.call_id] = cufflinks_call
     else:
         print "[Note] Skipping cufflinks step.\n"
 
