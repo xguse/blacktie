@@ -7,7 +7,7 @@
 #  University of California Irvine
 #  wadunn83@gmail.com
 #
-#  Licenced under the GNU General Public License 3.0 license.
+#  Licensed under the GNU General Public License 3.0 license.
 #******************************************************************************
 
 """
