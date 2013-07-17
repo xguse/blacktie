@@ -6,6 +6,17 @@
 News
 ====
 
+0.2.1.2
+-----------
+*Release date: 2013-07-17*
+
+* version number system adopted to conform to PEP386
+* This is a hot fix to squash a bug described in github issue: https://github.com/xguse/blacktie/issues/10
+    * **in short:** on a Mac ``pprocess`` complained "AttributeError: 'module' object has no attribute 'poll'" when trying to set up a queue.
+    * the quick fix is to look for that exception and continue without ``pprocess`` if encountered to avoid the fatal exception.
+
+
+
 0.2.1
 ---------
 *Release date: 2013-05-15*
