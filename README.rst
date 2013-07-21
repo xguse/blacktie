@@ -16,11 +16,12 @@ file and automate as much of everything else as possible so that once the config
 is filled out, **the entire process of analyzing a multi-condition RNA-seq experiment can
 be run with a single command.**  
 
+Documentation
+-----------------
 
-(Current version of the docs can be found here: http://blacktie.readthedocs.org)
+Current version of the docs can be found here: https://blacktie.readthedocs.org/en/latest/
 
-If you want to use/contribute before the docs are complete, please feel free to contact me at 
-wadunn83@gmail.com for guidance.
+
 
 Issue tracking
 --------------
