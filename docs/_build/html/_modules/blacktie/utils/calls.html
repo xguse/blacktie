@@ -759,7 +759,7 @@
         <span class="k">if</span> <span class="n">option</span> <span class="o">==</span> <span class="s">&#39;from_conditions&#39;</span><span class="p">:</span>
             <span class="n">paths</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">:</span>
-                <span class="n">gtf_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cuffGTF_path</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>
+                <span class="n">gtf_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cuff_gtf_path</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>
                 <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gtf_path</span><span class="p">)</span>
             <span class="n">mkdirp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span><span class="p">)</span>
             <span class="n">assembly_list_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">/assembly_list.txt&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)),</span><span class="s">&#39;w&#39;</span><span class="p">)</span>
@@ -775,7 +775,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">option</span>
 </div>
-<div class="viewcode-block" id="CuffmergeCall.get_cuffGTF_path"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffmergeCall.get_cuffGTF_path">[docs]</a>    <span class="k">def</span> <span class="nf">get_cuffGTF_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">condition</span><span class="p">):</span>
+<div class="viewcode-block" id="CuffmergeCall.get_cuff_gtf_path"><a class="viewcode-back" href="../../../code.html#blacktie.utils.calls.CuffmergeCall.get_cuff_gtf_path">[docs]</a>    <span class="k">def</span> <span class="nf">get_cuff_gtf_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">condition</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Supports ``self.get_cufflinks_gtfs()``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
