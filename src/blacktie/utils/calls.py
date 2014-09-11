@@ -1,8 +1,8 @@
-#*****************************************************************************
-#  calls.py (part of the blacktie package)
+# *****************************************************************************
+# calls.py (part of the blacktie package)
 #
-#  (c) 2013 - Augustine Dunn
-#  James Laboratory
+# (c) 2013 - Augustine Dunn
+# James Laboratory
 #  Department of Biochemistry and Molecular Biology
 #  University of California Irvine
 #  wadunn83@gmail.com
@@ -14,25 +14,23 @@
 ####################
 calls.py
 ####################
-Code defining classes to represent and excute pipeline program calls.
+Code defining classes to represent and execute pipeline program calls.
 """
 import os
-import sys
 import base64
 import traceback
-import re
-import time
 import socket
 import shutil
 from collections import defaultdict
 
 from mako.template import Template
 
-from blacktie.utils.misc import Bunch,bunchify
+from bunch import Bunch
+
 from blacktie.utils.misc import email_notification
 from blacktie.utils.misc import get_time
 from blacktie.utils.misc import uniques
-from blacktie.utils.externals import runExternalApp,mkdirp
+from blacktie.utils.externals import runExternalApp, mkdirp
 from blacktie.utils import errors
 
 
@@ -40,7 +38,8 @@ class BaseCall(object):
     """
     Defines common methods for all program call types.
     """
-    def __init__(self,yargs,email_info,run_id,run_logs,conditions,mode='analyze'):
+
+    def __init__(self, yargs, email_info, run_id, run_logs, conditions, mode='analyze'):
         """
         initializes a ``BaseCall`` object
         
@@ -61,11 +60,8 @@ class BaseCall(object):
         self.log_dir = run_logs
         self.prgbar_regex = yargs.prgbar_regex
         self._conditions = conditions
-        self.prog_yargs = None # over-ride in child __init__
-        self.arg_str = None # over-ride in child __init__
-
-
-
+        self.prog_yargs = None  # over-ride in child __init__
+        self.arg_str = None  # over-ride in child __init__
 
     def _flag_out_dir(self):
         """
@@ -74,7 +70,7 @@ class BaseCall(object):
         try:
             orig_path_tokens = os.path.abspath(self.out_dir).split('/')[1:]
             new_path = "/%s/FAILED.%s" % ('/'.join(orig_path_tokens[:-1]), orig_path_tokens[-1])
-            os.rename(os.path.abspath(self.out_dir),new_path)
+            os.rename(os.path.abspath(self.out_dir), new_path)
             self.out_dir = new_path
         except OSError as exc:
             if 'No such file or directory' in str(exc):
@@ -87,52 +83,54 @@ class BaseCall(object):
         creates empty log file for this call and stores its path in ``self.log_file``
         """
         if self.mode == 'analyze':
-            log_file = "%s/%s.log" % (self.log_dir.rstrip('/'),self.call_id)
-            log_file = open(log_file,'w')
+            log_file = "%s/%s.log" % (self.log_dir.rstrip('/'), self.call_id)
+            log_file = open(log_file, 'w')
             log_file.close()
             self.log_file = os.path.abspath(log_file.name)
         else:
             pass
 
-    def get_condition_id(self,condition_dict):
+    def get_condition_id(self, condition_dict):
         """
         Constructs condition ID
         :param condition_dict: a dictionary containing consition info like name, replicate_id, etc.
         :returns: an ID used to construct the call_id of a call.
         """
-        
-        condition_id = "%s_%s" % (condition_dict['name'],condition_dict['replicate_id'])
+
+        condition_id = "%s_%s" % (condition_dict['name'], condition_dict['replicate_id'])
         return condition_id
 
     def set_call_id(self):
         """
         builds and stores this call's call ID in ``self.call_id``
         """
-            
-        if isinstance(self._conditions,int) or isinstance(self._conditions,str):
+
+        if isinstance(self._conditions, int) or isinstance(self._conditions, str):
             # this should mean that we are dealing with a "group" type call
             self.experiment_id = self._conditions
             self._conditions = self.yargs.groups[self.experiment_id]
             condition_ids = [self.get_condition_id(x) for x in self._conditions]
-            call_id = "%s_%s" % (self.prog_name,".".join(condition_ids))
+            call_id = "%s_%s" % (self.prog_name, ".".join(condition_ids))
             self.call_id = call_id
 
-        elif isinstance(self._conditions,dict):
+        elif isinstance(self._conditions, dict):
             condition_id = self.get_condition_id(self._conditions)
-            call_id = "%s_%s" % (self.prog_name,condition_id)
+            call_id = "%s_%s" % (self.prog_name, condition_id)
             self.call_id = call_id
         else:
-            raise errors.SanityCheckError('type(self._conditions) should be either int, str, or dict. It is: %s' % (type(self._conditions)))
+            raise errors.SanityCheckError(
+                'type(self._conditions) should be either int, str, or dict. It is: %s' % (type(self._conditions)))
 
     def notify_start_of_call(self):
         """
         sends notification email informing user that ``self.call_id`` has been initiated
         """
         e = self.email_info
-        
+
         report_time = get_time()
-        email_sub="[SITREP from %s] Run %s - Starting %s at %s" % (self._hostname,self.run_id,self.call_id,report_time)
-        email_body="%s\n\n%s" % (email_sub,self.cmd_string)
+        email_sub = "[SITREP from %s] Run %s - Starting %s at %s" % (self._hostname, self.run_id, self.call_id,
+                                                                     report_time)
+        email_body = "%s\n\n%s" % (email_sub, self.cmd_string)
         server_info = self.yargs.run_options.custom_smtp
         email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li), server_info)
 
@@ -143,12 +141,13 @@ class BaseCall(object):
         e = self.email_info
 
         report_time = get_time()
-        email_sub="[SITREP from %s] Run %s - Exited %s at %s" % (self._hostname,self.run_id,self.call_id,report_time)
+        email_sub = "[SITREP from %s] Run %s - Exited %s at %s" % (self._hostname, self.run_id, self.call_id,
+                                                                   report_time)
 
         #    repeat subject in body
-        email_body=email_sub
-        
-        email_body += "\n\n ==> stderr <==\n\n%s" % (self.stderr_msg)
+        email_body = email_sub
+
+        email_body += "\n\n ==> stderr <==\n\n%s" % self.stderr_msg
         server_info = self.yargs.run_options.custom_smtp
         email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li), server_info)
 
@@ -160,7 +159,7 @@ class BaseCall(object):
         """
 
         base_dir = self.yargs.run_options.base_dir.rstrip('/')
-        return "%s/%s" % (base_dir,self.call_id)
+        return "%s/%s" % (base_dir, self.call_id)
 
     def init_opt_dict(self):
         """
@@ -171,8 +170,9 @@ class BaseCall(object):
         """
         opt_dict = defaultdict(bool)
         for opt in self.prog_yargs.keys():
-            opt_dict[opt]
-        opt_dict = dict(opt_dict) # from now on I want missing keys to raise error
+            # noinspection PyStatementEffect
+            opt_dict[opt]  # this initiates all values with False bc of the defaultdict
+        opt_dict = dict(opt_dict)  # from now on I want missing keys to raise error
 
         # Populate opt_dict with non-job-specific options encoded in yaml file
         # Ignore positional args for now
@@ -181,10 +181,10 @@ class BaseCall(object):
             no_positional_args.remove('positional_args')
         except ValueError:
             pass
-        
+
         for opt in no_positional_args:
             opt_val = self.prog_yargs[opt]
-            if opt_val != "from_conditions":
+            if opt_val not in ["from_conditions", "from_run"]:
                 opt_dict[opt] = opt_val
         return opt_dict
 
@@ -200,9 +200,9 @@ class BaseCall(object):
                 pass
 
             if len(opt) == 1:
-                options_list.append('-%s' % (opt))
+                options_list.append('-%s' % opt)
             else:
-                options_list.append('--%s' % (opt))
+                options_list.append('--%s' % opt)
 
             opt_val_str = str(self.opt_dict[opt])
             if opt_val_str != 'True':
@@ -217,21 +217,22 @@ class BaseCall(object):
         lines = stderr_str.split('\n')
         no_bar = []
         for line in lines:
-            if self.prgbar_regex.search(line) != None: # prgbar regex compiled outside scope to avoid re-complilation overhead
+            if self.prgbar_regex.search(line) is None:  # prgbar regex compiled outside scope to avoid re-complilation
+                # overhead
                 pass
             else:
                 no_bar.append(line)
         return '\n'.join(no_bar)
 
-    def log_msg(self,log_msg=''):
+    def log_msg(self, log_msg=''):
         """
         * opens ``self.log_file``
         * writes ``log_msg``
         * closes ``self.log_file``
         """
         if self.mode == 'analyze':
-            log = open(self.log_file,'a')
-            log.write('\n%s\n' % (log_msg))
+            log = open(self.log_file, 'a')
+            log.write('\n%s\n' % log_msg)
             log.close()
         else:
             pass
@@ -241,35 +242,34 @@ class BaseCall(object):
         records start of call in ``self.log_file``
         """
         if self.mode == 'analyze':
-            msg = '[start %s]\n' % (self.call_id)
+            msg = '[start %s]\n' % self.call_id
             self.log_msg(log_msg=msg)
         else:
             pass
-        
+
     def log_end(self):
         """
         records command string used, program output, and the end of call in ``self.log_file``
         """
         if self.mode == 'analyze':
             self.stderr_msg = self.purge_progress_bars(self.stderr_msg)
-            err_msg = "%s\n\n%s\n[end %s]" % (self.cmd_string,self.stderr_msg,self.call_id)
+            err_msg = "%s\n\n%s\n[end %s]" % (self.cmd_string, self.stderr_msg, self.call_id)
             self.log_msg(log_msg=err_msg)
         else:
             pass
-
 
     def build_qsub(self):
         """
         Builds and writes this CallObject's qsub script to current working directory
         using options provided under the "qsub_options" sub-tree in the yaml config file.
         """
-        nicknames = {'tophat':'th',
-                     'cufflinks':'cl',
-                     'cuffmerge':'cm',
-                     'cuffdiff':'cd',}
-        
+        nicknames = {'tophat': 'th',
+                     'cufflinks': 'cl',
+                     'cuffmerge': 'cm',
+                     'cuffdiff': 'cd', }
+
         qsub_options = self.yargs.qsub_options
-        
+
         # set keyword args for template
         kw = Bunch()
         kw.queues = qsub_options.queues
@@ -281,30 +281,29 @@ class BaseCall(object):
         kw.job_name = job_name
         kw.out_dir = self.out_dir
         kw.ld_library_path = qsub_options.ld_library_path
-        
+
         # need to make sure we use the number of cores that the SGE gave us
-        kw.cmd_str = self.cmd_string.replace('-p %s' % (self.opt_dict['p']),'-p $CORES')
-        
+        kw.cmd_str = self.cmd_string.replace('-p %s' % (self.opt_dict['p']), '-p $CORES')
+
         qsub_template = Template(filename=qsub_options.template)
-        out_file = open('%s.qsub.sh' % (self.call_id),'w')
+        out_file = open('%s.qsub.sh' % self.call_id, 'w')
         qsub_string = qsub_template.render(**kw)
         out_file.write(qsub_string)
         out_file.close()
-        
-        
+
     def execute(self):
         """
         calls correct program, records results, and manages errors
         """
-        
-        self.cmd_string = "%s %s" % (self.prog_name,self.arg_str)
+
+        self.cmd_string = "%s %s" % (self.prog_name, self.arg_str)
         if self.mode == 'analyze':
             try:
                 self.notify_start_of_call()
                 self.log_start()
-    
-                self.stdout_msg,self.stderr_msg = runExternalApp(progName=self.prog_name,argStr=self.arg_str)
-    
+
+                self.stdout_msg, self.stderr_msg = runExternalApp(progName=self.prog_name, argStr=self.arg_str)
+
                 self.log_end()
                 self.notify_end_of_call()
             except Exception as exc:
@@ -315,26 +314,32 @@ class BaseCall(object):
 
                 self.stdout_msg = "\nError in call.  Check error log.\n"
                 self.stderr_msg = email_body
-    
+
                 self.log_end()
-    
+
                 self._flag_out_dir()
-    
-                if isinstance(exc,errors.SystemCallError):
-                    email_sub="[SITREP from %s] Run %s experienced SystemCallError in call %s. MOVING ON." % (self._hostname,self.run_id,self.call_id)
-                    email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li),server_info)                
-                elif isinstance(exc,KeyboardInterrupt):
-                    email_sub="[SITREP from %s] Run %s experienced KeyboardInterrupt in call %s. MOVING ON." % (self._hostname,self.run_id,self.call_id)
-                    email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li),server_info) 
+
+                if isinstance(exc, errors.SystemCallError):
+                    email_sub = "[SITREP from %s] Run %s experienced SystemCallError in call %s. MOVING ON." % (
+                        self._hostname, self.run_id, self.call_id)
+                    email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li),
+                                       server_info)
+                elif isinstance(exc, KeyboardInterrupt):
+                    email_sub = "[SITREP from %s] Run %s experienced KeyboardInterrupt in call %s. MOVING ON." % (
+                        self._hostname, self.run_id, self.call_id)
+                    email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li),
+                                       server_info)
                 else:
-                    email_sub="[SITREP from %s] Run %s experienced unhandled exception in call %s. EXITING." % (self._hostname,self.run_id,self.call_id)
-                    email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li),server_info)
+                    email_sub = "[SITREP from %s] Run %s experienced unhandled exception in call %s. EXITING." % (
+                        self._hostname, self.run_id, self.call_id)
+                    email_notification(e.email_from, e.email_to, email_sub, email_body, base64.b64decode(e.email_li),
+                                       server_info)
                     raise
-        
+
         # DRY RUN
         elif self.mode == 'dry_run':
             print self.cmd_string + '\n'
-        
+
         # QSUB SCRIPT
         elif self.mode == 'qsub_script':
             self.build_qsub()
@@ -342,13 +347,12 @@ class BaseCall(object):
             raise errors.BlacktieError()
 
 
-
 class TophatCall(BaseCall):
     """
     Manage a single call to tophat and store associated run data.
     """
 
-    def __init__(self,yargs,email_info,run_id,run_logs,conditions,mode):
+    def __init__(self, yargs, email_info, run_id, run_logs, conditions, mode):
         """
         initializes the ``TophatCall`` object
         
@@ -364,7 +368,7 @@ class TophatCall(BaseCall):
 
         self.prog_name = 'tophat'
 
-        BaseCall.__init__(self,yargs,email_info,run_id,run_logs,conditions,mode)
+        BaseCall.__init__(self, yargs, email_info, run_id, run_logs, conditions, mode)
 
         self.prog_yargs = self.yargs.tophat_options
         self.set_call_id()
@@ -383,7 +387,7 @@ class TophatCall(BaseCall):
         right_reads = self.get_rt_reads()
 
         # combine and save arg_str
-        self.options_list.extend([bowtie_index,left_reads,right_reads])
+        self.options_list.extend([bowtie_index, left_reads, right_reads])
         self.arg_str = ' '.join(self.options_list)
 
     def get_out_dir(self):
@@ -415,7 +419,7 @@ class TophatCall(BaseCall):
         if option == 'from_conditions':
             bt_idx_dir = self.yargs.run_options.bowtie_indexes_dir.rstrip('/')
             bt_idx_name = self._conditions['bowtie2_index']
-            return "%s/%s" % (bt_idx_dir,bt_idx_name)
+            return "%s/%s" % (bt_idx_dir, bt_idx_name)
         else:
             return option
 
@@ -447,7 +451,7 @@ class CufflinksCall(BaseCall):
     Manage a single call to cufflinks and store associated run data.
     """
 
-    def __init__(self,yargs,email_info,run_id,run_logs,conditions,mode):
+    def __init__(self, yargs, email_info, run_id, run_logs, conditions, mode):
         """
         initializes the ``CufflinksCall`` object
         
@@ -465,13 +469,12 @@ class CufflinksCall(BaseCall):
 
         self.prog_name = 'cufflinks'
 
-        BaseCall.__init__(self,yargs,email_info,run_id,run_logs,conditions,mode)
+        BaseCall.__init__(self, yargs, email_info, run_id, run_logs, conditions, mode)
 
         self.prog_yargs = self.yargs.cufflinks_options
         self.set_call_id()
         self.init_log_file()
         self.out_dir = self.get_out_dir()
-
 
         # set up options for program call
         self.opt_dict = self.init_opt_dict()
@@ -484,7 +487,7 @@ class CufflinksCall(BaseCall):
         self.construct_options_list()
 
         # now the positional args
-        self.accepted_hits = self.get_accepted_hits() 
+        self.accepted_hits = self.get_accepted_hits()
 
         # combine and save arg_str
         self.options_list.extend([self.accepted_hits])
@@ -497,24 +500,24 @@ class CufflinksCall(BaseCall):
         .. todo:: **DONE** GTF and GTF-guide should not be used together but both can be ommited
         """
         options = self.prog_yargs
-        
+
         # GTF and GTF-guide should not be used together but both can be ommited
         try:
             gtf = bool(options['GTF'])
         except KeyError:
             gtf = False
             options['GTF'] = gtf
-        
+
         try:
             gtf_guide = bool(options['GTF-guide'])
         except KeyError:
             gtf_guide = False
             options['GTF-guide'] = gtf_guide
-            
+
         if gtf and gtf_guide:
-            raise errors.SanityCheckError('"GTF" and "GTF-guide" option were non-False.  Please only set one or the other.')
-            
-        
+            raise errors.SanityCheckError(
+                '"GTF" and "GTF-guide" option were non-False.  Please only set one or the other.')
+
     def get_out_dir(self):
         """
         Handles ``yaml_config.cufflinks_options.o: from_conditions``.
@@ -547,7 +550,6 @@ class CufflinksCall(BaseCall):
         else:
             return option
 
-
     def get_genome(self):
         """
         Handles ``yaml_config.cufflinks_options.frag-bias-correct: from_conditions``.
@@ -579,23 +581,25 @@ class CufflinksCall(BaseCall):
             th_call = self.yargs.call_records[th_call_id]
             th_out_dir = th_call.out_dir
             bam_path = "%s/accepted_hits.bam" % (th_out_dir.rstrip('/'))
-        except (KeyError,AttributeError) as exp:
-            msg = "WARNING: unable to find matching tophat call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
-                % (self.get_condition_id(self._conditions))            
+        except (KeyError, AttributeError) as exp:
+            msg = "WARNING: unable to find matching tophat call record in memory for condition: %s\nAttempting to " \
+                  "find corresponding cufflinks outfile in your base_dir." \
+                  % (self.get_condition_id(self._conditions))
             self.log_msg(log_msg=msg)
 
             # try to guess correct tophat out directory
             base_dir = self.yargs.run_options.base_dir
-            bam_path = "%s/%s/accepted_hits.bam" % (base_dir.rstrip('/'),th_call_id)
+            bam_path = "%s/%s/accepted_hits.bam" % (base_dir.rstrip('/'), th_call_id)
             if not os.path.exists(bam_path):
                 if self.mode == 'analyze':
                     #: ``.. todo:: build framework to handle this non-fatally``
-                    raise errors.MissingArgumentError("I could not find an appropriate accepted_hits.bam file. Failed to find: %s" \
-                                                      % (bam_path))
+                    raise errors.MissingArgumentError(
+                        "I could not find an appropriate accepted_hits.bam file. Failed to find: %s"
+                        % bam_path)
                 else:
                     pass
             else:
-                return bam_path 
+                return bam_path
         return bam_path
 
     def get_mask_file(self):
@@ -611,13 +615,14 @@ class CufflinksCall(BaseCall):
                 return option
         except KeyError:
             return False
-        
+
+
 class CuffmergeCall(BaseCall):
     """
     Manage a single call to cuffmerge and store associated run data.
     """
 
-    def __init__(self,yargs,email_info,run_id,run_logs,conditions,mode):
+    def __init__(self, yargs, email_info, run_id, run_logs, conditions, mode):
         """
         initializes the ``CuffmergeCall`` object
         
@@ -633,13 +638,12 @@ class CuffmergeCall(BaseCall):
 
         self.prog_name = 'cuffmerge'
 
-        BaseCall.__init__(self,yargs,email_info,run_id,run_logs,conditions,mode)
+        BaseCall.__init__(self, yargs, email_info, run_id, run_logs, conditions, mode)
 
         self.prog_yargs = self.yargs.cuffmerge_options
         self.set_call_id()
         self.init_log_file()
         self.out_dir = self.get_out_dir()
-
 
         # set up options for program call
         self.opt_dict = self.init_opt_dict()
@@ -676,8 +680,9 @@ class CuffmergeCall(BaseCall):
             if len(gtf_path) == 1:
                 gtf_path = gtf_path.pop()
             else:
-                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-gtf" to use: %s.' \
-                                                    % (self.experiment_id,gtf_path))
+                raise errors.InvalidFileFormatError(
+                    'CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-gtf" to use: %s.'
+                    % (self.experiment_id, gtf_path))
             return gtf_path
         else:
             return option
@@ -693,8 +698,10 @@ class CuffmergeCall(BaseCall):
             if len(genome_path) == 1:
                 genome_path = genome_path.pop()
             else:
-                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-sequence" to use: %s.' \
-                                                    % (self.experiment_id,genome_path))
+                raise errors.InvalidFileFormatError(
+                    'CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-sequence" to '
+                    'use: %s.'
+                    % (self.experiment_id, genome_path))
             return genome_path
         else:
             return option
@@ -707,23 +714,23 @@ class CuffmergeCall(BaseCall):
         if option == 'from_conditions':
             paths = []
             for condition in self._conditions:
-                gtf_path = self.get_cuffGTF_path(condition)
+                gtf_path = self.get_cuff_gtf_path(condition)
                 paths.append(gtf_path)
             mkdirp(self.out_dir)
-            assembly_list_file = open("%s/assembly_list.txt" % (self.out_dir.rstrip('/')),'w')
+            assembly_list_file = open("%s/assembly_list.txt" % (self.out_dir.rstrip('/')), 'w')
             assembly_list_file.write("\n".join(paths))
             assembly_list_file.close()
-            
+
             if self.mode == 'dry_run':
                 shutil.rmtree(self.out_dir)
             else:
                 pass
-            
+
             return os.path.abspath(assembly_list_file.name)
         else:
             return option
 
-    def get_cuffGTF_path(self,condition):
+    def get_cuff_gtf_path(self, condition):
         """
         Supports ``self.get_cufflinks_gtfs()``.
         """
@@ -732,32 +739,34 @@ class CuffmergeCall(BaseCall):
             cl_call = self.yargs.call_records[cl_call_id]
             cl_out_dir = cl_call.out_dir
             gtf_path = "%s/transcripts.gtf" % (cl_out_dir.rstrip('/'))
-        except (KeyError,AttributeError) as exp:
-            msg = "WARNING: unable to find matching cufflinks call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
-                % (self.get_condition_id(condition))
+        except (KeyError, AttributeError) as exp:
+            msg = "WARNING: unable to find matching cufflinks call record in memory for condition: %s\nAttempting " \
+                  "to find corresponding cufflinks outfile in your base_dir." \
+                  % (self.get_condition_id(condition))
             self.log_msg(log_msg=msg)
 
             # try to guess correct cufflinks out directory
             base_dir = self.yargs.run_options.base_dir
-            gtf_path = "%s/%s/transcripts.gtf" % (base_dir.rstrip('/'),cl_call_id)
+            gtf_path = "%s/%s/transcripts.gtf" % (base_dir.rstrip('/'), cl_call_id)
             if not os.path.exists(gtf_path):
                 if self.mode == 'analyze':
                     #: .. todo:: build framework to handle this non-fatally
-                    raise errors.MissingArgumentError("I could not find an appropriate transcripts.gtf file. Failed to find: %s" \
-                                                      % (gtf_path))
+                    raise errors.MissingArgumentError(
+                        "I could not find an appropriate transcripts.gtf file. Failed to find: %s"
+                        % gtf_path)
                 else:
                     pass
             else:
                 return gtf_path
         return gtf_path
-    
-    
+
+
 class CuffdiffCall(BaseCall):
     """
     Manage a single call to cuffdiff and store associated run data.
     """
 
-    def __init__(self,yargs,email_info,run_id,run_logs,conditions,mode):
+    def __init__(self, yargs, email_info, run_id, run_logs, conditions, mode):
         """
         initializes the ``CuffdiffCall`` object
         
@@ -773,35 +782,34 @@ class CuffdiffCall(BaseCall):
 
         self.prog_name = 'cuffdiff'
 
-        BaseCall.__init__(self,yargs,email_info,run_id,run_logs,conditions,mode)
+        BaseCall.__init__(self, yargs, email_info, run_id, run_logs, conditions, mode)
 
         self.prog_yargs = self.yargs.cuffdiff_options
         self.set_call_id()
         self.init_log_file()
         self.out_dir = self.get_out_dir()
 
-
         # set up options for program call
         ##cuffdiff_options:
-          ##o: from_conditions
-          ##labels: from_conditions
-          ##frag-bias-correct: from_conditions
-          ##positional_args:
-            ##transcripts_gtf: from_conditions
-            ##sample_bams: from_conditions
+        ##o: from_conditions
+        ##labels: from_conditions
+        ##frag-bias-correct: from_conditions
+        ##positional_args:
+        ##transcripts_gtf: from_conditions
+        ##sample_bams: from_conditions
         self.opt_dict = self.init_opt_dict()
         self.opt_dict['o'] = self.out_dir
-        self.opt_dict['labels'] = self.get_labels()           
+        self.opt_dict['labels'] = self.get_labels()
         self.opt_dict['mask-file'] = self.get_mask_file()
         self.opt_dict['frag-bias-correct'] = self.get_genome()
         self.construct_options_list()
 
         # now the positional args
-        transcripts_gtf = self.get_cuffmerge_gtf()  
+        transcripts_gtf = self.get_cuffmerge_gtf()
         sample_bams = self.get_sample_bams()
 
         # combine and save arg_str
-        self.options_list.extend([transcripts_gtf,sample_bams])
+        self.options_list.extend([transcripts_gtf, sample_bams])
         self.arg_str = ' '.join(self.options_list)
 
     def get_out_dir(self):
@@ -825,8 +833,10 @@ class CuffdiffCall(BaseCall):
             if len(genome_path) == 1:
                 genome_path = genome_path.pop()
             else:
-                raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-sequence" to use: %s.' \
-                                                    % (self.experiment_id,genome_path))
+                raise errors.InvalidFileFormatError(
+                    'CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-sequence" to '
+                    'use: %s.'
+                    % (self.experiment_id, genome_path))
             return genome_path
         else:
             return option
@@ -835,8 +845,8 @@ class CuffdiffCall(BaseCall):
         """
         Handles ``yaml_config.cuffdiff_options.positional_args.sample_bams: from_conditions``.
         """
-        
-        def join_replicate_paths(top_level_conditions,paths):
+
+        def join_replicate_paths(top_level_conditions, paths):
             # I KNOW this has crappy big O time but the list sizes here are small
             joined_rep_paths = []
             for tlc in top_level_conditions:
@@ -848,7 +858,7 @@ class CuffdiffCall(BaseCall):
                         pass
                 joined_rep_paths.append(','.join(tlc_paths))
             return joined_rep_paths
-        
+
         #: .. todo:: support replicate bams as: " samp1_r1.bam,samp1_r2.bam samp2_r1.bam,samp2_r2.bam "
         option = self.prog_yargs.positional_args.sample_bams
         if option == 'from_conditions':
@@ -856,16 +866,16 @@ class CuffdiffCall(BaseCall):
             for condition in self._conditions:
                 bam_path = self.get_bam_path(condition)
                 paths.append(bam_path)
-                
+
             # join bam paths that are bio-replicates with commas
-            top_level_conditions = ['_'.join(  path.split('/')[-2].split('_')[:-1]  ) for path in paths]
+            top_level_conditions = ['_'.join(path.split('/')[-2].split('_')[:-1]) for path in paths]
             top_level_conditions = uniques(top_level_conditions)
-            joined_replicate_paths = join_replicate_paths(top_level_conditions,paths)
+            joined_replicate_paths = join_replicate_paths(top_level_conditions, paths)
             return ' '.join(joined_replicate_paths)
         else:
             return option
 
-    def get_bam_path(self,condition):
+    def get_bam_path(self, condition):
         """
         Supports ``self.get_sample_bams()``.
         """
@@ -874,26 +884,28 @@ class CuffdiffCall(BaseCall):
             th_call = self.yargs.call_records[th_call_id]
             th_out_dir = th_call.out_dir
             bam_path = "%s/accepted_hits.bam" % (th_out_dir.rstrip('/'))
-        except (KeyError,AttributeError) as exp:
-            msg = "WARNING: unable to find matching tophat call record in memory for condition: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
-                % (self.get_condition_id(condition))
+        except (KeyError, AttributeError) as exp:
+            msg = "WARNING: unable to find matching tophat call record in memory for condition: %s\nAttempting to " \
+                  "find corresponding cufflinks outfile in your base_dir." \
+                  % (self.get_condition_id(condition))
             self.log_msg(log_msg=msg)
 
             # try to guess correct tophat out directory
             base_dir = self.yargs.run_options.base_dir
-            bam_path = "%s/%s/accepted_hits.bam" % (base_dir.rstrip('/'),th_call_id)
+            bam_path = "%s/%s/accepted_hits.bam" % (base_dir.rstrip('/'), th_call_id)
             if not os.path.exists(bam_path):
                 if self.mode == 'analyze':
                     #: .. todo:: build framework to handle this non-fatally
-                    raise errors.MissingArgumentError("I could not find an appropriate accepted_hits.bam file. Failed to find: %s" \
-                                                      % (bam_path))
-                
+                    raise errors.MissingArgumentError(
+                        "I could not find an appropriate accepted_hits.bam file. Failed to find: %s"
+                        % bam_path)
+
                 else:
                     pass
             else:
                 return bam_path
         return bam_path
-    
+
     def get_mask_file(self):
         """
         Handles ``yaml_config.cuffdiff_options.mask-file: from_conditions``.
@@ -906,14 +918,16 @@ class CuffdiffCall(BaseCall):
                 if len(mask_path) == 1:
                     mask_path = mask_path.pop()
                 else:
-                    raise errors.InvalidFileFormatError('CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-sequence" to use: %s.' \
-                                                        % (self.experiment_id,mask_path))
+                    raise errors.InvalidFileFormatError(
+                        'CHECK YAML CONFIG FILE: Conditions in experiment %s do not agree on which "ref-sequence" '
+                        'to use: %s.'
+                        % (self.experiment_id, mask_path))
                 return mask_path
             else:
                 return option
         except KeyError:
             return False
-        
+
     def get_labels(self):
         """
         Handles ``yaml_config.cuffdiff_options.labels: from_conditions``.
@@ -927,42 +941,44 @@ class CuffdiffCall(BaseCall):
             return ','.join(labels)
         else:
             return option
-        
+
     def get_cuffmerge_gtf(self):
         """
         Handles ``yaml_config.cuffdiff_options.positional_args.transcripts_gtf: from_conditions``.
         """
-        cm_call_id = self.call_id.replace('cuffdiff','cuffmerge')
+        cm_call_id = self.call_id.replace('cuffdiff', 'cuffmerge')
         try:
             cm_call = self.yargs.call_records[cm_call_id]
             cm_out_dir = cm_call.out_dir
             gtf_path = "%s/merged.gtf" % (cm_out_dir.rstrip('/'))
-        except (KeyError,AttributeError) as exp:
-            msg = "WARNING: unable to find matching cuffmerge call record in memory for experiment: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
-                % (cm_call_id)
+        except (KeyError, AttributeError) as exp:
+            msg = "WARNING: unable to find matching cuffmerge call record in memory for experiment: %s\n Attempting " \
+                  "to find corresponding cufflinks outfile in your base_dir." \
+                  % cm_call_id
             self.log_msg(log_msg=msg)
 
             # try to guess correct cuffmerge out directory
             base_dir = self.yargs.run_options.base_dir
-            gtf_path = "%s/%s/merged.gtf" % (base_dir.rstrip('/'),cm_call_id)
+            gtf_path = "%s/%s/merged.gtf" % (base_dir.rstrip('/'), cm_call_id)
             if not os.path.exists(gtf_path):
                 if self.mode == 'analyze':
                     #: .. todo:: build framework to handle this non-fatally
-                    raise errors.MissingArgumentError("I could not find an appropriate merged.gtf file. Failed to find: %s" \
-                                                      % (gtf_path))
+                    raise errors.MissingArgumentError(
+                        "I could not find an appropriate merged.gtf file. Failed to find: %s"
+                        % gtf_path)
                 else:
                     pass
             else:
                 return gtf_path
         return gtf_path
-    
+
 
 class CummerbundCall(BaseCall):
     """
     Manage a single call to blacktie-cummerbund script and store associated run data.
     """
 
-    def __init__(self,yargs,email_info,run_id,run_logs,conditions,mode):
+    def __init__(self, yargs, email_info, run_id, run_logs, conditions, mode):
         """
         initializes the ``CummerbundCall`` object
         
@@ -978,28 +994,26 @@ class CummerbundCall(BaseCall):
 
         self.prog_name = 'blacktie-cummerbund'
 
-        BaseCall.__init__(self,yargs,email_info,run_id,run_logs,conditions,mode)
+        BaseCall.__init__(self, yargs, email_info, run_id, run_logs, conditions, mode)
 
         self.prog_yargs = self.yargs.cummerbund_options
         self.set_call_id()
         self.init_log_file()
         self.out_dir = self.get_out_dir()
 
-
         # set up options for program call
         ##cuffdiff_options:
-          ##o: from_conditions
-          ##labels: from_conditions
-          ##frag-bias-correct: from_conditions
-          ##positional_args:
-            ##transcripts_gtf: from_conditions
-            ##sample_bams: from_conditions
+        ##o: from_conditions
+        ##labels: from_conditions
+        ##frag-bias-correct: from_conditions
+        ##positional_args:
+        ##transcripts_gtf: from_conditions
+        ##sample_bams: from_conditions
         self.opt_dict = self.init_opt_dict()
         self.opt_dict['cuffdiff-dir'] = self.get_cuffdiff_dir()
-        self.opt_dict['gtf-path'] = self.get_cuffmerge_gtf()  
-        self.opt_dict['out'] = self.out_dir         
+        self.opt_dict['gtf-path'] = self.get_cuffmerge_gtf()
+        self.opt_dict['out'] = self.out_dir
         self.construct_options_list()
-
 
         # combine and save arg_str
         self.arg_str = ' '.join(self.options_list)
@@ -1008,62 +1022,66 @@ class CummerbundCall(BaseCall):
         """
         Handles ``yaml_config.cummerbund_options.cuffdiff-dir: from_conditions``.
         """
-        cd_call_id = self.call_id.replace('blacktie-cummerbund','cuffdiff')
+        cd_call_id = self.call_id.replace('blacktie-cummerbund', 'cuffdiff')
         try:
             cd_call = self.yargs.call_records[cd_call_id]
             cd_out_dir = cd_call.out_dir
             cuffdiff_dir = cd_out_dir
-        except (KeyError,AttributeError) as exp:
-            msg = "WARNING: unable to find matching cuffdiff call record in memory for experiment: %s\nAttempting to find corresponding cuffdiff out_dir in your base_dir." \
-                % (cd_call_id)
+        except (KeyError, AttributeError) as exp:
+            msg = "WARNING: unable to find matching cuffdiff call record in memory for experiment: %s\n Attempting " \
+                  "to find corresponding cuffdiff out_dir in your base_dir." \
+                  % cd_call_id
             self.log_msg(log_msg=msg)
 
             # try to guess correct cuffmerge out directory
             base_dir = self.yargs.run_options.base_dir
-            cuffdiff_dir = "%s/%s" % (base_dir.rstrip('/'),cd_call_id)
+            cuffdiff_dir = "%s/%s" % (base_dir.rstrip('/'), cd_call_id)
             if not os.path.exists(cuffdiff_dir):
                 if self.mode == 'analyze':
                     #: .. todo:: build framework to handle this non-fatally
-                    raise errors.MissingArgumentError("I could not find an appropriate cuffdiff-dir directory. Failed to find: %s" \
-                                                      % (cuffdiff_dir))
+                    raise errors.MissingArgumentError(
+                        "I could not find an appropriate cuffdiff-dir directory. Failed to find: %s"
+                        % cuffdiff_dir)
                 else:
                     pass
             else:
                 return cuffdiff_dir
-        return cuffdiff_dir       
-        
+        return cuffdiff_dir
+
     def get_out_dir(self):
         """
         Handles ``yaml_config.cummerbund_options.out: from_conditions``.
         """
         option = self.prog_yargs.out
-        if option == 'from_conditions':
+        if option == 'from_run':
             return self.build_out_dir_path()
         else:
             return option
-        
+
     def get_cuffmerge_gtf(self):
         """
         Handles ``yaml_config.cummerbund_options.gtf-path: from_conditions``.
         """
-        cm_call_id = self.call_id.replace('blacktie-cummerbund','cuffmerge')
+        cm_call_id = self.call_id.replace('blacktie-cummerbund', 'cuffmerge')
         try:
             cm_call = self.yargs.call_records[cm_call_id]
             cm_out_dir = cm_call.out_dir
             gtf_path = "%s/merged.gtf" % (cm_out_dir.rstrip('/'))
-        except (KeyError,AttributeError) as exp:
-            msg = "WARNING: unable to find matching cuffmerge call record in memory for experiment: %s\nAttempting to find corresponding cufflinks outfile in your base_dir." \
-                % (cm_call_id)
+        except (KeyError, AttributeError) as exp:
+            msg = "WARNING: unable to find matching cuffmerge call record in memory for experiment: %s\n Attempting " \
+                  "to find corresponding cufflinks outfile in your base_dir." \
+                  % cm_call_id
             self.log_msg(log_msg=msg)
 
             # try to guess correct cuffmerge out directory
             base_dir = self.yargs.run_options.base_dir
-            gtf_path = "%s/%s/merged.gtf" % (base_dir.rstrip('/'),cm_call_id)
+            gtf_path = "%s/%s/merged.gtf" % (base_dir.rstrip('/'), cm_call_id)
             if not os.path.exists(gtf_path):
                 if self.mode == 'analyze':
                     #: .. todo:: build framework to handle this non-fatally
-                    raise errors.MissingArgumentError("I could not find an appropriate merged.gtf file. Failed to find: %s" \
-                                                      % (gtf_path))
+                    raise errors.MissingArgumentError(
+                        "I could not find an appropriate merged.gtf file. Failed to find: %s"
+                        % gtf_path)
                 else:
                     pass
             else:
