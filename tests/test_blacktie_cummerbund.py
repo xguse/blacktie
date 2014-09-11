@@ -39,7 +39,7 @@ import sh
 
 from bunch import Bunch
 
-debug = True
+debug = False
 
 current_directory = os.getcwd()
 
@@ -82,7 +82,6 @@ def test_bad_option():
 
     if not debug:
         shutil.rmtree(wdir)
-
 
 
 @with_setup(set_up(prefix="test_blacktie_call_settings_"))
