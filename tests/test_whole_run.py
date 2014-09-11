@@ -72,7 +72,7 @@ def test_bad_option():
 @with_setup(set_up(prefix="test_multi_progs_"))
 def test_multi_progs():
     wdir = "%s/test_data" % temp_dirs.test_multi_progs_
-    args = shlex.split("--prog tophat cufflinks --mode analyze %s/test_data/blacktie_config_test.yaml" %
+    args = shlex.split("--prog tophat cufflinks --mode analyze %s/blacktie_config_test.yaml" %
                        wdir)
     os.chdir(wdir)
     sh.blacktie(args)
@@ -84,7 +84,7 @@ def test_multi_progs():
 @with_setup(set_up(prefix="test_x_"))
 def test_x():
     wdir = "%s/test_data" % temp_dirs.test_x_
-    args = shlex.split("--prog all --mode analyze %s/test_data/blacktie_config_test.yaml" %
+    args = shlex.split("--prog all --mode analyze %s/blacktie_config_test.yaml" %
                        wdir)
     os.chdir(wdir)
     sh.blacktie(args)
