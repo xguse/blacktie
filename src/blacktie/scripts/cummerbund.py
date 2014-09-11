@@ -24,7 +24,6 @@ readCufflinks
 
 
 '''
-import os
 import sys
 import argparse
 
@@ -34,14 +33,14 @@ try:
 except ImportError as ie:
     raise errors.BlacktieError('Unable to import required module: "rpy2".  Try installing it with "[sudo] pip install rpy2".')
 except RuntimeError as rte:
-    raise errors.BlacktieError('Importing required module "rpy2" failed because no R application could be found on your system. Try again after instaling R.')
+    raise errors.BlacktieError('Importing required module "rpy2" failed because no R application could be found on your system. Try again after installing R.')
 
 
 import blacktie
 from blacktie.utils import errors
 from blacktie.utils.misc import Bunch
 from blacktie.utils.externals import mkdirp
-from blacktie.utils.externals import runExternalApp
+
 
 def print_my_plots(r, rplots, out='', file_type='pdf'):
     """
@@ -57,9 +56,10 @@ def print_my_plots(r, rplots, out='', file_type='pdf'):
     mkdirp(out)
     
     for plot_id in rplots:
-        file_path = "%s/%s.%s" % (out,plot_id,file_type)
-        r.ggsave(filename=file_path,plot=rplots[plot_id])
-        
+        file_path = "%s/%s.%s" % (out, plot_id, file_type)
+        r.ggsave(filename=file_path, plot=rplots[plot_id])
+
+
 def run_cummeRbund_install():
     """
     provides R install of cummeRbund and provides user with all R output and prompts.
@@ -123,7 +123,7 @@ def main():
                         help="""String indicating which genome build the .gtf annotations are for (e.g. 'hg19' or 'mm9').""")
     parser.add_argument('--out', type=str, 
                         help="""A base directory to add to our saved plots into.""")
-    parser.add_argument('--file-type', type=str, choices=['pdf','jpeg','png','ps'], default='pdf',
+    parser.add_argument('--file-type', type=str, choices=['pdf', 'jpeg', 'png', 'ps'], default='pdf',
                         help="""The type of output file to use when saving our plots. (default: %(default)s)""")
     
 
@@ -132,12 +132,10 @@ def main():
         exit(0)
 
     args = parser.parse_args()    
-    
 
     # import the cummeRbund libray to the R workspace
     import_cummeRbund_library()
-        
-    
+
     # read in the cuffdiff data
     cuff = r.readCufflinks(dir=args.cuffdiff_dir, gtfFile=args.gtf_path, genome=args.genome)
     
@@ -152,8 +150,7 @@ def main():
     
     # Store my plots here
     rplots = Bunch()
-    
-    
+
     # dispersion plot
     rplots.dispersionPlot = r.dispersionPlot(r.genes(cuff))
     
@@ -196,17 +193,51 @@ def main():
     rplots.csVolcanoMatrix = r.csVolcanoMatrix(r.genes(cuff))
     
     # Sig Matrix
-    rplots.sigMatrix = r.sigMatrix(cuff,level='genes',alpha=0.05)
-    
-    
+    rplots.sigMatrix = r.sigMatrix(cuff, level='genes', alpha=0.05)
+
     # get significant genes
-    mySigGeneIds = r.getSig(cuff,alpha=0.05,level='genes')
-    mySigGenes = r.getGenes(cuff,mySigGeneIds)
-    print "Significant Genes: %s" % (len(mySigGeneIds))
-    
+    try:
+        print "Getting significant genes."
+        my_sig_gene_ids = r.getSig(cuff, alpha=0.05, level='genes')
+        my_sig_genes = r.getGenes(cuff, my_sig_gene_ids)
+        print "Significant Genes: %s" % (len(my_sig_gene_ids))
+        sig_genes_success = True
+    except RRuntimeError:
+        try:
+            print "Rebuilding the database and trying to get significant genes one more time."
+            cuff = r.readCufflinks(dir=args.cuffdiff_dir, gtfFile=args.gtf_path, genome=args.genome)
+            my_sig_gene_ids = r.getSig(cuff, alpha=0.05, level='genes')
+            my_sig_genes = r.getGenes(cuff, my_sig_gene_ids)
+            print "Significant Genes: %s" % (len(my_sig_gene_ids))
+            sig_genes_success = True
+        except RRuntimeError:
+            print "Rebuilding the database and abandoning request for significant genes."
+            cuff = r.readCufflinks(dir=args.cuffdiff_dir, gtfFile=args.gtf_path, genome=args.genome)
+            sig_genes_success = False
+
     # Preliminary Clustering
-    ic = r.csCluster(mySigGenes,k=20)
-    rplots.csClusterPlot = r.csClusterPlot(ic)
+    if sig_genes_success:
+        print "Proceeding with k-means clustering of significant genes."
+        ic = r.csCluster(my_sig_genes, k=20)
+        rplots.csClusterPlot = r.csClusterPlot(ic)
+    else:
+        print "Omitting k-means clustering of significant genes."
+
+    # PCA
+    rplots.PCAplot = r.PCAplot(r.genes(cuff), "PC1", "PC2")
+
+    if we_have_replicates:
+        rplots.PCAplot_reps = r.PCAplot(r.genes(cuff), "PC1", "PC2", replicates='T')
+    else:
+        pass
+
+    # MDS
+    rplots.MDSplot = r.MDSplot(r.genes(cuff))
+
+    if we_have_replicates:
+        rplots.PCAplot_reps = r.MDSplot(r.genes(cuff), replicates='T')
+    else:
+        pass
     
     # print the plots
     print_my_plots(r, rplots, out=args.out, file_type=args.file_type)
