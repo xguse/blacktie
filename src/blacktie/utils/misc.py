@@ -16,11 +16,9 @@ misc.py
 ####################
 Code facilitating random aspects of this package.
 """
-import os
 import sys
 import inspect
 import smtplib
-import base64
 import time
 import re
 from email.MIMEMultipart import MIMEMultipart
@@ -50,18 +48,20 @@ def get_version_number(path_to_setup):
 
 class Bunch(dict):
     """
-    A dict like class to facilitate setting and access to tree-like data.  Allows access to dictionary keys through 'dot' notation: "yourDict.key = value".
+    A dict like class to facilitate setting and access to tree-like data.  Allows access to dictionary keys through
+    'dot' notation: "yourDict.key = value".
     """
     def __init__(self, *args, **kwds):
-        super(Bunch,self).__init__(*args,**kwds)
+        super(Bunch, self).__init__(*args, **kwds)
         self.__dict__ = self
+
 
 def bunchify(dict_tree):
     """
     Traverses a dictionary tree and converts all sub-dictionaries to Bunch() objects.
     """
-    for k,v in dict_tree.iteritems():
-        if type(v) == type({}):
+    for k, v in dict_tree.iteritems():
+        if isinstance(v, dict):
             dict_tree[k] = bunchify(dict_tree[k])
     return Bunch(dict_tree)
 
@@ -73,12 +73,12 @@ def whoami():
     return inspect.stack()[1][3]
 
 
-def email_notification(sender,to,subject,txt,pw,server_info):
+def email_notification(sender, to, subject, txt, pw, server_info):
     """
     Sends email to recipient using GMAIL server by default but will now accept ``server_info`` to customize this.
     
     :param sender: email address of sender
-    :param to: email addres of recipient
+    :param to: email address of recipient
     :param subject: subject text
     :param txt: body text
     :param pw: password of ``sender``
@@ -103,8 +103,8 @@ def email_notification(sender,to,subject,txt,pw,server_info):
             server.ehlo()
             server.starttls()
             server.ehlo()
-            server.login(sender,pw)
-            server.sendmail(sender,to,msg.as_string())
+            server.login(sender, pw)
+            server.sendmail(sender, to, msg.as_string())
             server.close()
         except (smtplib.SMTPAuthenticationError,
                 smtplib.SMTPConnectError,
@@ -116,7 +116,8 @@ def email_notification(sender,to,subject,txt,pw,server_info):
                 smtplib.SMTPSenderRefused,
                 smtplib.SMTPServerDisconnected) as e:
             
-            sys.stderr.write("Warning: %s was caught while trying to send your mail.\nSubject:%s\n" % (e.__class__.__name__,subject))
+            sys.stderr.write("Warning: %s was caught while trying to send your mail.\nSubject:%s\n" % (
+                e.__class__.__name__, subject))
     
             server.rset()
     else:
@@ -128,7 +129,7 @@ def get_time():
     Return system time formatted as 'YYYY:MM:DD-hh:mm:ss'.
     """
     t = time.localtime()
-    return time.strftime('%Y.%m.%d-%H:%M:%S',t)
+    return time.strftime('%Y.%m.%d-%H:%M:%S', t)
         
     
 
