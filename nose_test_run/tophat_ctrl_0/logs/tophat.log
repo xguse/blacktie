@@ -1,0 +1,7 @@
+
+[2015-02-19 09:19:41] Beginning TopHat run (v2.0.12)
+-----------------------------------------------
+[2015-02-19 09:19:41] Checking for Bowtie
+		  Bowtie version:	 2.2.3.0
+[2015-02-19 09:19:41] Checking for Samtools
+Error locating program: samtools
