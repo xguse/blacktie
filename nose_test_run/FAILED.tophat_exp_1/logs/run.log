@@ -1,1 +1,0 @@
-/home/gus/bin/tophat --mate-std-dev 25 -G fake_annotation.gtf --library-type fr-unstranded -o nose_test_run/tophat_exp_1 -p 6 -r 100 --no-coverage-search bowtie_indexes/fake_genome exp_fake_reads_left.fastq exp_fake_reads_right.fastq

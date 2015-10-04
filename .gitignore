@@ -13,3 +13,5 @@ develop-eggs
 tmp
 build
 dist
+
+*nose_test_run/
