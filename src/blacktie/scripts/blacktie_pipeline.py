@@ -150,7 +150,7 @@ def main():
             if args.mode == 'dry_run':
                 raise errors.BlacktieError("dry run")
             
-            #TODO: on mac pprocess raised AttributeError "module" has no attrb "poll" or some crap
+            #  TODO: on mac pprocess raised AttributeError "module" has no attrb "poll" or some crap
             try:
                 queue = pprocess.Queue(limit=yargs.cufflinks_options.p)
             except AttributeError as exc:

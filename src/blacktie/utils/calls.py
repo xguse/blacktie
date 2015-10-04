@@ -93,7 +93,7 @@ class BaseCall(object):
     def get_condition_id(self, condition_dict):
         """
         Constructs condition ID
-        :param condition_dict: a dictionary containing consition info like name, replicate_id, etc.
+        :param condition_dict: a dictionary containing condition info like name, replicate_id, etc.
         :returns: an ID used to construct the call_id of a call.
         """
 
