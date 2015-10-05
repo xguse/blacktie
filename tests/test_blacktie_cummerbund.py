@@ -37,7 +37,7 @@ from nose.tools import raises, with_setup
 from sh import ErrorReturnCode
 import sh
 
-from bunch import Bunch
+from munch import Munch as Bunch
 
 debug = False
 

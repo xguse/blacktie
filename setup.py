@@ -12,7 +12,8 @@ install_requires = ['PyYAML',
                     'rpy2',
                     'sh',
                     'nose',
-                    'bunch'
+                    'pytest',
+                    'munch'
                     ]
 
 setup(name='blacktie',
